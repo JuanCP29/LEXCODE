@@ -2,26 +2,147 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@layer base {
 
-@media (prefers-color-scheme: dark) {
+  /* ── MODO DÍA ─────────────────────────────────────────────────────────── */
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background:          #f0f2f5;
+    --surface:             #ffffff;
+    --surface-raised:      #f8f9fb;
+
+    --foreground:          #111827;
+    --foreground-muted:    #6b7280;
+    --foreground-subtle:   #9ca3af;
+
+    /* Azul Collegia */
+    --primary:             #1a4a8a;
+    --primary-hover:       #15397a;
+    --primary-foreground:  #ffffff;
+    --primary-subtle:      #e8f0fb;
+    --primary-light:       #3b82c4;
+
+    /* Acento IA */
+    --ia:                  #6366f1;
+    --ia-subtle:           #eef2ff;
+
+    --card:                #ffffff;
+    --card-foreground:     #111827;
+    --popover:             #ffffff;
+    --popover-foreground:  #111827;
+
+    --secondary:           #f3f4f6;
+    --secondary-foreground:#374151;
+    --muted:               #f3f4f6;
+    --muted-foreground:    #6b7280;
+    --accent:              #e8f0fb;
+    --accent-foreground:   #1a4a8a;
+
+    --destructive:         #dc2626;
+    --destructive-foreground: #ffffff;
+
+    --border:              #e5e7eb;
+    --input:               #e5e7eb;
+    --ring:                #1a4a8a;
+    --radius:              0.625rem;
+
+    /* Sidebar — blanco con borde */
+    --sidebar:             #ffffff;
+    --sidebar-foreground:  #374151;
+    --sidebar-border:      #e5e7eb;
+    --sidebar-accent:      #e8f0fb;
+    --sidebar-accent-foreground: #1a4a8a;
+    --sidebar-muted:       #9ca3af;
+
+    /* Topbar */
+    --topbar:              #ffffff;
+    --topbar-border:       #e5e7eb;
+
+    /* Estados */
+    --estado-listo-text:    #166534;
+    --estado-listo-bg:      #dcfce7;
+    --estado-revision-text: #92400e;
+    --estado-revision-bg:   #fef3c7;
+    --estado-borrador-text: #1e40af;
+    --estado-borrador-bg:   #dbeafe;
+    --estado-pendiente-text:#991b1b;
+    --estado-pendiente-bg:  #fee2e2;
+
+    --ficha-color:          #1a4a8a;
+    --contestacion-color:   #dc2626;
+  }
+
+  /* ── MODO NOCTURNO ────────────────────────────────────────────────────── */
+  .dark {
+    --background:          #0f1117;
+    --surface:             #1a1d27;
+    --surface-raised:      #1e2235;
+
+    --foreground:          #f1f5f9;
+    --foreground-muted:    #94a3b8;
+    --foreground-subtle:   #475569;
+
+    --primary:             #3b82c4;
+    --primary-hover:       #2563a8;
+    --primary-foreground:  #ffffff;
+    --primary-subtle:      #1e3a5f;
+    --primary-light:       #60a5fa;
+
+    --ia:                  #818cf8;
+    --ia-subtle:           #1e1b4b;
+
+    --card:                #1a1d27;
+    --card-foreground:     #f1f5f9;
+    --popover:             #1e2235;
+    --popover-foreground:  #f1f5f9;
+
+    --secondary:           #1e2235;
+    --secondary-foreground:#cbd5e1;
+    --muted:               #1e2235;
+    --muted-foreground:    #64748b;
+    --accent:              #1e3a5f;
+    --accent-foreground:   #93c5fd;
+
+    --destructive:         #ef4444;
+    --destructive-foreground: #ffffff;
+
+    --border:              #2d3148;
+    --input:               #2d3148;
+    --ring:                #3b82c4;
+
+    --sidebar:             #111827;
+    --sidebar-foreground:  #d1d5db;
+    --sidebar-border:      #1f2937;
+    --sidebar-accent:      #1e3a5f;
+    --sidebar-accent-foreground: #93c5fd;
+    --sidebar-muted:       #6b7280;
+
+    --topbar:              #111827;
+    --topbar-border:       #1f2937;
+
+    --estado-listo-text:    #86efac;
+    --estado-listo-bg:      #14532d;
+    --estado-revision-text: #fcd34d;
+    --estado-revision-bg:   #451a03;
+    --estado-borrador-text: #93c5fd;
+    --estado-borrador-bg:   #1e3a5f;
+    --estado-pendiente-text:#fca5a5;
+    --estado-pendiente-bg:  #450a0a;
+
+    --ficha-color:          #3b82c4;
+    --contestacion-color:   #ef4444;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * { @apply border-border; }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
 }
 
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+  .text-balance { text-wrap: balance; }
+  .card-shadow  { box-shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05); }
+  .card-shadow-md { box-shadow: 0 4px 6px -1px rgba(0,0,0,.08), 0 2px 4px -2px rgba(0,0,0,.05); }
 }
