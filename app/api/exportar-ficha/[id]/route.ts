@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { generarFichaDocx } from "@/lib/docx/generar-ficha-docx";
+import { rellenarTemplateDocx, templateDocxDisponible } from "@/lib/docx/rellenar-template-docx";
 
 function createSupabaseServer() {
   const cookieStore = cookies();
@@ -112,8 +113,40 @@ export async function GET(
       fecha_elaboracion: ficha.created_at,
     };
 
-    // 4. Generar .docx
-    const buffer = await generarFichaDocx(datos);
+    // 4. Generar .docx — rellenando el template oficial; fallback al generador legacy
+    let buffer: Buffer;
+    if (templateDocxDisponible()) {
+      buffer = rellenarTemplateDocx({
+        fecha_diligencia:     ficha.fecha_diligencia ?? "",
+        radicado_bizagi:      caso.radicado_bizagi ?? "",
+        radicado:             caso.radicado ?? "",
+        nombre_demandante:    caso.nombre_demandante ?? "",
+        expediente_pensional: ficha.expediente_pensional_aplica ?? caso.expediente_pensional ?? "",
+        autoridad_citacion:   caso.despacho ?? "",
+        caducidad:            ficha.caducidad ?? "",
+        sec_1:  ficha.sec_1_hechos ?? "",
+        sec_2:  ficha.sec_2_pretensiones ?? "",
+        sec_3:  ficha.sec_3_cuantia ?? "",
+        sec_4:  ficha.sec_4_normas ?? "",
+        sec_5:  ficha.sec_5_apelacion ?? "N/A",
+        sec_6:  ficha.sec_6_sentencia ?? "N/A",
+        sec_7:  ficha.sec_7_probatorio ?? "",
+        sec_8:  ficha.sec_8_problema ?? "",
+        sec_9:  ficha.sec_9_caducidad ?? "N/A",
+        sec_10: ficha.sec_10_movimientos ?? "",
+        sec_11: ficha.sec_11_jurisprudencia ?? "",
+        sec_12: ficha.sec_12_doctrina ?? "",
+        sec_13: ficha.sec_13_comite_ext ?? "N/A",
+        sec_14: ficha.sec_14_casos_similares ?? "",
+        sec_15: ficha.sec_15_politicas ?? "",
+        sec_16: ficha.sec_16_consideraciones ?? "",
+        sec_17: ficha.sec_17_riesgo ?? "",
+        sec_18: ficha.sec_18_recomendacion ?? "",
+        sec_19: ficha.sec_19_elaboro ?? perfil?.nombre_completo ?? "",
+      });
+    } else {
+      buffer = await generarFichaDocx(datos);
+    }
 
     // 5. Nombre del archivo
     const fecha = new Date().toISOString().slice(0, 10).replace(/-/g, "");

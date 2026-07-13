@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { FormularioParametrico } from "@/components/fichas/formulario-parametrico";
 import { PanelDocumentosExtra } from "@/components/fichas/panel-documentos-extra";
+import { PanelInsumos } from "@/components/fichas/panel-insumos";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type CamposExtraidos = Record<string, any>;
 
@@ -23,16 +24,21 @@ export function GeneradorParamsView({ casoId, casoData }: GeneradorParamsViewPro
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-6 items-start">
-      {/* Formulario */}
-      <FormularioParametrico
-        casoId={casoId}
-        casoData={casoData}
-        valoresPrellenados={valoresPrellenados ?? undefined}
-      />
+    <div className="space-y-5">
+      {/* Estado de insumos del caso */}
+      <PanelInsumos casoId={casoId} />
 
-      {/* Panel lateral PDFs */}
-      <PanelDocumentosExtra onCamposExtraidos={handleCampos} />
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-6 items-start">
+        {/* Formulario */}
+        <FormularioParametrico
+          casoId={casoId}
+          casoData={casoData}
+          valoresPrellenados={valoresPrellenados ?? undefined}
+        />
+
+        {/* Panel lateral PDFs */}
+        <PanelDocumentosExtra onCamposExtraidos={handleCampos} />
+      </div>
     </div>
   );
 }
