@@ -39,6 +39,8 @@ type Pendiente = {
 
 const MOTIVO_LABEL: Record<string, string> = {
   sin_traslado_demanda: "Sin traslado de demanda en Bizagi",
+  documento_ilegible:   "Documento no procesable (requiere transcripción)",
+  insumos_incompletos:  "Insumos incompletos para generar ficha",
 };
 
 const ACCION_CONFIG: Record<string, { label: string; Icon: React.ElementType; color: string }> = {
@@ -46,6 +48,7 @@ const ACCION_CONFIG: Record<string, { label: string; Icon: React.ElementType; co
   enviado_portal:    { label: "Enviado — Portal RJ",       Icon: ExternalLink,  color: "text-blue-600"   },
   enviado_correo:    { label: "Enviado — Gmail",           Icon: Mail,          color: "text-red-500"    },
   poder_generado:    { label: "Poder de sustitución",      Icon: FileSignature, color: "text-purple-600" },
+  documento_error:   { label: "Documento no procesable",   Icon: AlertCircle,   color: "text-orange-600" },
   nota:              { label: "Nota",                      Icon: StickyNote,    color: "text-yellow-600" },
 };
 

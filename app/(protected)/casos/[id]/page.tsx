@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { estadoBadgeClases } from "@/lib/ui/estado-badge";
+import { PanelDocumentosCaso } from "@/components/casos/panel-documentos-caso";
 
 // ── Labels ────────────────────────────────────────────────────────────────────
 const PRETENSION_LABEL: Record<string, string> = {
@@ -56,8 +57,8 @@ export default async function CasoDetallePage({
 }) {
   const supabase = createClient();
 
-  // Cargar caso, fichas y archivos en paralelo
-  const [{ data: caso }, { data: fichas }, { data: archivos }] =
+  // Cargar caso, fichas, archivos y documentos fuente en paralelo
+  const [{ data: caso }, { data: fichas }, { data: archivos }, { data: documentosFuente }] =
     await Promise.all([
       supabase.from("casos").select("*").eq("id", params.id).single(),
       supabase
@@ -68,6 +69,11 @@ export default async function CasoDetallePage({
       supabase
         .from("archivos_proceso")
         .select("id, tipo, storage_path, nombre_original, created_at")
+        .eq("caso_id", params.id)
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("documentos_caso")
+        .select("id, tipo_documento, nombre_archivo, mime_type, estado_procesamiento, error_procesamiento, created_at")
         .eq("caso_id", params.id)
         .order("created_at", { ascending: true }),
     ]);
@@ -164,6 +170,12 @@ export default async function CasoDetallePage({
 
         {/* Columna derecha */}
         <div className="space-y-4">
+
+          {/* Documentos fuente para la ficha */}
+          <PanelDocumentosCaso
+            casoId={caso.id}
+            documentos={documentosFuente ?? []}
+          />
 
           {/* Archivos del proceso */}
           <div className="bg-[#1a1d27] rounded-xl border border-[#2d3148]">
