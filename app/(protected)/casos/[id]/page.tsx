@@ -17,6 +17,7 @@ import {
 import { formatDate } from "@/lib/utils";
 import { estadoBadgeClases } from "@/lib/ui/estado-badge";
 import { PanelDocumentosCaso } from "@/components/casos/panel-documentos-caso";
+import { SelectorTipologia } from "@/components/casos/selector-tipologia";
 
 // ── Labels ────────────────────────────────────────────────────────────────────
 const PRETENSION_LABEL: Record<string, string> = {
@@ -170,6 +171,12 @@ export default async function CasoDetallePage({
 
         {/* Columna derecha */}
         <div className="space-y-4">
+
+          {/* Tipología y directrices aplicables */}
+          <SelectorTipologia
+            casoId={caso.id}
+            tipologiaActual={caso.tipologia_id ?? null}
+          />
 
           {/* Documentos fuente para la ficha */}
           <PanelDocumentosCaso

@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from("directrices_conciliacion")
-      .select("id, nombre, pretension, clase_pretension, nombre_original, activo, created_at")
+      .select("id, nombre, codigo, fecha_directriz, pretension, clase_pretension, nombre_original, activo, created_at, directriz_tipologias(tipologia_id, tipologias(id, nombre, parent_id))")
       .order("pretension")
       .order("nombre");
 
@@ -73,10 +73,18 @@ export async function POST(request: NextRequest) {
     const nombre   = formData.get("nombre") as string;
     const pretension      = formData.get("pretension") as string;
     const clase_pretension = formData.get("clase_pretension") as string | null;
+    const codigo           = formData.get("codigo") as string | null;
+    const fecha_directriz  = formData.get("fecha_directriz") as string | null;
+    const tipologiasRaw    = formData.get("tipologia_ids") as string | null; // JSON array de UUIDs
 
     if (!archivo || !nombre || !pretension) {
       return NextResponse.json({ error: "Faltan campos requeridos: archivo, nombre, pretension" }, { status: 400 });
     }
+
+    let tipologiaIds: string[] = [];
+    try {
+      tipologiaIds = tipologiasRaw ? JSON.parse(tipologiasRaw) : [];
+    } catch { /* array vacío si viene malformado */ }
 
     // Extraer texto del PDF
     let textoExtraido = "";
@@ -109,6 +117,8 @@ export async function POST(request: NextRequest) {
         nombre,
         pretension,
         clase_pretension: clase_pretension || null,
+        codigo: codigo || null,
+        fecha_directriz: fecha_directriz || null,
         storage_path: uploadError ? null : storagePath,
         nombre_original: archivo.name,
         texto_extraido: textoExtraido,
@@ -119,6 +129,14 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (insertError) throw insertError;
+
+    // Asociar a tipologías
+    if (tipologiaIds.length > 0) {
+      const { error: relError } = await supabase.from("directriz_tipologias").insert(
+        tipologiaIds.map((tid) => ({ directriz_id: directriz.id, tipologia_id: tid }))
+      );
+      if (relError) console.error("directriz_tipologias insert:", relError);
+    }
 
     return NextResponse.json({ directriz }, { status: 201 });
   } catch (e) {

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Plus, Trash2, FileText, Upload, Loader2,
-  CheckCircle2, AlertCircle, ToggleLeft, ToggleRight,
+  CheckCircle2, AlertCircle, ToggleLeft, ToggleRight, Tags,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -29,11 +29,21 @@ const PRETENSION_BADGE: Record<string, string> = {
 type Directriz = {
   id: string;
   nombre: string;
+  codigo?: string | null;
+  fecha_directriz?: string | null;
   pretension: string;
   clase_pretension: string | null;
   nombre_original: string | null;
   activo: boolean;
   created_at: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  directriz_tipologias?: any[];
+};
+
+type GrupoTipologia = {
+  id: string;
+  nombre: string;
+  hijas: { id: string; nombre: string }[];
 };
 
 interface DirectricesAdminProps {
@@ -54,6 +64,23 @@ export function DirectricesAdmin({ directrices: inicial }: DirectricesAdminProps
   const [nombre, setNombre] = useState("");
   const [pretension, setPretension] = useState("vejez");
   const [clase, setClase] = useState("");
+  const [codigo, setCodigo] = useState("");
+  const [fechaDirectriz, setFechaDirectriz] = useState("");
+  const [tipologiaIds, setTipologiaIds] = useState<string[]>([]);
+  const [grupos, setGrupos] = useState<GrupoTipologia[]>([]);
+
+  useEffect(() => {
+    fetch("/api/tipologias")
+      .then((r) => r.json())
+      .then((body) => setGrupos(body.tipologias ?? []))
+      .catch(() => {});
+  }, []);
+
+  function toggleTipologia(id: string) {
+    setTipologiaIds((prev) =>
+      prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]
+    );
+  }
 
   function setArchivoYNombre(f: File) {
     setArchivo(f);
@@ -72,6 +99,9 @@ export function DirectricesAdmin({ directrices: inicial }: DirectricesAdminProps
       fd.append("nombre", nombre.trim());
       fd.append("pretension", pretension);
       if (clase.trim()) fd.append("clase_pretension", clase.trim());
+      if (codigo.trim()) fd.append("codigo", codigo.trim());
+      if (fechaDirectriz) fd.append("fecha_directriz", fechaDirectriz);
+      if (tipologiaIds.length > 0) fd.append("tipologia_ids", JSON.stringify(tipologiaIds));
 
       const res = await fetch("/api/directrices", { method: "POST", body: fd });
       const json = await res.json();
@@ -82,6 +112,9 @@ export function DirectricesAdmin({ directrices: inicial }: DirectricesAdminProps
       setArchivo(null);
       setNombre("");
       setClase("");
+      setCodigo("");
+      setFechaDirectriz("");
+      setTipologiaIds([]);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error desconocido");
     } finally {
@@ -198,6 +231,33 @@ export function DirectricesAdmin({ directrices: inicial }: DirectricesAdminProps
             </div>
           </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">
+                Código{" "}
+                <span className="text-muted-foreground font-normal">(opcional)</span>
+              </label>
+              <input
+                value={codigo}
+                onChange={(e) => setCodigo(e.target.value)}
+                placeholder="Ej: DIC-013"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">
+                Fecha de la directriz{" "}
+                <span className="text-muted-foreground font-normal">(opcional)</span>
+              </label>
+              <input
+                type="date"
+                value={fechaDirectriz}
+                onChange={(e) => setFechaDirectriz(e.target.value)}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+            </div>
+          </div>
+
           <div className="space-y-1.5">
             <label className="text-sm font-medium">
               Clase de pretensión{" "}
@@ -209,6 +269,49 @@ export function DirectricesAdmin({ directrices: inicial }: DirectricesAdminProps
               placeholder="Ej: Régimen de Prima Media con Prestación Definida"
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
             />
+          </div>
+
+          {/* Tipologías asociadas */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium flex items-center gap-1.5">
+              <Tags className="w-3.5 h-3.5 text-[#1a4a8a]" />
+              Tipologías asociadas{" "}
+              <span className="text-muted-foreground font-normal">
+                — determinan cuándo aplica la directriz ({tipologiaIds.length} seleccionada{tipologiaIds.length !== 1 ? "s" : ""})
+              </span>
+            </label>
+            {grupos.length === 0 ? (
+              <p className="text-xs text-muted-foreground bg-muted/40 rounded-md px-3 py-2">
+                No hay tipologías registradas. Ejecuta la migración <code className="font-mono">fase1_tipologias_trazabilidad.sql</code> en Supabase.
+              </p>
+            ) : (
+              <div className="border border-border rounded-lg max-h-64 overflow-y-auto divide-y divide-border">
+                {grupos.map((g) => (
+                  <div key={g.id} className="px-3 py-2">
+                    <label className="flex items-center gap-2 cursor-pointer py-1">
+                      <input
+                        type="checkbox"
+                        checked={tipologiaIds.includes(g.id)}
+                        onChange={() => toggleTipologia(g.id)}
+                        className="rounded border-input"
+                      />
+                      <span className="text-xs font-semibold text-foreground">{g.nombre}</span>
+                    </label>
+                    {g.hijas.map((h) => (
+                      <label key={h.id} className="flex items-center gap-2 cursor-pointer py-1 pl-6">
+                        <input
+                          type="checkbox"
+                          checked={tipologiaIds.includes(h.id)}
+                          onChange={() => toggleTipologia(h.id)}
+                          className="rounded border-input"
+                        />
+                        <span className="text-xs text-muted-foreground">{h.nombre}</span>
+                      </label>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Feedback */}
@@ -266,6 +369,11 @@ export function DirectricesAdmin({ directrices: inicial }: DirectricesAdminProps
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
+                    {d.codigo && (
+                      <span className="text-[11px] px-1.5 py-0.5 rounded font-mono font-semibold bg-[#1a4a8a]/10 text-[#1a4a8a] dark:text-[#93c5fd]">
+                        {d.codigo}
+                      </span>
+                    )}
                     <p className="text-sm font-medium text-foreground truncate">{d.nombre}</p>
                     <span className={cn("text-[11px] px-2 py-0.5 rounded font-semibold", PRETENSION_BADGE[d.pretension] ?? "bg-gray-100 text-gray-600")}>
                       {PRETENSION_OPTS.find((o) => o.value === d.pretension)?.label ?? d.pretension}
@@ -278,6 +386,12 @@ export function DirectricesAdmin({ directrices: inicial }: DirectricesAdminProps
                     {!d.activo && (
                       <span className="text-[11px] px-2 py-0.5 rounded bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400">
                         Inactiva
+                      </span>
+                    )}
+                    {(d.directriz_tipologias?.length ?? 0) > 0 && (
+                      <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded bg-muted text-muted-foreground">
+                        <Tags className="w-2.5 h-2.5" />
+                        {d.directriz_tipologias!.length} tipología{d.directriz_tipologias!.length !== 1 ? "s" : ""}
                       </span>
                     )}
                   </div>
