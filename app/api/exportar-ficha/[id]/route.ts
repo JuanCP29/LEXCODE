@@ -174,6 +174,21 @@ export async function GET(
         .eq("id", params.id);
     }
 
+    // 6b. Registrar exportación + transición de estado (best-effort)
+    try {
+      await supabase.from("exportaciones").insert({
+        ficha_id: params.id,
+        tipo: "docx",
+        storage_path: uploadError ? null : storagePath,
+        generado_por: user.id,
+      });
+      if (ficha.estado === "aprobada") {
+        await supabase.from("fichas_conciliacion").update({ estado: "exportada" }).eq("id", params.id);
+      }
+    } catch (e) {
+      console.error("exportaciones (no bloqueante):", e);
+    }
+
     // 7. Retornar el archivo directamente para descarga
     return new NextResponse(buffer as unknown as BodyInit, {
       status: 200,

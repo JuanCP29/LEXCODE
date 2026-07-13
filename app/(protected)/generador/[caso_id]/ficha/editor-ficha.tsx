@@ -5,7 +5,7 @@ import Link from "next/link";
 import { SECCIONES, BADGE_TIPO, generarTextoDefault } from "@/lib/ia/secciones";
 import { CajaIA } from "@/components/fichas/caja-ia";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, FileText, FileSpreadsheet, Save, Loader2, ChevronRight } from "lucide-react";
+import { ArrowLeft, FileText, FileSpreadsheet, Save, Loader2, CheckCircle2, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 
@@ -47,7 +47,12 @@ export function EditorFicha({ caso, fichaInicial }: EditorFichaProps) {
   const [guardando, setGuardando] = useState(false);
   const [fichaId, setFichaId] = useState<string | null>(fichaInicial?.id ?? null);
   const [mensajeGuardado, setMensajeGuardado] = useState("");
+  const [estadoFicha, setEstadoFicha] = useState<string>(String(fichaInicial?.estado ?? "borrador"));
+  const [aprobando, setAprobando] = useState(false);
+  const [errorAprobacion, setErrorAprobacion] = useState<string | null>(null);
   const seccionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  const estaAprobada = estadoFicha === "aprobada" || estadoFicha === "exportada" || estadoFicha === "listo";
 
   function handleChange(key: string, valor: string) {
     setSecciones((prev) => ({ ...prev, [key]: valor }));
@@ -99,6 +104,49 @@ export function EditorFicha({ caso, fichaInicial }: EditorFichaProps) {
       setTimeout(() => setMensajeGuardado(""), 2000);
     } finally {
       setGuardando(false);
+    }
+  }
+
+  async function handleAprobar() {
+    if (!fichaId) return;
+    setAprobando(true);
+    setErrorAprobacion(null);
+    try {
+      // Guardar primero para que la validación evalúe el contenido actual
+      await supabase.from("fichas_conciliacion").update(secciones).eq("id", fichaId);
+
+      const res = await fetch(`/api/fichas/${fichaId}/aprobar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accion: "aprobar" }),
+      });
+      const body = await res.json();
+      if (!res.ok) {
+        if (body.faltantes) {
+          setErrorAprobacion(
+            `Secciones obligatorias sin contenido: ${body.faltantes.map((f: { seccion: number }) => f.seccion).join(", ")}`
+          );
+        } else {
+          setErrorAprobacion(body.error ?? "Error al aprobar");
+        }
+        return;
+      }
+      setEstadoFicha(body.estado);
+    } finally {
+      setAprobando(false);
+    }
+  }
+
+  async function handleReabrir() {
+    if (!fichaId) return;
+    const res = await fetch(`/api/fichas/${fichaId}/aprobar`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ accion: "reabrir" }),
+    });
+    if (res.ok) {
+      const body = await res.json();
+      setEstadoFicha(body.estado);
     }
   }
 
@@ -170,9 +218,20 @@ export function EditorFicha({ caso, fichaInicial }: EditorFichaProps) {
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Topbar del editor */}
         <div className="shrink-0 border-b border-border px-6 py-3 flex items-center justify-between bg-background">
-          <div>
-            <p className="text-sm font-semibold font-mono">{caso.radicado}</p>
-            <p className="text-xs text-muted-foreground">{caso.nombre_demandante}</p>
+          <div className="flex items-center gap-3">
+            <div>
+              <p className="text-sm font-semibold font-mono">{caso.radicado}</p>
+              <p className="text-xs text-muted-foreground">{caso.nombre_demandante}</p>
+            </div>
+            <span className={cn(
+              "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border",
+              estaAprobada
+                ? "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800"
+                : "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800"
+            )}>
+              {estaAprobada && <CheckCircle2 className="w-2.5 h-2.5" />}
+              {estadoFicha === "exportada" ? "Exportada" : estaAprobada ? "Aprobada" : estadoFicha === "en_revision" ? "En revisión" : "Borrador"}
+            </span>
           </div>
           <div className="flex items-center gap-2">
             {mensajeGuardado && (
@@ -182,6 +241,22 @@ export function EditorFicha({ caso, fichaInicial }: EditorFichaProps) {
               {guardando ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Save className="w-3.5 h-3.5 mr-1" />}
               Guardar
             </Button>
+            {fichaId && !estaAprobada && (
+              <Button
+                size="sm"
+                className="bg-green-600 hover:bg-green-700 text-white"
+                onClick={handleAprobar}
+                disabled={aprobando}
+              >
+                {aprobando ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <CheckCircle2 className="w-3.5 h-3.5 mr-1" />}
+                Aprobar
+              </Button>
+            )}
+            {fichaId && estaAprobada && estadoFicha !== "exportada" && (
+              <Button size="sm" variant="outline" onClick={handleReabrir}>
+                <RotateCcw className="w-3.5 h-3.5 mr-1" /> Reabrir
+              </Button>
+            )}
             {fichaId && (
               <>
                 <Button
@@ -203,6 +278,13 @@ export function EditorFicha({ caso, fichaInicial }: EditorFichaProps) {
             )}
           </div>
         </div>
+
+        {/* Error de aprobación */}
+        {errorAprobacion && (
+          <div className="shrink-0 px-6 py-2 bg-destructive/10 border-b border-destructive/30">
+            <p className="text-xs text-destructive font-medium">{errorAprobacion}</p>
+          </div>
+        )}
 
         {/* Secciones scrollables */}
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">

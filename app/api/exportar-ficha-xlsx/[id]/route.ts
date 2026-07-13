@@ -81,6 +81,20 @@ export async function GET(
     const radicadoSafe = (caso.radicado ?? "SIN_RADICADO").replace(/[^a-zA-Z0-9]/g, "_");
     const nombreArchivo = `FICHA_CONCILIACION_${radicadoSafe}_${fecha}.xlsx`;
 
+    // Registrar exportación + transición de estado (best-effort)
+    try {
+      await supabase.from("exportaciones").insert({
+        ficha_id: params.id,
+        tipo: "xlsx",
+        generado_por: user.id,
+      });
+      if (ficha.estado === "aprobada") {
+        await supabase.from("fichas_conciliacion").update({ estado: "exportada" }).eq("id", params.id);
+      }
+    } catch (e) {
+      console.error("exportaciones (no bloqueante):", e);
+    }
+
     return new NextResponse(buffer as unknown as BodyInit, {
       status: 200,
       headers: {

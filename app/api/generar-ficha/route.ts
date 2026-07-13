@@ -172,6 +172,25 @@ export async function POST(request: NextRequest) {
       console.error("ficha_seccion_fuentes (no bloqueante):", e);
     }
 
+    // 7b. Snapshot de versión inicial (best-effort)
+    try {
+      await supabase.from("ficha_versiones").insert({
+        ficha_id: ficha.id,
+        version: 1,
+        secciones,
+        parametros: paramsFicha,
+        fuentes: {
+          traslado: contexto.traslado?.documento_id ?? null,
+          actos: contexto.actos.map((a) => a.acto_id),
+          directriz: contexto.directriz?.directriz_id ?? null,
+        },
+        motivo: "generacion",
+        creado_por: user.id,
+      });
+    } catch (e) {
+      console.error("ficha_versiones v1 (no bloqueante):", e);
+    }
+
     // 8. Pendiente automático si hay secciones críticas sin insumos
     const criticasVacias = plan.filter((p) => p.accion === "vacia");
     if (criticasVacias.length > 0) {
