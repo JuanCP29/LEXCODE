@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   FileText, FileDown, Trash2, RefreshCw, Loader2,
@@ -62,13 +62,25 @@ export function PanelDocumentosCaso({
   const [error, setError] = useState<string | null>(null);
   const [advertencia, setAdvertencia] = useState<string | null>(null);
   const [reprocesando, setReprocesando] = useState<string | null>(null);
+  const [migracionPendiente, setMigracionPendiente] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    // Detectar si la tabla documentos_caso existe (migración fase1)
+    fetch(`/api/documentos-caso?caso_id=${casoId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body) => {
+        if (body?.migracion_pendiente) setMigracionPendiente(true);
+        else if (body?.documentos) setDocumentos(body.documentos);
+      })
+      .catch(() => {});
+  }, [casoId]);
 
   async function recargar() {
     const res = await fetch(`/api/documentos-caso?caso_id=${casoId}`);
     if (res.ok) {
-      const { documentos: docs } = await res.json();
-      setDocumentos(docs);
+      const body = await res.json();
+      if (body.documentos) setDocumentos(body.documentos);
     }
     router.refresh();
   }
@@ -145,6 +157,20 @@ export function PanelDocumentosCaso({
         )}
       </div>
 
+      {/* Banner migración pendiente */}
+      {migracionPendiente && (
+        <div className="px-5 py-3 border-b border-orange-900/40 bg-orange-950/20">
+          <p className="text-xs text-orange-400 flex items-start gap-2">
+            <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+            <span>
+              La carga de documentos requiere ejecutar la migración{" "}
+              <code className="font-mono text-[10px] bg-orange-950/40 px-1 rounded">fase1_tipologias_trazabilidad.sql</code>{" "}
+              en el SQL Editor de Supabase.
+            </span>
+          </p>
+        </div>
+      )}
+
       {/* Uploader */}
       <div className="px-5 py-4 border-b border-[#2d3148] space-y-3">
         <div className="flex flex-wrap gap-1.5">
@@ -179,7 +205,7 @@ export function PanelDocumentosCaso({
         />
         <button
           type="button"
-          disabled={subiendo}
+          disabled={subiendo || migracionPendiente}
           onClick={() => inputRef.current?.click()}
           className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-dashed border-[#3a3f5c] text-gray-300 hover:text-white hover:border-[#6b7dff] transition-colors text-xs font-semibold disabled:opacity-60"
         >

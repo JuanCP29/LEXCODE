@@ -34,7 +34,11 @@ export async function GET(request: NextRequest) {
     .eq("caso_id", casoId)
     .order("created_at", { ascending: true });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  // Migración fase1 pendiente → lista vacía + flag (no rompe el UI)
+  if (error) {
+    console.error("GET /api/documentos-caso:", error.message);
+    return NextResponse.json({ documentos: [], migracion_pendiente: true });
+  }
   return NextResponse.json({ documentos: data });
 }
 
@@ -98,7 +102,17 @@ export async function POST(request: NextRequest) {
     })
     .select("id")
     .single();
-  if (docErr || !doc) return NextResponse.json({ error: docErr?.message }, { status: 500 });
+  if (docErr || !doc) {
+    const esTablaFaltante = docErr?.message?.includes("Could not find the table") || docErr?.code === "42P01";
+    return NextResponse.json(
+      {
+        error: esTablaFaltante
+          ? "La base de datos aún no tiene la tabla de documentos. Ejecuta la migración fase1_tipologias_trazabilidad.sql en el SQL Editor de Supabase."
+          : docErr?.message,
+      },
+      { status: esTablaFaltante ? 503 : 500 }
+    );
+  }
 
   // 3. Extracción de texto (solo tipos que alimentan la ficha)
   let estadoFinal = "ok";
