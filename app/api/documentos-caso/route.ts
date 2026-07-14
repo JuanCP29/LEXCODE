@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { extraerTextoPDF } from "@/lib/ia/extraer-pdf";
 
 export const maxDuration = 60;
+export const runtime = "nodejs";
 
 const TIPOS_VALIDOS = ["traslado_demanda", "acto_administrativo", "historia_laboral", "anexo"];
 // Tipos cuyo texto se extrae y alimenta la generación de la ficha
@@ -19,33 +20,78 @@ function sb() {
   );
 }
 
+type ErrorSerializado = {
+  name: string;
+  message: string;
+  stack?: string;
+  cause?: ErrorSerializado;
+};
+
+function serializarError(error: unknown): ErrorSerializado {
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      cause: error.cause ? serializarError(error.cause) : undefined,
+    };
+  }
+
+  try {
+    return { name: "ErrorNoEstándar", message: JSON.stringify(error) ?? String(error) };
+  } catch {
+    return { name: "ErrorNoEstándar", message: String(error) };
+  }
+}
+
+function respuestaErrorInesperado(metodo: "GET" | "POST", error: unknown) {
+  const detalle = serializarError(error);
+  console.error(`${metodo} /api/documentos-caso — excepción no controlada`, detalle);
+  return NextResponse.json(
+    { error: `Error inesperado en ${metodo} /api/documentos-caso`, detalle },
+    { status: 500 }
+  );
+}
+
 // ── GET: listar documentos de un caso ──────────────────────────────────────────
 export async function GET(request: NextRequest) {
-  const supabase = sb();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+  try {
+    const supabase = sb();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
 
-  const casoId = request.nextUrl.searchParams.get("caso_id");
-  if (!casoId) return NextResponse.json({ error: "Falta caso_id" }, { status: 400 });
+    const casoId = request.nextUrl.searchParams.get("caso_id");
+    if (!casoId) return NextResponse.json({ error: "Falta caso_id" }, { status: 400 });
 
-  const { data, error } = await supabase
-    .from("documentos_caso")
-    .select("id, tipo_documento, nombre_archivo, mime_type, estado_procesamiento, error_procesamiento, created_at")
-    .eq("caso_id", casoId)
-    .order("created_at", { ascending: true });
+    const { data, error } = await supabase
+      .from("documentos_caso")
+      .select("id, tipo_documento, nombre_archivo, mime_type, estado_procesamiento, error_procesamiento, created_at")
+      .eq("caso_id", casoId)
+      .order("created_at", { ascending: true });
 
-  // Migración fase1 pendiente → lista vacía + flag (no rompe el UI)
-  if (error) {
-    console.error("GET /api/documentos-caso:", error.message);
-    return NextResponse.json({ documentos: [], migracion_pendiente: true });
+    // Migración fase1 pendiente → lista vacía + flag (no rompe el UI)
+    if (error) {
+      console.error("GET /api/documentos-caso:", error.message);
+      return NextResponse.json({ documentos: [], migracion_pendiente: true });
+    }
+    return NextResponse.json({ documentos: data });
+  } catch (error) {
+    return respuestaErrorInesperado("GET", error);
   }
-  return NextResponse.json({ documentos: data });
 }
 
 // ── POST: registrar documento ya subido a Storage + extraer texto ─────────────
 // El archivo se sube DIRECTO del navegador a Storage (límite de 4.5MB de
 // Vercel no aplica); aquí solo llega la ruta.
 export async function POST(request: NextRequest) {
+  try {
+    return await registrarDocumento(request);
+  } catch (error) {
+    return respuestaErrorInesperado("POST", error);
+  }
+}
+
+async function registrarDocumento(request: NextRequest) {
   const supabase = sb();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
