@@ -1,33 +1,23 @@
-import { PDFParse } from "pdf-parse";
-import { existsSync } from "node:fs";
-import path from "node:path";
+type PDFParseClass = typeof import("pdf-parse")["PDFParse"];
 
-let workerConfigurado = false;
+let pdfParsePromise: Promise<PDFParseClass> | null = null;
 
-function configurarWorker() {
-  if (workerConfigurado) return;
-
-  // En desarrollo el worker vive bajo process.cwd(). En un bundle serverless,
-  // pdf-parse puede quedar reubicado; resolver también desde su entrypoint hace
-  // que la búsqueda sea independiente del directorio de trabajo de la función.
-  const rutasCandidatas = [
-    path.resolve(process.cwd(), "node_modules/pdf-parse/dist/worker/pdf.worker.mjs"),
-    path.resolve(path.dirname(require.resolve("pdf-parse")), "../../worker/pdf.worker.mjs"),
-  ];
-  const workerPath = rutasCandidatas.find((ruta) => existsSync(ruta));
-
-  if (!workerPath) {
-    throw new Error(
-      `No se encontró el worker de pdf-parse. Rutas verificadas: ${rutasCandidatas.join(", ")}`
-    );
+function cargarPDFParse(): Promise<PDFParseClass> {
+  if (!pdfParsePromise) {
+    pdfParsePromise = (async () => {
+      // Este módulo Node instala DOMMatrix, Path2D e ImageData desde
+      // @napi-rs/canvas. Debe cargarse ANTES de pdf-parse/pdfjs-dist.
+      const { getPath } = await import("pdf-parse/worker");
+      const { PDFParse } = await import("pdf-parse");
+      PDFParse.setWorker(getPath());
+      return PDFParse;
+    })();
   }
-
-  PDFParse.setWorker(workerPath);
-  workerConfigurado = true;
+  return pdfParsePromise;
 }
 
 export async function extraerTextoPDF(buffer: Buffer): Promise<string> {
-  configurarWorker();
+  const PDFParse = await cargarPDFParse();
   const parser = new PDFParse({ data: buffer });
   try {
     const result = await parser.getText();
