@@ -30,27 +30,39 @@ export async function POST(request: NextRequest) {
     if (!user)
       return NextResponse.json({ error: "No autenticado" }, { status: 401 });
 
-    const formData = await request.formData();
-    const archivos = formData.getAll("archivos") as File[];
+    // Los archivos se suben directo del navegador a Storage (evita el límite
+    // de 4.5MB de Vercel); aquí llegan solo las rutas.
+    const { paths } = await request.json() as { paths: { path: string; nombre: string }[] };
 
-    if (!archivos || archivos.length === 0) {
+    if (!paths || paths.length === 0) {
       return NextResponse.json(
         { error: "No se recibieron archivos" },
         { status: 400 }
       );
     }
 
-    // Extraer texto de cada PDF
+    // Extraer texto de cada PDF descargándolo de Storage
     const textos: string[] = [];
-    for (const archivo of archivos) {
+    for (const { path, nombre } of paths) {
+      if (!path.startsWith(`${user.id}/`)) continue; // solo rutas del usuario
       try {
-        const buffer = Buffer.from(await archivo.arrayBuffer());
+        const { data: archivoData, error: dlErr } = await supabase.storage
+          .from("documentos-lexcode")
+          .download(path);
+        if (dlErr || !archivoData) throw new Error(dlErr?.message);
+        const buffer = Buffer.from(await archivoData.arrayBuffer());
         const texto = await extraerTextoPDF(buffer);
-        textos.push(`=== ${archivo.name} ===\n${texto}`);
+        textos.push(`=== ${nombre} ===\n${texto}`);
       } catch {
-        textos.push(`=== ${archivo.name} ===\n[No se pudo extraer el texto]`);
+        textos.push(`=== ${nombre} ===\n[No se pudo extraer el texto]`);
       }
     }
+
+    // Limpieza de archivos temporales (best-effort)
+    supabase.storage
+      .from("documentos-lexcode")
+      .remove(paths.filter((p) => p.path.includes("/tmp/")).map((p) => p.path))
+      .catch(() => {});
 
     const textoCompleto = textos.join("\n\n");
 
@@ -97,7 +109,7 @@ Devuelve UNICAMENTE un objeto JSON valido con estos campos (sin texto adicional)
 
     return NextResponse.json({
       campos,
-      archivos_procesados: archivos.map((a) => a.name),
+      archivos_procesados: paths.map((p) => p.nombre),
     });
   } catch (e) {
     console.error("analizar-documentos-extra:", e);

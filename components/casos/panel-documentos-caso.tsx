@@ -7,6 +7,7 @@ import {
   CheckCircle2, AlertTriangle, Upload, Landmark, FileSearch, Paperclip,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { subirArchivoStorage } from "@/lib/supabase/subir-storage";
 
 type Documento = {
   id: string;
@@ -77,14 +78,23 @@ export function PanelDocumentosCaso({
     setError(null);
     setAdvertencia(null);
     try {
-      const fd = new FormData();
-      fd.append("caso_id", casoId);
-      fd.append("tipo_documento", tipoSeleccionado);
-      fd.append("archivo", file);
+      // 1. Subir directo a Storage desde el navegador (sin límite de Vercel)
+      const { path } = await subirArchivoStorage(file, `casos/${casoId}/${tipoSeleccionado}`);
 
-      const res = await fetch("/api/documentos-caso", { method: "POST", body: fd });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.error ?? "Error al subir el documento");
+      // 2. Registrar y procesar en el servidor (solo viaja la ruta)
+      const res = await fetch("/api/documentos-caso", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          caso_id: casoId,
+          tipo_documento: tipoSeleccionado,
+          storage_path: path,
+          nombre_archivo: file.name,
+          mime_type: file.type,
+        }),
+      });
+      const body = await res.json().catch(() => ({ error: `Error del servidor (HTTP ${res.status})` }));
+      if (!res.ok) throw new Error(body.error ?? "Error al registrar el documento");
       if (body.advertencia) setAdvertencia(body.advertencia);
       await recargar();
     } catch (e) {

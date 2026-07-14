@@ -23,7 +23,11 @@ export async function GET() {
     .eq("activa", true)
     .order("orden");
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  // Migración fase1 pendiente → lista vacía en vez de error (no rompe el UI)
+  if (error) {
+    console.error("GET /api/tipologias:", error.message);
+    return NextResponse.json({ tipologias: [], migracion_pendiente: true });
+  }
 
   // Agrupar: padres con sus hijas
   const padres = (data ?? []).filter((t) => !t.parent_id);

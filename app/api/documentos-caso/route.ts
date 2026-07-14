@@ -38,22 +38,32 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ documentos: data });
 }
 
-// ── POST: subir documento + extraer texto + estructurar acto administrativo ───
+// ── POST: registrar documento ya subido a Storage + extraer texto ─────────────
+// El archivo se sube DIRECTO del navegador a Storage (límite de 4.5MB de
+// Vercel no aplica); aquí solo llega la ruta.
 export async function POST(request: NextRequest) {
   const supabase = sb();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
 
-  const formData = await request.formData();
-  const casoId = formData.get("caso_id") as string;
-  const tipoDocumento = formData.get("tipo_documento") as string;
-  const archivo = formData.get("archivo") as File | null;
+  const { caso_id: casoId, tipo_documento: tipoDocumento, storage_path: storagePath, nombre_archivo: nombreArchivo, mime_type: mimeType } =
+    await request.json() as {
+      caso_id: string;
+      tipo_documento: string;
+      storage_path: string;
+      nombre_archivo: string;
+      mime_type?: string;
+    };
 
-  if (!casoId || !tipoDocumento || !archivo) {
-    return NextResponse.json({ error: "Faltan campos: caso_id, tipo_documento, archivo" }, { status: 400 });
+  if (!casoId || !tipoDocumento || !storagePath || !nombreArchivo) {
+    return NextResponse.json({ error: "Faltan campos: caso_id, tipo_documento, storage_path, nombre_archivo" }, { status: 400 });
   }
   if (!TIPOS_VALIDOS.includes(tipoDocumento)) {
     return NextResponse.json({ error: `Tipo inválido. Válidos: ${TIPOS_VALIDOS.join(", ")}` }, { status: 400 });
+  }
+  // La ruta debe pertenecer al usuario (primera carpeta = uid)
+  if (!storagePath.startsWith(`${user.id}/`)) {
+    return NextResponse.json({ error: "Ruta de Storage inválida" }, { status: 403 });
   }
 
   // Verificar que el caso pertenece al usuario (o es admin)
@@ -64,18 +74,15 @@ export async function POST(request: NextRequest) {
     .single();
   if (!caso) return NextResponse.json({ error: "Caso no encontrado" }, { status: 404 });
 
-  const buffer = Buffer.from(await archivo.arrayBuffer());
-  const esPdf = archivo.type === "application/pdf" || archivo.name.toLowerCase().endsWith(".pdf");
-
-  // 1. Subir a Storage — carpeta por usuario (política RLS del bucket)
-  const timestamp = Date.now();
-  const nombreSaneado = archivo.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-  const storagePath = `${user.id}/casos/${casoId}/${tipoDocumento}/${timestamp}_${nombreSaneado}`;
-
-  const { error: upErr } = await supabase.storage
+  // 1. Descargar de Storage para procesar
+  const { data: archivoData, error: dlErr } = await supabase.storage
     .from("documentos-lexcode")
-    .upload(storagePath, buffer, { contentType: archivo.type || "application/octet-stream" });
-  if (upErr) return NextResponse.json({ error: `Error al subir: ${upErr.message}` }, { status: 500 });
+    .download(storagePath);
+  if (dlErr || !archivoData) {
+    return NextResponse.json({ error: `No se pudo leer el archivo de Storage: ${dlErr?.message}` }, { status: 500 });
+  }
+  const buffer = Buffer.from(await archivoData.arrayBuffer());
+  const esPdf = mimeType === "application/pdf" || nombreArchivo.toLowerCase().endsWith(".pdf");
 
   // 2. Registrar en documentos_caso
   const { data: doc, error: docErr } = await supabase
@@ -83,9 +90,9 @@ export async function POST(request: NextRequest) {
     .insert({
       caso_id: casoId,
       tipo_documento: tipoDocumento,
-      nombre_archivo: archivo.name,
+      nombre_archivo: nombreArchivo,
       storage_path: storagePath,
-      mime_type: archivo.type,
+      mime_type: mimeType ?? null,
       estado_procesamiento: TIPOS_CON_EXTRACCION.includes(tipoDocumento) ? "procesando" : "ok",
       uploaded_by: user.id,
     })
@@ -114,7 +121,7 @@ export async function POST(request: NextRequest) {
           await supabase.from("documentos_caso")
             .update({ estado_procesamiento: "error", error_procesamiento: advertencia })
             .eq("id", doc.id);
-          await crearPendienteDocumento(supabase, casoId, user.id, archivo.name, advertencia);
+          await crearPendienteDocumento(supabase, casoId, user.id, nombreArchivo, advertencia);
         } else {
           await supabase.from("documentos_caso")
             .update({ estado_procesamiento: "ok", texto_extraido: texto })
@@ -142,7 +149,7 @@ export async function POST(request: NextRequest) {
         await supabase.from("documentos_caso")
           .update({ estado_procesamiento: "error", error_procesamiento: advertencia })
           .eq("id", doc.id);
-        await crearPendienteDocumento(supabase, casoId, user.id, archivo.name, advertencia);
+        await crearPendienteDocumento(supabase, casoId, user.id, nombreArchivo, advertencia);
       }
     }
   }

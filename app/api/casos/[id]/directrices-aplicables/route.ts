@@ -23,11 +23,27 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
 
-  const { data: caso } = await supabase
+  // Query con join a tipologías; si la migración fase1 no se ha ejecutado,
+  // cae a la query básica por pretensión (no rompe el UI).
+  let caso: { id: string; pretension: string | null; tipologia_id?: string | null; tipologias?: unknown } | null = null;
+
+  const { data: casoFull, error: joinError } = await supabase
     .from("casos")
     .select("id, pretension, tipologia_id, tipologias(id, nombre, parent_id)")
     .eq("id", params.id)
     .single();
+
+  if (casoFull) {
+    caso = casoFull;
+  } else if (joinError) {
+    const { data: casoBasico } = await supabase
+      .from("casos")
+      .select("id, pretension")
+      .eq("id", params.id)
+      .single();
+    caso = casoBasico;
+  }
+
   if (!caso) return NextResponse.json({ error: "Caso no encontrado" }, { status: 404 });
 
   const seleccion = "id, nombre, codigo, fecha_directriz, pretension, clase_pretension, criterio_conciliacion, recomendacion_base, riesgo_base, activo";

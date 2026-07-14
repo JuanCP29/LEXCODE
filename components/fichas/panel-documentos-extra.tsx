@@ -3,6 +3,7 @@
 import { useRef, useState, useCallback } from "react";
 import { Upload, X, FileText, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { subirArchivoStorage } from "@/lib/supabase/subir-storage";
 
 type CamposExtraidos = {
   resolucion_prestacion?: string | null;
@@ -75,15 +76,22 @@ export function PanelDocumentosExtra({ onCamposExtraidos }: PanelDocumentosExtra
     setCamposExtraidos(null);
 
     try {
-      const fd = new FormData();
-      archivos.forEach((f) => fd.append("archivos", f));
+      // 1. Subir a Storage directo del navegador (sin límite de Vercel)
+      const paths = await Promise.all(
+        archivos.map(async (f) => {
+          const { path } = await subirArchivoStorage(f, "tmp");
+          return { path, nombre: f.name };
+        })
+      );
 
+      // 2. Analizar en el servidor (solo viajan las rutas)
       const res = await fetch("/api/analizar-documentos-extra", {
         method: "POST",
-        body: fd,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paths }),
       });
 
-      const json = await res.json();
+      const json = await res.json().catch(() => ({ error: `Error del servidor (HTTP ${res.status})` }));
       if (!res.ok) throw new Error(json.error ?? "Error desconocido");
 
       const campos: CamposExtraidos = json.campos;
