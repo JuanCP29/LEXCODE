@@ -4,8 +4,9 @@ import { useState, useRef } from "react";
 import Link from "next/link";
 import { SECCIONES, BADGE_TIPO, generarTextoDefault } from "@/lib/ia/secciones";
 import { CajaIA } from "@/components/fichas/caja-ia";
+import { VistaPreviaFicha } from "@/components/fichas/vista-previa-ficha";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, FileText, FileSpreadsheet, Save, Loader2, CheckCircle2, RotateCcw } from "lucide-react";
+import { ArrowLeft, FileText, FileSpreadsheet, Save, Loader2, CheckCircle2, RotateCcw, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 
@@ -50,6 +51,7 @@ export function EditorFicha({ caso, fichaInicial }: EditorFichaProps) {
   const [estadoFicha, setEstadoFicha] = useState<string>(String(fichaInicial?.estado ?? "borrador"));
   const [aprobando, setAprobando] = useState(false);
   const [errorAprobacion, setErrorAprobacion] = useState<string | null>(null);
+  const [previewAbierto, setPreviewAbierto] = useState(false);
   const seccionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const estaAprobada = estadoFicha === "aprobada" || estadoFicha === "exportada" || estadoFicha === "listo";
@@ -270,6 +272,9 @@ export function EditorFicha({ caso, fichaInicial }: EditorFichaProps) {
             )}
             {fichaId && (
               <>
+                <Button size="sm" variant="outline" onClick={() => setPreviewAbierto(true)}>
+                  <Eye className="w-3.5 h-3.5 mr-1" /> Vista previa
+                </Button>
                 <Button
                   size="sm"
                   variant="outline"
@@ -342,6 +347,23 @@ export function EditorFicha({ caso, fichaInicial }: EditorFichaProps) {
           })}
         </div>
       </div>
+
+      {/* Modal de vista previa */}
+      <VistaPreviaFicha
+        abierto={previewAbierto}
+        onClose={() => setPreviewAbierto(false)}
+        secciones={secciones}
+        encabezado={{
+          tipo_conciliacion:    String(fichaInicial?.tipo_conciliacion ?? ""),
+          fecha_diligencia:     (fichaInicial?.fecha_diligencia as string) ?? "",
+          radicado_bizagi:      (fichaInicial?.radicado_bizagi as string) ?? "",
+          radicado:             caso.radicado,
+          nombre_demandante:    caso.nombre_demandante,
+          expediente_pensional: (fichaInicial?.expediente_pensional_aplica as string) ?? "",
+          despacho:             (fichaInicial?.despacho as string) ?? "",
+          caducidad:            (fichaInicial?.caducidad as string) ?? "",
+        }}
+      />
     </div>
   );
 }
