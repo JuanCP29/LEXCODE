@@ -54,6 +54,17 @@ export function EditorFicha({ caso, fichaInicial }: EditorFichaProps) {
 
   const estaAprobada = estadoFicha === "aprobada" || estadoFicha === "exportada" || estadoFicha === "listo";
 
+  // Nombre de archivo estructurado y editable:
+  // AAAAMMDD_FichaConciliacion_<Demandante>_Rad_<radicado>
+  const [nombreArchivo, setNombreArchivo] = useState<string>(() => {
+    const fecha = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+    const demandante = (caso.nombre_demandante ?? "")
+      .normalize("NFD").replace(/[̀-ͯ]/g, "")   // quitar tildes
+      .replace(/[^a-zA-Z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 40);
+    const rad = (caso.radicado ?? "SIN_RADICADO").replace(/[^a-zA-Z0-9]/g, "");
+    return `${fecha}_FichaConciliacion_${demandante}_Rad_${rad}`;
+  });
+
   function handleChange(key: string, valor: string) {
     setSecciones((prev) => ({ ...prev, [key]: valor }));
   }
@@ -262,7 +273,7 @@ export function EditorFicha({ caso, fichaInicial }: EditorFichaProps) {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => descargar(`/api/exportar-ficha/${fichaId}`, `FICHA_CONCILIACION_${caso.radicado.replace(/[^a-zA-Z0-9]/g, "_")}.docx`)}
+                  onClick={() => descargar(`/api/exportar-ficha/${fichaId}`, `${nombreArchivo || "FICHA_CONCILIACION"}.docx`)}
                 >
                   <FileText className="w-3.5 h-3.5 mr-1" /> Exportar .docx
                 </Button>
@@ -270,7 +281,7 @@ export function EditorFicha({ caso, fichaInicial }: EditorFichaProps) {
                   size="sm"
                   variant="outline"
                   className="border-green-300 text-green-700 hover:bg-green-50"
-                  onClick={() => descargar(`/api/exportar-ficha-xlsx/${fichaId}`, `FICHA_CONCILIACION_${caso.radicado.replace(/[^a-zA-Z0-9]/g, "_")}.xlsx`)}
+                  onClick={() => descargar(`/api/exportar-ficha-xlsx/${fichaId}`, `${nombreArchivo || "FICHA_CONCILIACION"}.xlsx`)}
                 >
                   <FileSpreadsheet className="w-3.5 h-3.5 mr-1" /> Exportar .xlsx
                 </Button>
@@ -278,6 +289,20 @@ export function EditorFicha({ caso, fichaInicial }: EditorFichaProps) {
             )}
           </div>
         </div>
+
+        {/* Nombre de archivo editable */}
+        {fichaId && (
+          <div className="shrink-0 px-6 py-2 border-b border-border bg-muted/10 flex items-center gap-2">
+            <label className="text-xs text-muted-foreground shrink-0">Nombre de archivo</label>
+            <input
+              value={nombreArchivo}
+              onChange={(e) => setNombreArchivo(e.target.value)}
+              spellCheck={false}
+              className="flex-1 max-w-xl rounded-md border border-input bg-background px-2.5 py-1 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+            <span className="text-[11px] text-muted-foreground shrink-0">.docx / .xlsx</span>
+          </div>
+        )}
 
         {/* Error de aprobación */}
         {errorAprobacion && (
