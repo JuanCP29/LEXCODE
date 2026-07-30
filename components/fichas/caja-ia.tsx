@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { type TipoSeccion, BADGE_TIPO } from "@/lib/ia/secciones";
 import { Button } from "@/components/ui/button";
-import { Check, Pencil, RefreshCw, Loader2 } from "lucide-react";
+import { Check, Pencil, RefreshCw, Loader2, Copy, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface CajaIAProps {
@@ -14,6 +14,8 @@ interface CajaIAProps {
   valor: string;
   onChange: (valor: string) => void;
   onRegenerar?: () => Promise<void>;
+  /** Sección de criterio jurídico (16, 17, 18): exige revisión humana consciente */
+  esCritica?: boolean;
 }
 
 export function CajaIA({
@@ -24,11 +26,21 @@ export function CajaIA({
   valor,
   onChange,
   onRegenerar,
+  esCritica = false,
 }: CajaIAProps) {
   const [editando, setEditando] = useState(tipo === "MANUAL");
   const [regenerando, setRegenerando] = useState(false);
   const [aceptado, setAceptado] = useState(false);
+  const [copiado, setCopiado] = useState(false);
   const badge = BADGE_TIPO[tipo];
+
+  async function handleCopiar() {
+    try {
+      await navigator.clipboard.writeText(valor);
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 1800);
+    } catch { /* clipboard no disponible */ }
+  }
 
   async function handleRegenerar() {
     if (!onRegenerar) return;
@@ -49,7 +61,9 @@ export function CajaIA({
   return (
     <div className={cn(
       "rounded-lg border-2 transition-colors",
-      aceptado ? "border-green-200 bg-green-50/30" : "border-border bg-card"
+      aceptado ? "border-green-200 bg-green-50/30"
+        : esCritica ? "border-orange-300 bg-orange-50/30 dark:border-orange-800 dark:bg-orange-950/10"
+        : "border-border bg-card"
     )}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
@@ -61,9 +75,25 @@ export function CajaIA({
             {badge.label}
           </span>
           <h3 className="text-sm font-semibold">{label}</h3>
+          {esCritica && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full border border-orange-300 text-orange-700 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400">
+              <AlertTriangle className="w-2.5 h-2.5" /> Revisión obligatoria
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-1.5">
+          {esCritica && valor && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 px-2 text-xs gap-1"
+              onClick={handleCopiar}
+            >
+              {copiado ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3" />}
+              {copiado ? "Copiado" : "Copiar"}
+            </Button>
+          )}
           {tipo !== "MANUAL" && !editando && (
             <Button
               size="sm"
@@ -122,6 +152,13 @@ export function CajaIA({
               <span className="text-muted-foreground italic">{descripcion}</span>
             )}
           </div>
+        )}
+
+        {esCritica && (
+          <p className="mt-3 pt-2 border-t border-orange-200/60 dark:border-orange-900/40 text-[11px] text-orange-700 dark:text-orange-400 flex items-start gap-1.5">
+            <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5" />
+            Contenido de criterio jurídico generado por IA. Verifica cada cita, cifra y afirmación contra las fuentes antes de aprobar.
+          </p>
         )}
       </div>
     </div>
