@@ -1,9 +1,23 @@
 "use client";
 
 import { useRef, useState, useCallback } from "react";
-import { Upload, X, FileText, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { Upload, X, FileText, Loader2, CheckCircle2, AlertCircle, Copy, Check, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { subirArchivoStorage } from "@/lib/supabase/subir-storage";
+
+type Sugerencias = {
+  sintesis_hechos?: string | null;
+  consideraciones?: string | null;
+  evaluacion_riesgo?: string | null;
+  recomendacion?: string | null;
+};
+
+const LABEL_SUGERENCIA: Record<string, string> = {
+  sintesis_hechos:   "Síntesis de hechos (sec. 1)",
+  consideraciones:   "Consideraciones (sec. 16)",
+  evaluacion_riesgo: "Evaluación del riesgo (sec. 17)",
+  recomendacion:     "Recomendación (sec. 18)",
+};
 
 type CamposExtraidos = {
   resolucion_prestacion?: string | null;
@@ -49,8 +63,18 @@ export function PanelDocumentosExtra({ onCamposExtraidos }: PanelDocumentosExtra
   const [archivos, setArchivos] = useState<File[]>([]);
   const [estado, setEstado] = useState<Estado>("idle");
   const [camposExtraidos, setCamposExtraidos] = useState<CamposExtraidos | null>(null);
+  const [sugerencias, setSugerencias] = useState<Sugerencias | null>(null);
+  const [copiado, setCopiado] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
+
+  async function copiarSugerencia(key: string, texto: string) {
+    try {
+      await navigator.clipboard.writeText(texto);
+      setCopiado(key);
+      setTimeout(() => setCopiado(null), 1800);
+    } catch { /* clipboard no disponible */ }
+  }
 
   const agregarArchivos = useCallback((nuevos: FileList | File[]) => {
     const lista = Array.from(nuevos).filter((f) => f.type === "application/pdf");
@@ -61,12 +85,14 @@ export function PanelDocumentosExtra({ onCamposExtraidos }: PanelDocumentosExtra
     });
     setEstado("idle");
     setCamposExtraidos(null);
+    setSugerencias(null);
   }, []);
 
   function quitarArchivo(nombre: string) {
     setArchivos((prev) => prev.filter((f) => f.name !== nombre));
     setEstado("idle");
     setCamposExtraidos(null);
+    setSugerencias(null);
   }
 
   async function analizar() {
@@ -96,6 +122,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos }: PanelDocumentosExtra
 
       const campos: CamposExtraidos = json.campos;
       setCamposExtraidos(campos);
+      setSugerencias(json.suggestions ?? null);
       setEstado("listo");
 
       // Filtrar nulos antes de pasar al formulario
@@ -228,6 +255,39 @@ export function PanelDocumentosExtra({ onCamposExtraidos }: PanelDocumentosExtra
           {estado === "listo" && camposConValor.length === 0 && (
             <div className="px-3 pb-3 text-xs text-muted-foreground">
               No se detectaron campos reconocibles en los documentos.
+            </div>
+          )}
+
+          {/* Sugerencias redactadas — copiar y pegar en las secciones */}
+          {estado === "listo" && sugerencias && Object.values(sugerencias).some((v) => v && String(v).trim()) && (
+            <div className="px-3 pb-3 space-y-2 border-t border-border pt-3">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-[#1a4a8a] dark:text-[#93c5fd]">
+                <Sparkles className="w-3.5 h-3.5" />
+                Sugerencias redactadas
+              </div>
+              {Object.entries(sugerencias)
+                .filter(([, v]) => v && String(v).trim())
+                .map(([key, texto]) => (
+                  <div key={key} className="rounded-md border border-border bg-muted/30 px-2.5 py-2">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <span className="text-[10px] font-semibold text-muted-foreground">
+                        {LABEL_SUGERENCIA[key] ?? key}
+                      </span>
+                      <button
+                        onClick={() => copiarSugerencia(key, String(texto))}
+                        className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#1a4a8a] hover:underline shrink-0"
+                      >
+                        {copiado === key
+                          ? <><Check className="w-2.5 h-2.5 text-green-600" /> Copiado</>
+                          : <><Copy className="w-2.5 h-2.5" /> Copiar</>}
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-foreground/80 leading-snug line-clamp-4">{String(texto)}</p>
+                  </div>
+                ))}
+              <p className="text-[10px] text-muted-foreground/70 leading-snug">
+                Revisa antes de pegar. Generado por IA con base en los documentos; puede contener errores.
+              </p>
             </div>
           )}
 

@@ -85,31 +85,47 @@ export async function POST(request: NextRequest) {
 
     const textoCompleto = textos.join("\n\n");
 
+    // Extracción de DOS NIVELES (análisis multi-documento en una sola pasada):
+    //  - data: hechos textuales verificables (null si no aparecen) → prellenan el formulario
+    //  - suggestions: prosa redactada SOLO con base en las fuentes → el abogado copia y pega
     const prompt = `Eres un asistente juridico especializado en derecho laboral y seguridad social colombiana.
-Analiza el texto extraido de documentos del proceso (Sentencia, AOE, SUB u otros) y extrae los datos listados.
-Si un dato no aparece o no es claro, devuelve null para ese campo.
+Analiza EN CONJUNTO el texto extraido de los documentos del proceso (Sentencia, AOE, SUB, traslado u otros)
+y cruza la informacion entre ellos.
+
+REGLAS ESTRICTAS:
+- En "data" solo van datos TEXTUALES y verificables que aparezcan en los documentos. Si un dato no aparece, devuelve null.
+- En "suggestions" redacta prosa juridica formal basada UNICAMENTE en lo que dicen los documentos. No inventes hechos,
+  cifras, normas ni jurisprudencia que no consten en las fuentes.
 
 DOCUMENTOS:
-${textoCompleto.slice(0, 15000)}
+${textoCompleto.slice(0, 30000)}
 
-Devuelve UNICAMENTE un objeto JSON valido con estos campos (sin texto adicional):
+Devuelve UNICAMENTE un objeto JSON valido con esta forma exacta (sin texto adicional):
 {
-  "resolucion_prestacion": "numero de resolucion SUB o FONDO o null",
-  "semanas_cotizadas": numero entero o null,
-  "tasa_aplicada": numero decimal porcentaje o null,
-  "tasa_solicitada": numero decimal porcentaje o null,
-  "cuantia_tipo": "determinada" o "indeterminada" o null,
-  "cuantia_valor": numero entero pesos colombianos o null,
-  "hay_fallo": true si hay sentencia de primera instancia o false o null,
-  "sintesis_fallo": "resumen del fallo en 2-3 oraciones" o null,
-  "pretende_intereses": true o false o null,
-  "pretende_indexacion": true o false o null
+  "data": {
+    "resolucion_prestacion": "numero de resolucion SUB o FONDO o null",
+    "semanas_cotizadas": numero entero o null,
+    "tasa_aplicada": numero decimal porcentaje o null,
+    "tasa_solicitada": numero decimal porcentaje o null,
+    "cuantia_tipo": "determinada" o "indeterminada" o null,
+    "cuantia_valor": numero entero pesos colombianos o null,
+    "hay_fallo": true si hay sentencia de primera instancia o false o null,
+    "sintesis_fallo": "resumen del fallo en 2-3 oraciones o null",
+    "pretende_intereses": true o false o null,
+    "pretende_indexacion": true o false o null
+  },
+  "suggestions": {
+    "sintesis_hechos": "sintesis de los hechos del caso, redactada a partir de los documentos, o null",
+    "consideraciones": "consideraciones juridicas basadas en las fuentes, o null",
+    "evaluacion_riesgo": "evaluacion del riesgo procesal segun lo que consta, o null",
+    "recomendacion": "recomendacion de conciliacion fundamentada en las fuentes, o null"
+  }
 }`;
 
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
     const message = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 1024,
+      max_tokens: 4096,
       messages: [{ role: "user", content: prompt }],
     });
 
@@ -124,10 +140,19 @@ Devuelve UNICAMENTE un objeto JSON valido con estos campos (sin texto adicional)
       );
     }
 
-    const campos = JSON.parse(jsonMatch[0]);
+    const parsed = JSON.parse(jsonMatch[0]);
+    // Compatibilidad: si la IA devolvió el formato plano antiguo, tratarlo como data.
+    const campos = parsed.data ?? parsed;
+    const suggestions = parsed.suggestions ?? {};
+
+    const fieldsFound = Object.values(campos).filter((v) => v !== null && v !== undefined).length;
+    const suggestionsFound = Object.values(suggestions).filter((v) => v !== null && v !== undefined && String(v).trim() !== "").length;
 
     return NextResponse.json({
-      campos,
+      campos,          // se mantiene para el prellenado del formulario (retrocompatible)
+      suggestions,     // prosa redactada para copiar-pegar en las secciones
+      fieldsFound,
+      suggestionsFound,
       archivos_procesados: textos.length,
     });
   } catch (e) {
