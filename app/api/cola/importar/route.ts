@@ -57,7 +57,9 @@ export async function POST(request: NextRequest) {
   const nuevos: Record<string, unknown>[] = [];
 
   for (const c of casos) {
-    const asignacion = c.asignado_a ?? asignado_a ?? null;
+    // Por defecto, los casos se asignan a quien los importa (aparecen en "Mis casos").
+    // Se pueden reasignar luego desde la pestaña "Todos (empresa)".
+    const asignacion = c.asignado_a ?? asignado_a ?? user.id;
     if (mapaExistente.has(c.radicado)) {
       // Caso ya existe → marcarlo en cola
       await supabase
