@@ -172,6 +172,17 @@ export async function POST(request: NextRequest) {
       console.error("ficha_seccion_fuentes (no bloqueante):", e);
     }
 
+    // 7a. Si el caso está en la cola de trabajo, marcarlo completado (best-effort)
+    try {
+      await supabase
+        .from("casos")
+        .update({ cola_estado: "completado" })
+        .eq("id", caso_id)
+        .not("cola_estado", "is", null);
+    } catch (e) {
+      console.error("marcar cola completado (no bloqueante):", e);
+    }
+
     // 7b. Snapshot de versión inicial (best-effort)
     try {
       await supabase.from("ficha_versiones").insert({
