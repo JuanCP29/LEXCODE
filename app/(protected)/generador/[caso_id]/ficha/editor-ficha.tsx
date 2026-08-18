@@ -355,14 +355,16 @@ export function EditorFicha({ caso, fichaInicial }: EditorFichaProps) {
         onClose={() => setPreviewAbierto(false)}
         secciones={secciones}
         encabezado={{
-          tipo_conciliacion:    String(fichaInicial?.tipo_conciliacion ?? ""),
-          fecha_diligencia:     (fichaInicial?.fecha_diligencia as string) ?? "",
-          radicado_bizagi:      (fichaInicial?.radicado_bizagi as string) ?? "",
-          radicado:             caso.radicado,
-          nombre_demandante:    caso.nombre_demandante,
-          expediente_pensional: (fichaInicial?.expediente_pensional_aplica as string) ?? "",
-          despacho:             (fichaInicial?.despacho as string) ?? "",
-          caducidad:            (fichaInicial?.caducidad as string) ?? "",
+          fecha_diligencia:  (fichaInicial?.fecha_diligencia as string) ?? "",
+          radicado_bizagi:   (fichaInicial?.radicado_bizagi as string) ?? "",
+          radicado:          caso.radicado,
+          nombre_demandante: caso.nombre_demandante,
+          causante_afiliado: (fichaInicial?.causante_afiliado as string) ?? "",
+          demandado:         (fichaInicial?.demandado as string) ?? "",
+          despacho:          (fichaInicial?.despacho as string) ?? "",
+          juez:              (fichaInicial?.juez as string) ?? "",
+          caducidad:         (fichaInicial?.caducidad as string) ?? "",
+          reconsideracion:   (fichaInicial?.reconsideracion as string) ?? "",
         }}
       />
     </div>

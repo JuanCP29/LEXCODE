@@ -8,16 +8,20 @@ interface VistaPreviaFichaProps {
   onClose: () => void;
   secciones: Record<string, string>;
   encabezado: {
-    tipo_conciliacion?: string | null;
     fecha_diligencia?: string | null;
     radicado_bizagi?: string | null;
     radicado?: string | null;
     nombre_demandante?: string | null;
-    expediente_pensional?: string | null;
+    causante_afiliado?: string | null;
+    demandado?: string | null;
     despacho?: string | null;
+    juez?: string | null;
     caducidad?: string | null;
+    reconsideracion?: string | null;
   };
 }
+
+const DEMANDADO_DEFAULT = "Administradora Colombiana de Pensiones — COLPENSIONES. NIT 900.336.004-7";
 
 function FilaEnc({ label, valor }: { label: string; valor?: string | null }) {
   return (
@@ -53,20 +57,24 @@ export function VistaPreviaFicha({ abierto, onClose, secciones, encabezado }: Vi
         <div className="overflow-y-auto px-8 py-6 bg-white text-gray-900" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
           {/* Encabezado oficial */}
           <div className="text-center mb-4">
-            <p className="text-[13px] font-bold uppercase tracking-wide">Ficha Técnica para Conciliación Judicial</p>
-            <p className="text-[10px] text-gray-500 mt-0.5">Formato GDJ-GPO-FMT-005 · Versión 2</p>
+            <p className="text-[13px] font-bold uppercase tracking-wide">Ficha de Conciliación Judicial</p>
+            <p className="text-[10px] text-gray-500 mt-0.5">Código GDJ-GPO-FMT-005 · Versión 3</p>
           </div>
 
           <table className="w-full border-collapse mb-6">
             <tbody>
-              <FilaEnc label="Tipo de conciliación" valor={encabezado.tipo_conciliacion} />
               <FilaEnc label="Fecha de la diligencia" valor={encabezado.fecha_diligencia} />
-              <FilaEnc label="Radicación en Bizagi" valor={encabezado.radicado_bizagi} />
-              <FilaEnc label="Radicación del proceso" valor={encabezado.radicado} />
-              <FilaEnc label="Demandante y/o causante" valor={encabezado.nombre_demandante} />
-              <FilaEnc label="Expediente pensional" valor={encabezado.expediente_pensional} />
-              <FilaEnc label="Autoridad que efectúa la citación" valor={encabezado.despacho} />
+              <FilaEnc label="Radicado de demanda en Bizagi" valor={encabezado.radicado_bizagi} />
+              <FilaEnc label="Radicado del proceso (23 dígitos)" valor={encabezado.radicado} />
+              <FilaEnc label="Nombre e identificación demandante" valor={encabezado.nombre_demandante} />
+              <FilaEnc label="Nombre e identificación causante y/o afiliado" valor={encabezado.causante_afiliado} />
+              <FilaEnc label="Nombre e identificación demandado" valor={encabezado.demandado || DEMANDADO_DEFAULT} />
+              <FilaEnc
+                label="Autoridad que realiza la citación"
+                valor={[encabezado.despacho, encabezado.juez].filter(Boolean).join(" — ")}
+              />
               <FilaEnc label="Caducidad" valor={encabezado.caducidad} />
+              <FilaEnc label="Reconsideración" valor={encabezado.reconsideracion} />
             </tbody>
           </table>
 

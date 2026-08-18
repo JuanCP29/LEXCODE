@@ -167,6 +167,9 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
       fecha_diligencia: null,
       caducidad: null,
       expediente_pensional_aplica: null,
+      causante_afiliado: null,
+      reconsideracion: null,
+      juez: null,
     },
   });
 
@@ -873,6 +876,63 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
               )}
             />
           </Campo>
+        </div>
+
+        {/* ── Campos formato v3 (GDJ-GPO-FMT-005 v3) ── */}
+        <div className="pt-2 border-t border-border">
+          <p className="text-[11px] font-semibold text-[#1a4a8a] dark:text-[#93c5fd] uppercase tracking-wide mb-3">
+            Encabezado formato v3
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Campo label="Causante y/o afiliado">
+              <Controller
+                name="causante_afiliado"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    value={field.value ?? ""}
+                    onChange={(e) => field.onChange(e.target.value || null)}
+                    placeholder="Nombre y C.C. del causante/afiliado"
+                  />
+                )}
+              />
+              <p className="text-xs text-muted-foreground">Solo si difiere del demandante (ej. sobrevivientes)</p>
+            </Campo>
+
+            <Campo label="Reconsideración">
+              <Controller
+                name="reconsideracion"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                    placeholder="Selecciona..."
+                    options={[
+                      { value: "SI", label: "SÍ" },
+                      { value: "NO", label: "NO" },
+                    ]}
+                  />
+                )}
+              />
+            </Campo>
+          </div>
+
+          <div className="mt-4">
+            <Campo label="Juez (autoridad que realiza la citación)">
+              <Controller
+                name="juez"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    value={field.value ?? ""}
+                    onChange={(e) => field.onChange(e.target.value || null)}
+                    placeholder="Ej: Dr. Jaime García Pardo"
+                  />
+                )}
+              />
+            </Campo>
+          </div>
         </div>
       </Bloque>
 

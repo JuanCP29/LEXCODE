@@ -63,6 +63,11 @@ export const parametrosSchema = z.object({
   fecha_diligencia:            z.string().optional().nullable(),
   caducidad:                   z.enum(["SI", "NO", "NO APLICA"]).optional().nullable(),
   expediente_pensional_aplica: z.enum(["SI", "NO", "NO APLICA"]).optional().nullable(),
+
+  // Formato v3 (GDJ-GPO-FMT-005 v3) — nuevos campos del encabezado
+  causante_afiliado:           z.string().optional().nullable(),   // nombre + C.C. del causante/afiliado
+  reconsideracion:             z.enum(["SI", "NO"]).optional().nullable(),
+  juez:                        z.string().optional().nullable(),   // nombre del juez de la autoridad
 }).superRefine((data, ctx) => {
   if (data.conciliable && !data.directriz_conciliacion) {
     ctx.addIssue({
