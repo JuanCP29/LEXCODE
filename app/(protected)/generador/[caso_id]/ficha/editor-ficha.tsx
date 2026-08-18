@@ -341,7 +341,7 @@ export function EditorFicha({ caso, fichaInicial }: EditorFichaProps) {
                   valor={valorActual}
                   onChange={(v) => handleChange(s.key, v)}
                   onRegenerar={s.tipo === "AUTO" ? () => handleRegenerar(s.key) : undefined}
-                  esCritica={[16, 17, 18].includes(s.numero)}
+                  esCritica={["sec_16_consideraciones", "sec_17_riesgo", "sec_18_recomendacion"].includes(s.key)}
                 />
               </div>
             );

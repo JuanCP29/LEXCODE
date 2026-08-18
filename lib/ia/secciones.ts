@@ -9,6 +9,9 @@ export interface DefSeccion {
   descripcion: string;
 }
 
+// Secciones eliminadas del formato (7 Soporte probatorio, 10 Mov. procesales,
+// 12 Doctrina, 13 Comité extrajudicial, 14 Casos similares). Las columnas en BD
+// se conservan; simplemente no se muestran ni se generan. Renumeradas 1-14.
 export const SECCIONES: DefSeccion[] = [
   { numero: 1,  key: "sec_1_hechos",           label: "Síntesis de hechos",          tipo: "AUTO",    descripcion: "IA genera síntesis de los hechos de la demanda." },
   { numero: 2,  key: "sec_2_pretensiones",     label: "Pretensiones",                tipo: "AUTO",    descripcion: "IA extrae y lista las pretensiones." },
@@ -16,19 +19,14 @@ export const SECCIONES: DefSeccion[] = [
   { numero: 4,  key: "sec_4_normas",           label: "Normas violadas",             tipo: "AUTO",    descripcion: "IA identifica las normas invocadas en la demanda." },
   { numero: 5,  key: "sec_5_apelacion",        label: "Arg. de apelación",           tipo: "DEFAULT", descripcion: "Texto por defecto según si hay fallo o no." },
   { numero: 6,  key: "sec_6_sentencia",        label: "Sentencia",                   tipo: "DEFAULT", descripcion: "Texto por defecto según si hay fallo de segunda instancia." },
-  { numero: 7,  key: "sec_7_probatorio",       label: "Soporte probatorio",          tipo: "MANUAL",  descripcion: "El abogado diligencia desde el expediente físico." },
-  { numero: 8,  key: "sec_8_problema",         label: "Problema jurídico",           tipo: "AUTO",    descripcion: "IA plantea el problema jurídico central." },
-  { numero: 9,  key: "sec_9_caducidad",        label: "Análisis de caducidad",       tipo: "DEFAULT", descripcion: "Texto por defecto según jurisdicción." },
-  { numero: 10, key: "sec_10_movimientos",     label: "Mov. procesales",             tipo: "MANUAL",  descripcion: "El abogado registra los movimientos del expediente." },
-  { numero: 11, key: "sec_11_jurisprudencia",  label: "Jurisprudencia",              tipo: "MANUAL",  descripcion: "El abogado cita la jurisprudencia aplicable." },
-  { numero: 12, key: "sec_12_doctrina",        label: "Doctrina",                    tipo: "MANUAL",  descripcion: "El abogado referencia la doctrina relevante." },
-  { numero: 13, key: "sec_13_comite_ext",      label: "Comité extrajudicial",        tipo: "DEFAULT", descripcion: "Texto por defecto sobre el comité extrajudicial." },
-  { numero: 14, key: "sec_14_casos_similares", label: "Casos similares",             tipo: "DEFAULT", descripcion: "Texto por defecto referenciando casos análogos." },
-  { numero: 15, key: "sec_15_politicas",       label: "Políticas / llamamientos",    tipo: "DEFAULT", descripcion: "Texto por defecto con políticas de Colpensiones." },
-  { numero: 16, key: "sec_16_consideraciones", label: "Consideraciones",             tipo: "AUTO",    descripcion: "IA genera las consideraciones jurídicas." },
-  { numero: 17, key: "sec_17_riesgo",          label: "Evaluación de riesgo",        tipo: "DEFAULT", descripcion: "Texto por defecto según el nivel de riesgo estimado." },
-  { numero: 18, key: "sec_18_recomendacion",   label: "Recomendación",               tipo: "AUTO",    descripcion: "IA genera la recomendación de conciliación." },
-  { numero: 19, key: "sec_19_elaboro",         label: "Elaboró",                     tipo: "MANUAL",  descripcion: "El abogado firma y registra quién elaboró la ficha." },
+  { numero: 7,  key: "sec_8_problema",         label: "Problema jurídico",           tipo: "AUTO",    descripcion: "IA plantea el problema jurídico central." },
+  { numero: 8,  key: "sec_9_caducidad",        label: "Análisis de caducidad",       tipo: "DEFAULT", descripcion: "Texto por defecto según jurisdicción." },
+  { numero: 9,  key: "sec_11_jurisprudencia",  label: "Jurisprudencia",              tipo: "MANUAL",  descripcion: "El abogado cita la jurisprudencia aplicable." },
+  { numero: 10, key: "sec_15_politicas",       label: "Políticas / llamamientos",    tipo: "DEFAULT", descripcion: "Texto por defecto con políticas de Colpensiones." },
+  { numero: 11, key: "sec_16_consideraciones", label: "Consideraciones",             tipo: "AUTO",    descripcion: "IA genera las consideraciones jurídicas." },
+  { numero: 12, key: "sec_17_riesgo",          label: "Evaluación de riesgo",        tipo: "DEFAULT", descripcion: "Texto por defecto según el nivel de riesgo estimado." },
+  { numero: 13, key: "sec_18_recomendacion",   label: "Recomendación",               tipo: "AUTO",    descripcion: "IA genera la recomendación de conciliación." },
+  { numero: 14, key: "sec_19_elaboro",         label: "Elaboró",                     tipo: "MANUAL",  descripcion: "El abogado firma y registra quién elaboró la ficha." },
 ];
 
 export const BADGE_TIPO: Record<TipoSeccion, { label: string; clase: string }> = {
