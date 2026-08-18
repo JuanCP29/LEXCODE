@@ -20,6 +20,8 @@ const AZUL_LIGHT = "E6F1FB";
 const GRIS_HEADER= "F1F5F9";
 const NEGRO      = "0F1117";
 
+const DEMANDADO_DEFAULT = "Administradora Colombiana de Pensiones — COLPENSIONES. NIT 900.336.004-7";
+
 interface DatosFicha {
   // Datos del caso
   radicado: string;
@@ -29,6 +31,14 @@ interface DatosFicha {
   expediente_pensional: string | null;
   despacho: string | null;
   jurisdiccion: string | null;
+
+  // Encabezado formato v3
+  causante_afiliado: string | null;
+  demandado: string | null;
+  juez: string | null;
+  reconsideracion: string | null;
+  caducidad: string | null;
+  fecha_diligencia: string | null;
 
   // Parámetros
   tipo_conciliacion: string | null;
@@ -135,7 +145,7 @@ export async function generarFichaDocx(datos: DatosFicha): Promise<Buffer> {
           children: [
             new TextRun({ text: "LEGIUX", bold: true, size: 28, color: AZUL }),
             new TextRun({ text: "  |  Collegia Abogados  |  ", size: 20, color: "64748B" }),
-            new TextRun({ text: "GDJ-GPO-FMT-005  v2", size: 20, color: "64748B" }),
+            new TextRun({ text: "GDJ-GPO-FMT-005  v3", size: 20, color: "64748B" }),
           ],
           alignment: AlignmentType.LEFT,
           spacing: { after: 80 },
@@ -157,7 +167,7 @@ export async function generarFichaDocx(datos: DatosFicha): Promise<Buffer> {
         new Paragraph({
           children: [
             new TextRun({
-              text: "Formato GDJ-GPO-FMT-005 — Colpensiones",
+              text: "Código GDJ-GPO-FMT-005 · Versión 3 — Colpensiones",
               size: 18,
               color: "64748B",
             }),
@@ -166,20 +176,22 @@ export async function generarFichaDocx(datos: DatosFicha): Promise<Buffer> {
           spacing: { after: 320 },
         }),
 
-        // ── Tabla datos generales ─────────────────────────────────────────
-        tituloCampo("DATOS GENERALES DEL PROCESO"),
+        // ── Tabla encabezado (formato v3) ─────────────────────────────────
         new Table({
           width: { size: 100, type: WidthType.PERCENTAGE },
           rows: [
-            filaDatos("Tipo de conciliación",  datos.tipo_conciliacion ?? "—"),
-            filaDatos("Fecha de elaboración",  fechaStr),
-            filaDatos("Radicación Bizagi",      datos.radicado_bizagi ?? "—"),
-            filaDatos("Radicación proceso",     datos.radicado),
-            filaDatos("Demandante",             datos.nombre_demandante),
-            filaDatos("Cédula demandante",      datos.cedula_demandante ?? "—"),
-            filaDatos("Expediente pensional",   datos.expediente_pensional ?? "—"),
-            filaDatos("Autoridad / Despacho",   datos.despacho ?? "—"),
-            filaDatos("Jurisdicción",           datos.jurisdiccion ?? "—"),
+            filaDatos("Fecha de la diligencia",
+              datos.fecha_diligencia ? new Date(datos.fecha_diligencia).toLocaleDateString("es-CO") : "—"),
+            filaDatos("Radicado de demanda en Bizagi",  datos.radicado_bizagi ?? "—"),
+            filaDatos("Radicado del proceso (23 dígitos)", datos.radicado),
+            filaDatos("Nombre e identificación demandante",
+              [datos.nombre_demandante, datos.cedula_demandante ? `C.C. ${datos.cedula_demandante}` : ""].filter(Boolean).join(". ")),
+            filaDatos("Nombre e identificación causante y/o afiliado", datos.causante_afiliado ?? "—"),
+            filaDatos("Nombre e identificación demandado",  datos.demandado || DEMANDADO_DEFAULT),
+            filaDatos("Autoridad que realiza la citación",
+              [datos.despacho, datos.juez].filter(Boolean).join(" — ") || "—"),
+            filaDatos("Caducidad",        datos.caducidad ?? "—"),
+            filaDatos("Reconsideración",  datos.reconsideracion ?? "—"),
           ],
         }),
 
