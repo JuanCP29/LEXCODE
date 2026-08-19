@@ -69,6 +69,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias }: Panel
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const [sinTexto, setSinTexto] = useState(false);
+  const [escaneado, setEscaneado] = useState(false);
 
   async function copiarSugerencia(key: string, texto: string) {
     try {
@@ -89,6 +90,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias }: Panel
     setCamposExtraidos(null);
     setSugerencias(null);
     setSinTexto(false);
+    setEscaneado(false);
   }, []);
 
   function quitarArchivo(nombre: string) {
@@ -128,6 +130,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias }: Panel
       setSugerencias(json.suggestions ?? null);
       onSugerencias?.(json.suggestions ?? null);
       setSinTexto((json.caracteres_extraidos ?? 0) < 200);
+      setEscaneado(!!json.escaneado);
       setEstado("listo");
 
       // Filtrar nulos antes de pasar al formulario
@@ -144,6 +147,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias }: Panel
   const camposConValor = camposExtraidos
     ? Object.entries(camposExtraidos).filter(([, v]) => v !== null && v !== undefined)
     : [];
+  const haySugerencias = !!sugerencias && Object.values(sugerencias).some((v) => v && String(v).trim());
 
   return (
     <div className="hidden lg:block">
@@ -257,12 +261,21 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias }: Panel
             </div>
           )}
 
-          {estado === "listo" && camposConValor.length === 0 && (
+          {estado === "listo" && escaneado && haySugerencias && (
+            <div className="px-3 pb-3">
+              <div className="flex items-start gap-2 text-xs text-green-700 dark:text-green-400">
+                <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                <span>Documento escaneado leído con IA (visión). La síntesis de hechos se cargó en el paso 2 «Síntesis de los hechos».</span>
+              </div>
+            </div>
+          )}
+
+          {estado === "listo" && camposConValor.length === 0 && !haySugerencias && (
             <div className="px-3 pb-3 space-y-2">
               {sinTexto ? (
                 <div className="flex items-start gap-2 text-xs text-orange-600 dark:text-orange-400">
                   <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                  <span>El PDF no tiene texto extraíble (parece escaneado). Usa un PDF con texto seleccionable o transcríbelo manualmente.</span>
+                  <span>No se pudo leer el documento (escaneado ilegible o sin la sección HECHOS). Revisa el archivo o diligencia la síntesis manualmente.</span>
                 </div>
               ) : (
                 <p className="text-xs text-muted-foreground">
