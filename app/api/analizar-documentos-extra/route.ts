@@ -108,7 +108,11 @@ COMO IDENTIFICAR AL CAUSANTE / AFILIADO (campo "causante_afiliado"):
       demandante (p. ej. "la pension causada por el senor/la senora <NOMBRE>", "en calidad de conyuge/hijo(a) del causante <NOMBRE>",
       "el afiliado fallecido <NOMBRE> identificado con C.C. ...").
     * En los demas casos (vejez, invalidez, indemnizacion, devolucion) el afiliado suele ser el MISMO demandante; devuelve igual su
-      nombre completo tal como aparece en el traslado.
+      nombre completo tal como aparece en el traslado. Reconoce patrones como:
+        - "Teniendo en cuenta que el senor/la senora <NOMBRE>, cumplio los requisitos para acceder a la Pension de Vejez/Invalidez..."
+        - "el senor/la senora <NOMBRE>, tiene derecho a que su monto, IBL y mesada pensional sea liquidada..."
+        - "el afiliado/la afiliada <NOMBRE> cotizo/acredito ... semanas".
+      El nombre suele venir en MAYUSCULAS (p. ej. "JOSE LEONCIO GARCES VALENCIA"). Ese es el afiliado/causante.
 - Devuelve el nombre completo y, si aparece, su numero de identificacion. Solo devuelve null si el documento no permite
   identificar al afiliado/causante.
 
