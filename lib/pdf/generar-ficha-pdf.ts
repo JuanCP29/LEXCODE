@@ -1,4 +1,13 @@
 import PDFDocument from "pdfkit";
+import fs from "fs";
+import path from "path";
+
+// Logo institucional (si existe). Colócalo en public/plantillas/logo-colpensiones.png
+const LOGO_PATH = path.join(process.cwd(), "public", "plantillas", "logo-colpensiones.png");
+function logoBuffer(): Buffer | null {
+  try { return fs.existsSync(LOGO_PATH) ? fs.readFileSync(LOGO_PATH) : null; }
+  catch { return null; }
+}
 
 /**
  * Ficha de Conciliación Judicial en PDF replicando el formato oficial
@@ -96,9 +105,18 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
     // celdas externas
     doc.rect(left, y0, wLogo, hTit).stroke(BORDE);
     doc.rect(left + wLogo, y0, wTitulo, hTit).stroke(BORDE);
-    // logo (placeholder texto)
-    doc.fillColor(NEGRO).font("Helvetica-Bold").fontSize(9)
-      .text("COLPENSIONES", left, y0 + hTit / 2 - 6, { width: wLogo, align: "center" });
+    // logo institucional (imagen si existe; si no, texto)
+    const logo = logoBuffer();
+    if (logo) {
+      try {
+        doc.image(logo, left + 6, y0 + 6, { fit: [wLogo - 12, hTit - 12], align: "center", valign: "center" });
+      } catch {
+        doc.fillColor(NEGRO).font("Helvetica-Bold").fontSize(9).text("COLPENSIONES", left, y0 + hTit / 2 - 6, { width: wLogo, align: "center" });
+      }
+    } else {
+      doc.fillColor(NEGRO).font("Helvetica-Bold").fontSize(9)
+        .text("COLPENSIONES", left, y0 + hTit / 2 - 6, { width: wLogo, align: "center" });
+    }
     // título centrado
     doc.fillColor(NEGRO).font("Helvetica-Bold").fontSize(12)
       .text("FICHA DE CONCILIACIÓN JUDICIAL", left + wLogo + 4, y0 + 12, { width: wTitulo - 8, align: "center" });
