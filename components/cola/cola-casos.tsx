@@ -7,6 +7,7 @@ import {
   ListChecks, AlertCircle, UserCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { WORKFLOW_ESTADO } from "@/lib/ui/estado-badge";
 
 type CasoCola = {
   id: string;
@@ -62,15 +63,16 @@ function parsearFila(row: Record<string, unknown>) {
 }
 
 function EstadoBadge({ estado }: { estado: string }) {
-  const cfg: Record<string, { label: string; Icon: React.ElementType; clase: string }> = {
-    pendiente:  { label: "Pendiente",  Icon: Clock,        clase: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" },
-    en_proceso: { label: "En proceso", Icon: RefreshCw,    clase: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
-    completado: { label: "Completado", Icon: CheckCircle2, clase: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
+  const iconos: Record<string, React.ElementType> = {
+    pendiente:  Clock,
+    en_proceso: RefreshCw,
+    completado: CheckCircle2,
   };
-  const { label, Icon, clase } = cfg[estado] ?? cfg.pendiente;
+  const est = WORKFLOW_ESTADO[estado] ?? WORKFLOW_ESTADO.pendiente;
+  const Icon = iconos[estado] ?? Clock;
   return (
-    <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold", clase)}>
-      <Icon className="w-2.5 h-2.5" /> {label}
+    <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold", est.clase)}>
+      <Icon className="w-2.5 h-2.5" /> {est.label}
     </span>
   );
 }

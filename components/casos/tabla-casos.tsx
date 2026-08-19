@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FileText, Lock } from "lucide-react";
+import { WORKFLOW_ESTADO } from "@/lib/ui/estado-badge";
 
 // Quita la ciudad repetida y el departamento del despacho
 // ("JUZGADO ... DE CALI — CALI — VALLE DEL CAUCA" → "JUZGADO ... DE CALI")
@@ -147,18 +148,16 @@ export function TablaCasos({ casos }: TablaCasosProps) {
 
                 {/* Estado ficha */}
                 <td className="px-3 py-3">
-                  <span
-                    className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap ${
-                      fichaLista
-                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                        : fichaEnProceso
-                        ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                        : "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
-                    }`}
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0" />
-                    {fichaLista ? "Completado" : fichaEnProceso ? "En proceso" : "Pendiente"}
-                  </span>
+                  {(() => {
+                    const clave = fichaLista ? "completado" : fichaEnProceso ? "en_proceso" : "pendiente";
+                    const est = WORKFLOW_ESTADO[clave];
+                    return (
+                      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap ${est.clase}`}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0" />
+                        {est.label}
+                      </span>
+                    );
+                  })()}
                 </td>
 
                 {/* Radicado */}
@@ -198,15 +197,15 @@ export function TablaCasos({ casos }: TablaCasosProps) {
       {/* Leyenda */}
       <div className="flex flex-wrap items-center gap-5 px-4 py-3 border-t border-border bg-muted/20 text-[11px] text-muted-foreground">
         <span className="flex items-center gap-1.5">
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Completado</span>
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${WORKFLOW_ESTADO.completado.clase}`}>Completado</span>
           Conciliación lista — Contestación Dda habilitada
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">En proceso</span>
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${WORKFLOW_ESTADO.en_proceso.clase}`}>En proceso</span>
           Ficha en proceso
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">Pendiente</span>
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${WORKFLOW_ESTADO.pendiente.clase}`}>Pendiente</span>
           Sin ficha generada
         </span>
         <span className="flex items-center gap-1.5 ml-auto">
