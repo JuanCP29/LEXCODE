@@ -41,14 +41,14 @@ async function sintesisHechosDesdeVision(
 Localiza la seccion titulada "HECHOS" (encabezado que puede aparecer como "HECHOS", "HECHOS DE LA DEMANDA" o "III. HECHOS").
 
 Redacta una SINTESIS de los hechos cumpliendo EXACTAMENTE estas reglas:
-1. ENUMERA cada hecho con el formato "1)", "2)", "3)"... en el MISMO orden de la demanda, uno por linea.
+1. ENUMERA cada hecho con el formato "1)", "2)", "3)"... en el MISMO orden de la demanda, separando cada hecho del siguiente con una LINEA EN BLANCO (doble salto de linea).
 2. Debe haber EXACTAMENTE el MISMO numero de hechos que la demanda enumera. Si la demanda tiene 14 hechos, tu sintesis debe tener 14 puntos (de 1) a 14)). NO unas dos hechos en uno, NO omitas ninguno, NO agregues hechos que no existan. Resume cada hecho en 1 o 2 frases.
 3. Escribe en TERCERA PERSONA. Refierete al demandante como "el senor <NOMBRE>" o "la senora <NOMBRE>" (o "el/la demandante"). NUNCA uses "mi apoderado", "mi poderdante", "mi representado", "mi mandante" ni primera persona: recuerda que es un resumen elaborado por la parte demandada (Colpensiones), no por el abogado que presento la demanda.
 4. Usa TIEMPO PASADO (p. ej. "cotizo", "solicito", "presento", "nego", "reconocio").
 5. Recoge UNICAMENTE lo que consta en el documento (fechas, resoluciones, numeros de semanas, montos, negativas). No inventes ni interpretes.
 
 Si NO logras ubicar la seccion HECHOS o el documento es ilegible, responde exactamente null.
-Devuelve UNICAMENTE un JSON: { "sintesis_hechos": "1) ...\\n2) ...\\n3) ..." }  o  { "sintesis_hechos": null }`;
+Devuelve UNICAMENTE un JSON: { "sintesis_hechos": "1) ...\\n\\n2) ...\\n\\n3) ..." }  o  { "sintesis_hechos": null }`;
 
   try {
     const message = await anthropic.messages.create({
@@ -213,7 +213,7 @@ Devuelve UNICAMENTE un objeto JSON valido con esta forma exacta (sin texto adici
     "pretende_indexacion": true o false o null
   },
   "suggestions": {
-    "sintesis_hechos": "sintesis de los HECHOS de la demanda (busca la seccion 'HECHOS' del traslado). ENUMERA cada hecho con formato '1)', '2)', '3)'... uno por linea, con EXACTAMENTE el mismo numero de hechos que la demanda. Tercera persona ('el senor <NOMBRE>' / 'la senora <NOMBRE>'), tiempo pasado, sin usar 'mi apoderado', 'mi poderdante' ni primera persona (lo redacta la parte demandada). Solo lo que conste. Devuelve el texto con saltos de linea entre hechos, o null.",
+    "sintesis_hechos": "sintesis de los HECHOS de la demanda (busca la seccion 'HECHOS' del traslado). ENUMERA cada hecho con formato '1)', '2)', '3)'... separando cada hecho con una LINEA EN BLANCO (doble salto de linea, \\n\\n), con EXACTAMENTE el mismo numero de hechos que la demanda. Tercera persona ('el senor <NOMBRE>' / 'la senora <NOMBRE>'), tiempo pasado, sin usar 'mi apoderado', 'mi poderdante' ni primera persona (lo redacta la parte demandada). Solo lo que conste. Devuelve el texto o null.",
     "consideraciones": "consideraciones juridicas basadas en las fuentes, o null",
     "evaluacion_riesgo": "evaluacion del riesgo procesal segun lo que consta, o null",
     "recomendacion": "recomendacion de conciliacion fundamentada en las fuentes, o null"
