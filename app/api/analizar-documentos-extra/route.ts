@@ -151,8 +151,15 @@ export async function POST(request: NextRequest) {
     }
 
     const textoCompleto = textos.join("\n\n");
-    // Caracteres de texto realmente extraídos (sin los encabezados "=== nombre ===")
-    const caracteresExtraidos = textoCompleto.replace(/=== .*? ===/g, "").trim().length;
+    // Caracteres de texto REALMENTE útiles: se descartan los encabezados "=== nombre ===",
+    // los marcadores de página que emite pdf-parse en escaneados ("-- 1 of 156 --") y los
+    // avisos de fallo, y se colapsan espacios. Así un PDF escaneado da ~0 y dispara la visión.
+    const caracteresExtraidos = textoCompleto
+      .replace(/=== .*? ===/g, "")
+      .replace(/--\s*\d+\s*of\s*\d+\s*--/gi, "")
+      .replace(/\[No se pudo extraer el texto\]/gi, "")
+      .replace(/\s+/g, " ")
+      .trim().length;
 
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
