@@ -161,11 +161,15 @@ Devuelve UNICAMENTE un objeto JSON valido con esta forma exacta (sin texto adici
     const fieldsFound = Object.values(campos).filter((v) => v !== null && v !== undefined).length;
     const suggestionsFound = Object.values(suggestions).filter((v) => v !== null && v !== undefined && String(v).trim() !== "").length;
 
+    // Caracteres de texto realmente extraídos (sin los encabezados "=== nombre ===")
+    const caracteresExtraidos = textoCompleto.replace(/=== .*? ===/g, "").trim().length;
+
     return NextResponse.json({
       campos,          // se mantiene para el prellenado del formulario (retrocompatible)
       suggestions,     // prosa redactada para copiar-pegar en las secciones
       fieldsFound,
       suggestionsFound,
+      caracteres_extraidos: caracteresExtraidos,
       archivos_procesados: textos.length,
     });
   } catch (e) {

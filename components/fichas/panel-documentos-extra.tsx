@@ -69,6 +69,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos }: PanelDocumentosExtra
   const [copiado, setCopiado] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [sinTexto, setSinTexto] = useState(false);
 
   async function copiarSugerencia(key: string, texto: string) {
     try {
@@ -88,6 +89,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos }: PanelDocumentosExtra
     setEstado("idle");
     setCamposExtraidos(null);
     setSugerencias(null);
+    setSinTexto(false);
   }, []);
 
   function quitarArchivo(nombre: string) {
@@ -125,6 +127,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos }: PanelDocumentosExtra
       const campos: CamposExtraidos = json.campos;
       setCamposExtraidos(campos);
       setSugerencias(json.suggestions ?? null);
+      setSinTexto((json.caracteres_extraidos ?? 0) < 200);
       setEstado("listo");
 
       // Filtrar nulos antes de pasar al formulario
@@ -182,7 +185,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos }: PanelDocumentosExtra
                 Arrastra o haz clic
               </p>
               <p className="text-xs text-muted-foreground">
-                Sentencia, AOE y/o SUB
+                Traslado, Sentencia, AOE y/o SUB
               </p>
             </div>
           </div>
@@ -255,8 +258,17 @@ export function PanelDocumentosExtra({ onCamposExtraidos }: PanelDocumentosExtra
           )}
 
           {estado === "listo" && camposConValor.length === 0 && (
-            <div className="px-3 pb-3 text-xs text-muted-foreground">
-              No se detectaron campos reconocibles en los documentos.
+            <div className="px-3 pb-3 space-y-2">
+              {sinTexto ? (
+                <div className="flex items-start gap-2 text-xs text-orange-600 dark:text-orange-400">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                  <span>El PDF no tiene texto extraíble (parece escaneado). Usa un PDF con texto seleccionable o transcríbelo manualmente.</span>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  No se detectaron campos reconocibles. Si es un caso de vejez/invalidez, el causante coincide con el demandante y este campo queda vacío por diseño.
+                </p>
+              )}
             </div>
           )}
 
