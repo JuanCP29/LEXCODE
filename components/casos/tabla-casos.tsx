@@ -11,6 +11,22 @@ const pretensionLabel: Record<string, string> = {
   devolucion:     "Devolución",
 };
 
+// Convierte texto en MAYÚSCULAS a "Nombre Propio" (deja conectores en minúscula)
+const MINUSCULAS = new Set(["de", "del", "la", "las", "los", "y", "e", "el", "en", "a"]);
+function aNombrePropio(texto: string | null | undefined): string {
+  if (!texto) return "";
+  return texto
+    .toLowerCase()
+    .split(/\s+/)
+    .map((palabra, i) => {
+      if (i > 0 && MINUSCULAS.has(palabra)) return palabra;
+      // Mantén tokens con dígitos tal cual (ej. "021")
+      if (/\d/.test(palabra)) return palabra;
+      return palabra.charAt(0).toUpperCase() + palabra.slice(1);
+    })
+    .join(" ");
+}
+
 type FichaMin = { id: string; estado: string };
 
 type CasoConFichas = {
@@ -176,7 +192,7 @@ export function TablaCasos({ casos }: TablaCasosProps) {
                 {/* Demandante */}
                 <td className="px-4 py-3">
                   <span className="font-medium text-foreground text-sm">
-                    {caso.nombre_demandante}
+                    {aNombrePropio(caso.nombre_demandante)}
                   </span>
                 </td>
 
@@ -192,7 +208,7 @@ export function TablaCasos({ casos }: TablaCasosProps) {
 
                 {/* Despacho */}
                 <td className="px-4 py-3 text-sm text-muted-foreground max-w-[180px] truncate">
-                  {caso.despacho ?? "—"}
+                  {caso.despacho ? aNombrePropio(caso.despacho) : "—"}
                 </td>
 
                 {/* Pretensión */}
