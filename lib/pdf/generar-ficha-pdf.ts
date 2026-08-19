@@ -92,6 +92,8 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
     doc.on("data", (c: Buffer) => chunks.push(c));
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
+    // pdfkit reinicia el grosor de línea en cada página nueva → fijarlo siempre
+    doc.on("pageAdded", () => doc.lineWidth(0.4));
 
     // Fuente Roboto (más limpia) si está disponible; si no, Helvetica.
     let FONT = "Helvetica", FONT_BOLD = "Helvetica-Bold";
@@ -112,41 +114,41 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
     doc.lineWidth(0.4);
 
     // ── Bloque de título (logo · título · meta) ──
-    const hTit = 92;
-    const wLogo = W * 0.26, wTitulo = W * 0.52, wMeta = W - wLogo - wTitulo;
+    const hTit = 58;
+    const wLogo = W * 0.30, wTitulo = W * 0.48, wMeta = W - wLogo - wTitulo;
     const y0 = doc.y;
     // celdas externas
     doc.rect(left, y0, wLogo, hTit).stroke(BORDE);
     doc.rect(left + wLogo, y0, wTitulo, hTit).stroke(BORDE);
-    // logo institucional (imagen si existe; si no, texto)
+    // logo institucional (imagen si existe; si no, texto) — tamaño moderado
     const logo = logoBuffer();
     if (logo) {
       try {
-        doc.image(logo, left + 8, y0 + 8, { fit: [wLogo - 16, hTit - 16], align: "center", valign: "center" });
+        doc.image(logo, left + 12, y0 + 8, { fit: [wLogo - 24, hTit - 16], align: "center", valign: "center" });
       } catch {
-        doc.fillColor(NEGRO).font(FONT_BOLD).fontSize(11).text("COLPENSIONES", left, y0 + hTit / 2 - 7, { width: wLogo, align: "center" });
+        doc.fillColor(NEGRO).font(FONT_BOLD).fontSize(9).text("COLPENSIONES", left, y0 + hTit / 2 - 6, { width: wLogo, align: "center" });
       }
     } else {
-      doc.fillColor(NEGRO).font(FONT_BOLD).fontSize(11)
-        .text("COLPENSIONES", left, y0 + hTit / 2 - 7, { width: wLogo, align: "center" });
+      doc.fillColor(NEGRO).font(FONT_BOLD).fontSize(9)
+        .text("COLPENSIONES", left, y0 + hTit / 2 - 6, { width: wLogo, align: "center" });
     }
-    // título a la izquierda, centrado verticalmente
-    doc.fillColor(NEGRO).font(FONT_BOLD).fontSize(13);
+    // título — mismo tamaño que el cuerpo (9), centrado
+    doc.fillColor(NEGRO).font(FONT_BOLD).fontSize(9);
     const hTitleTxt = doc.heightOfString("FICHA DE CONCILIACIÓN JUDICIAL", { width: wTitulo - 16 });
-    doc.text("FICHA DE CONCILIACIÓN JUDICIAL", left + wLogo + 8, y0 + (hTit - hTitleTxt) / 2, { width: wTitulo - 16, align: "left" });
+    doc.text("FICHA DE CONCILIACIÓN JUDICIAL", left + wLogo + 8, y0 + (hTit - hTitleTxt) / 2, { width: wTitulo - 16, align: "center" });
     // meta: 3 filas (código, versión, fecha)
     const metaX = left + wLogo + wTitulo;
-    const wMetaL = wMeta * 0.50, wMetaV = wMeta - wMetaL;
+    const wMetaL = wMeta * 0.38, wMetaV = wMeta - wMetaL;
     const metaRows = [["Código:", "GDJ-GPO-FMT-005"], ["Versión:", "3"], ["Fecha:", "07/04/2025"]];
     const hMetaRow = hTit / 3;
     metaRows.forEach((mr, i) => {
       const my = y0 + i * hMetaRow;
       doc.rect(metaX, my, wMetaL, hMetaRow).stroke(BORDE);
       doc.rect(metaX + wMetaL, my, wMetaV, hMetaRow).stroke(BORDE);
-      doc.font(FONT_BOLD).fontSize(7.5).fillColor(NEGRO)
-        .text(mr[0], metaX + 3, my + 5, { width: wMetaL - 6 });
-      doc.font(FONT).fontSize(7.5)
-        .text(mr[1], metaX + wMetaL + 3, my + 5, { width: wMetaV - 6 });
+      doc.font(FONT_BOLD).fontSize(7).fillColor(NEGRO)
+        .text(mr[0], metaX + 3, my + 4, { width: wMetaL - 5 });
+      doc.font(FONT).fontSize(7)
+        .text(mr[1], metaX + wMetaL + 3, my + 4, { width: wMetaV - 5 });
     });
     doc.y = y0 + hTit + 10;
     doc.x = left;
