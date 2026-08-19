@@ -105,7 +105,7 @@ function Campo({ label, required, error, children }: {
 }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+      <Label className="text-[11px] font-semibold uppercase tracking-wide text-primary">
         {label}{required && <span className="text-destructive ml-0.5">*</span>}
       </Label>
       {children}
@@ -118,7 +118,7 @@ function Campo({ label, required, error, children }: {
 function CampoLectura({ label, valor }: { label: string; valor?: string | null }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</Label>
+      <Label className="text-[11px] font-semibold uppercase tracking-wide text-primary">{label}</Label>
       <div className="w-full rounded-md border border-input bg-muted/40 px-3 py-2 text-sm text-foreground/80 min-h-[38px] break-words">
         {valor && valor.trim() ? valor : <span className="text-muted-foreground">—</span>}
       </div>
