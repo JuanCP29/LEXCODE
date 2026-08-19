@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn, limpiarDespacho } from "@/lib/utils";
-import { Loader2, ArrowRight, ArrowLeft, ChevronDown, FileSignature, CheckCircle2, AlertCircle, ExternalLink, Mail, Clock } from "lucide-react";
+import { Loader2, ArrowRight, ArrowLeft, ChevronDown, FileSignature, CheckCircle2, AlertCircle, ExternalLink, Mail, Clock, Handshake } from "lucide-react";
 import { ConsultaRadicado } from "@/components/fichas/consulta-radicado";
 import { VistaPreviaDocumento } from "@/components/fichas/vista-previa-documento";
 
@@ -86,12 +86,12 @@ function Select({
   );
 }
 
-function Bloque({ numero, titulo, children }: { numero: number; titulo: string; children: React.ReactNode }) {
+function Bloque({ numero, titulo, children, icono }: { numero?: number; titulo: string; children: React.ReactNode; icono?: React.ReactNode }) {
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden">
       <div className="flex items-center gap-3 px-5 py-4 border-b border-border bg-primary/5 border-l-4 border-l-primary">
         <span className="w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shrink-0">
-          {numero}
+          {icono ?? numero}
         </span>
         <h3 className="text-[15px] font-bold text-foreground">{titulo}</h3>
       </div>
@@ -742,7 +742,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
       </div>
 
       {/* ── Conciliabilidad (dentro del paso 1) ── */}
-      <Bloque numero={1} titulo="Conciliabilidad">
+      <Bloque icono={<Handshake className="w-4 h-4" />} titulo="Conciliación">
         <Campo label="¿El asunto es conciliable?" required>
           <Controller
             name="conciliable"
