@@ -98,9 +98,9 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
     const bottom = doc.page.height - M;
     doc.lineWidth(0.7);
 
-    // ── Bloque de título (logo · título · meta) ──
-    const hTit = 54;
-    const wLogo = W * 0.20, wTitulo = W * 0.52, wMeta = W - wLogo - wTitulo;
+    // ── Bloque de título (logo · título · meta) — proporciones del modelo ──
+    const hTit = 72;
+    const wLogo = W * 0.40, wTitulo = W * 0.38, wMeta = W - wLogo - wTitulo;
     const y0 = doc.y;
     // celdas externas
     doc.rect(left, y0, wLogo, hTit).stroke(BORDE);
@@ -109,36 +109,37 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
     const logo = logoBuffer();
     if (logo) {
       try {
-        doc.image(logo, left + 6, y0 + 6, { fit: [wLogo - 12, hTit - 12], align: "center", valign: "center" });
+        doc.image(logo, left + 10, y0 + 10, { fit: [wLogo - 20, hTit - 20], align: "center", valign: "center" });
       } catch {
-        doc.fillColor(NEGRO).font("Helvetica-Bold").fontSize(9).text("COLPENSIONES", left, y0 + hTit / 2 - 6, { width: wLogo, align: "center" });
+        doc.fillColor(NEGRO).font("Helvetica-Bold").fontSize(11).text("COLPENSIONES", left, y0 + hTit / 2 - 7, { width: wLogo, align: "center" });
       }
     } else {
-      doc.fillColor(NEGRO).font("Helvetica-Bold").fontSize(9)
-        .text("COLPENSIONES", left, y0 + hTit / 2 - 6, { width: wLogo, align: "center" });
+      doc.fillColor(NEGRO).font("Helvetica-Bold").fontSize(11)
+        .text("COLPENSIONES", left, y0 + hTit / 2 - 7, { width: wLogo, align: "center" });
     }
-    // título centrado
-    doc.fillColor(NEGRO).font("Helvetica-Bold").fontSize(12)
-      .text("FICHA DE CONCILIACIÓN JUDICIAL", left + wLogo + 4, y0 + 12, { width: wTitulo - 8, align: "center" });
+    // título a la izquierda, centrado verticalmente
+    doc.fillColor(NEGRO).font("Helvetica-Bold").fontSize(13);
+    const hTitleTxt = doc.heightOfString("FICHA DE CONCILIACIÓN JUDICIAL", { width: wTitulo - 16 });
+    doc.text("FICHA DE CONCILIACIÓN JUDICIAL", left + wLogo + 8, y0 + (hTit - hTitleTxt) / 2, { width: wTitulo - 16, align: "left" });
     // meta: 3 filas (código, versión, fecha)
     const metaX = left + wLogo + wTitulo;
-    const wMetaL = wMeta * 0.42, wMetaV = wMeta - wMetaL;
+    const wMetaL = wMeta * 0.50, wMetaV = wMeta - wMetaL;
     const metaRows = [["CÓDIGO:", "GDJ-GPO-FMT-005"], ["VERSIÓN:", "3"], ["FECHA:", "07/04/2025"]];
     const hMetaRow = hTit / 3;
     metaRows.forEach((mr, i) => {
       const my = y0 + i * hMetaRow;
       doc.rect(metaX, my, wMetaL, hMetaRow).stroke(BORDE);
       doc.rect(metaX + wMetaL, my, wMetaV, hMetaRow).stroke(BORDE);
-      doc.font("Helvetica").fontSize(7).fillColor(NEGRO)
-        .text(mr[0], metaX + 3, my + hMetaRow / 2 - 4, { width: wMetaL - 6 });
-      doc.font("Helvetica").fontSize(7)
-        .text(mr[1], metaX + wMetaL + 3, my + hMetaRow / 2 - 4, { width: wMetaV - 6 });
+      doc.font("Helvetica-Bold").fontSize(7.5).fillColor(NEGRO)
+        .text(mr[0], metaX + 3, my + 5, { width: wMetaL - 6 });
+      doc.font("Helvetica").fontSize(7.5)
+        .text(mr[1], metaX + wMetaL + 3, my + 5, { width: wMetaV - 6 });
     });
-    doc.y = y0 + hTit + 8;
+    doc.y = y0 + hTit + 10;
     doc.x = left;
 
     // ── Tabla de encabezado (9 filas, blanco con bordes) ──
-    const labelW = W * 0.37;
+    const labelW = W * 0.40;
     const valueW = W - labelW;
     for (const row of ENCABEZADO_ROWS) {
       const valor = row.get(datos);
@@ -164,7 +165,7 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
     doc.moveDown(0.6);
 
     // ── 14 secciones: título centrado negro + caja de respuesta alta ──
-    const MIN_CAJA = 64;
+    const MIN_CAJA = 34;
     for (const s of SECCIONES_PDF) {
       const contenido = (datos[s.key] ?? "").toString().trim() || "N/A";
       const tituloFull = `${s.n}. ${s.titulo}`;
