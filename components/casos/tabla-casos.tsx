@@ -91,7 +91,7 @@ export function TablaCasos({ casos }: TablaCasosProps) {
             <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
               Cédula
             </th>
-            <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
+            <th className="text-center px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
               Despacho
             </th>
           </tr>
