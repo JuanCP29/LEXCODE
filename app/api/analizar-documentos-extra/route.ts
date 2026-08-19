@@ -34,11 +34,18 @@ const REGLAS_REDACCION = `- ENUMERA cada punto con el formato "1)", "2)", "3)"..
 - Recoge UNICAMENTE lo que consta en el documento (fechas, resoluciones, semanas, montos, negativas). No inventes ni interpretes.`;
 
 // Lee un traslado ESCANEADO con visión de Claude: localiza las secciones HECHOS y PRETENSIONES y las resume.
+type SeccionesTraslado = {
+  sintesis_hechos: string | null;
+  pretensiones: string | null;
+  cuantia: string | null;
+  normas: string | null;
+};
+
 async function analizarTrasladoVision(
   anthropic: Anthropic,
   pdfs: { nombre: string; buffer: Buffer }[]
-): Promise<{ sintesis_hechos: string | null; pretensiones: string | null }> {
-  const vacio = { sintesis_hechos: null, pretensiones: null };
+): Promise<SeccionesTraslado> {
+  const vacio: SeccionesTraslado = { sintesis_hechos: null, pretensiones: null, cuantia: null, normas: null };
   if (pdfs.length === 0) return vacio;
   // Prioriza el documento cuyo nombre sugiere "traslado"; si no, el primero.
   const doc = pdfs.find((p) => /traslad/i.test(p.nombre)) ?? pdfs[0];
@@ -46,21 +53,30 @@ async function analizarTrasladoVision(
   if (!recorte) return vacio;
 
   const prompt = `Este documento es el TRASLADO de una demanda laboral/pensional (puede estar escaneado, en imagenes).
-Debes localizar y resumir DOS secciones de la demanda:
-  A) La seccion titulada "HECHOS" (o "HECHOS DE LA DEMANDA", "III. HECHOS") -> va en el campo "sintesis_hechos".
-  B) La seccion titulada "PRETENSIONES" (o "PETICIONES", "PRETENSIONES DE LA DEMANDA") -> va en el campo "pretensiones".
+Debes localizar y resumir CUATRO secciones de la demanda:
 
-Para AMBAS secciones aplica EXACTAMENTE estas reglas de redaccion:
+A) HECHOS -> campo "sintesis_hechos". Seccion titulada "HECHOS" (o "HECHOS DE LA DEMANDA", "III. HECHOS").
+B) PRETENSIONES -> campo "pretensiones". Seccion titulada "PRETENSIONES" (o "PETICIONES").
+   Para A) y B) aplica EXACTAMENTE estas reglas:
 ${REGLAS_REDACCION}
 
-Si NO logras ubicar alguna de las dos secciones o es ilegible, pon ese campo en null (no inventes).
+C) CUANTIA -> campo "cuantia". Busca la seccion titulada "CUANTIA", "COMPETENCIA Y CUANTIA" o "ESTIMACION DE LA CUANTIA".
+   Devuelve EXACTAMENTE la frase: "La cuantia fue estimada por la parte actora, en <VALOR>." reemplazando <VALOR> por el
+   monto que aparezca (puede ser un valor en moneda, p. ej. "$278.903.832", o en salarios minimos, p. ej. "20 SMLMV").
+   Si no encuentras el valor de la cuantia, pon null.
+
+D) NORMAS -> campo "normas". Busca la seccion titulada "FUNDAMENTOS Y RAZONES DE DERECHO", "NORMAS VIOLADAS" o
+   "CONCEPTO DE VIOLACION". Relaciona las leyes, decretos, articulos y demas normatividad citada, UNA POR LINEA
+   (por ejemplo: "Ley 100 de 1993, articulo 141", "Decreto 1730 de 2001", "Constitucion Politica, articulo 48").
+   No inventes normas que no consten. Si no encuentras la seccion, pon null.
+
 Devuelve UNICAMENTE un JSON con esta forma exacta:
-{ "sintesis_hechos": "1) ...\\n\\n2) ...", "pretensiones": "1) ...\\n\\n2) ..." }`;
+{ "sintesis_hechos": "1) ...\\n\\n2) ...", "pretensiones": "1) ...\\n\\n2) ...", "cuantia": "La cuantia fue estimada...", "normas": "Ley ...\\nDecreto ..." }`;
 
   try {
     const message = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 4000,
+      max_tokens: 5000,
       messages: [{
         role: "user",
         content: [
@@ -78,6 +94,8 @@ Devuelve UNICAMENTE un JSON con esta forma exacta:
     return {
       sintesis_hechos: limpiar(parsed?.sintesis_hechos),
       pretensiones: limpiar(parsed?.pretensiones),
+      cuantia: limpiar(parsed?.cuantia),
+      normas: limpiar(parsed?.normas),
     };
   } catch (e) {
     console.error("analizarTrasladoVision:", e);
@@ -183,13 +201,18 @@ export async function POST(request: NextRequest) {
     // ── Documento ESCANEADO (sin capa de texto): leer HECHOS y PRETENSIONES con visión ──
     if (caracteresExtraidos < 200) {
       const vision = await analizarTrasladoVision(anthropic, pdfs);
-      const algo = vision.sintesis_hechos || vision.pretensiones;
+      const encontrados = [vision.sintesis_hechos, vision.pretensiones, vision.cuantia, vision.normas].filter(Boolean);
       return NextResponse.json({
         campos: {},
-        suggestions: { sintesis_hechos: vision.sintesis_hechos, pretensiones: vision.pretensiones },
+        suggestions: {
+          sintesis_hechos: vision.sintesis_hechos,
+          pretensiones: vision.pretensiones,
+          cuantia: vision.cuantia,
+          normas: vision.normas,
+        },
         fieldsFound: 0,
-        suggestionsFound: [vision.sintesis_hechos, vision.pretensiones].filter(Boolean).length,
-        caracteres_extraidos: algo ? 999 : caracteresExtraidos,
+        suggestionsFound: encontrados.length,
+        caracteres_extraidos: encontrados.length > 0 ? 999 : caracteresExtraidos,
         escaneado: true,
         archivos_procesados: textos.length,
       });
@@ -227,6 +250,8 @@ Devuelve UNICAMENTE un objeto JSON valido con esta forma exacta (sin texto adici
   "suggestions": {
     "sintesis_hechos": "sintesis de los HECHOS de la demanda (busca la seccion 'HECHOS' del traslado). ENUMERA cada hecho con formato '1)', '2)', '3)'... separando cada hecho con una LINEA EN BLANCO (doble salto de linea, \\n\\n), con EXACTAMENTE el mismo numero de hechos que la demanda. Tercera persona ('el senor <NOMBRE>' / 'la senora <NOMBRE>'), tiempo pasado, sin usar 'mi apoderado', 'mi poderdante' ni primera persona (lo redacta la parte demandada). Solo lo que conste. Devuelve el texto o null.",
     "pretensiones": "sintesis de las PRETENSIONES de la demanda (busca la seccion 'PRETENSIONES' o 'PETICIONES' del traslado). Mismas reglas que sintesis_hechos: ENUMERA '1)', '2)', '3)'... separando cada una con LINEA EN BLANCO (\\n\\n), con EXACTAMENTE el mismo numero de pretensiones que la demanda, tercera persona, tiempo pasado, sin 'mi apoderado'/'mi poderdante' ni primera persona. Solo lo que conste. Devuelve el texto o null.",
+    "cuantia": "busca la seccion 'CUANTIA', 'COMPETENCIA Y CUANTIA' o 'ESTIMACION DE LA CUANTIA'. Devuelve EXACTAMENTE la frase 'La cuantia fue estimada por la parte actora, en <VALOR>.' reemplazando <VALOR> por el monto (en moneda, ej '$278.903.832', o en salarios minimos, ej '20 SMLMV'). Si no hay valor, null.",
+    "normas": "busca la seccion 'FUNDAMENTOS Y RAZONES DE DERECHO', 'NORMAS VIOLADAS' o 'CONCEPTO DE VIOLACION'. Relaciona las leyes, decretos, articulos y normatividad citada, UNA POR LINEA. No inventes. Devuelve el texto o null.",
     "consideraciones": "consideraciones juridicas basadas en las fuentes, o null",
     "evaluacion_riesgo": "evaluacion del riesgo procesal segun lo que consta, o null",
     "recomendacion": "recomendacion de conciliacion fundamentada en las fuentes, o null"

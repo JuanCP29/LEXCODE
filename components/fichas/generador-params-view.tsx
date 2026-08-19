@@ -24,6 +24,8 @@ export function GeneradorParamsView({ casoId, casoData }: GeneradorParamsViewPro
   const [valoresPrellenados, setValoresPrellenados] = useState<CamposExtraidos | null>(null);
   const [sintesisHechos, setSintesisHechos] = useState<string | null>(null);
   const [pretensiones, setPretensiones] = useState<string | null>(null);
+  const [cuantia, setCuantia] = useState<string | null>(null);
+  const [normas, setNormas] = useState<string | null>(null);
 
   function handleCampos(campos: CamposExtraidos) {
     setValoresPrellenados(campos);
@@ -33,6 +35,8 @@ export function GeneradorParamsView({ casoId, casoData }: GeneradorParamsViewPro
   function handleSugerencias(s: any) {
     setSintesisHechos(s?.sintesis_hechos ?? null);
     setPretensiones(s?.pretensiones ?? null);
+    setCuantia(s?.cuantia ?? null);
+    setNormas(s?.normas ?? null);
   }
 
   return (
@@ -44,6 +48,8 @@ export function GeneradorParamsView({ casoId, casoData }: GeneradorParamsViewPro
         valoresPrellenados={valoresPrellenados ?? undefined}
         sintesisHechosSugerida={sintesisHechos}
         pretensionesSugerida={pretensiones}
+        cuantiaSugerida={cuantia}
+        normasSugerida={normas}
       />
 
       {/* Panel lateral: prerrellenar desde PDFs */}

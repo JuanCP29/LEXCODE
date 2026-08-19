@@ -143,6 +143,8 @@ interface FormularioParametricoProps {
   valoresPrellenados?: Record<string, any>;
   sintesisHechosSugerida?: string | null;
   pretensionesSugerida?: string | null;
+  cuantiaSugerida?: string | null;
+  normasSugerida?: string | null;
 }
 
 const DEMANDADO_FIJO = "Administradora Colombiana de Pensiones — COLPENSIONES. NIT 900.336.004-7";
@@ -158,7 +160,7 @@ function limpiarNum(v: string | null | undefined): string {
   return s;
 }
 
-export function FormularioParametrico({ casoId, casoData, valoresPrellenados, sintesisHechosSugerida, pretensionesSugerida }: FormularioParametricoProps) {
+export function FormularioParametrico({ casoId, casoData, valoresPrellenados, sintesisHechosSugerida, pretensionesSugerida, cuantiaSugerida, normasSugerida }: FormularioParametricoProps) {
   const router = useRouter();
   const [generando, setGenerando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -172,6 +174,8 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
   const [pendienteId, setPendienteId] = useState<string | null>(null);
   const [sintesisHechos, setSintesisHechos] = useState("");
   const [pretensionesTexto, setPretensionesTexto] = useState("");
+  const [cuantiaTexto, setCuantiaTexto] = useState("");
+  const [normasTexto, setNormasTexto] = useState("");
   const prevPrellenados = useRef<Partial<ParametrosFormData> | undefined>(undefined);
 
   // Encabezado del proceso (editable) — arranca con los datos del CSV/caso
@@ -225,7 +229,6 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
   });
 
   const conciliable      = watch("conciliable");
-  const cuantiaTipo      = watch("cuantia_tipo");
   const hayFallo         = watch("hay_fallo");
 
   async function handleGenerarPoder() {
@@ -281,6 +284,20 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
       setPretensionesTexto(pretensionesSugerida);
     }
   }, [pretensionesSugerida, pretensionesTexto]);
+
+  // Traer la cuantía extraída del traslado al cuadro de texto (Sección 3).
+  useEffect(() => {
+    if (cuantiaSugerida && !cuantiaTexto.trim()) {
+      setCuantiaTexto(cuantiaSugerida);
+    }
+  }, [cuantiaSugerida, cuantiaTexto]);
+
+  // Traer las normas extraídas del traslado al cuadro de texto (Sección 4).
+  useEffect(() => {
+    if (normasSugerida && !normasTexto.trim()) {
+      setNormasTexto(normasSugerida);
+    }
+  }, [normasSugerida, normasTexto]);
 
   async function handleGenerarMemorial() {
     setGenerandoMemorial(true);
@@ -358,6 +375,8 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
           secciones_manual: {
             sec_1_hechos: sintesisHechos.trim() || null,
             sec_2_pretensiones: pretensionesTexto.trim() || null,
+            sec_3_cuantia: cuantiaTexto.trim() || null,
+            sec_4_normas: normasTexto.trim() || null,
           },
         }),
       });
@@ -802,52 +821,46 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
       </Bloque>
 
 
-      {/* ── Bloque 3: Cuantía ── */}
-      <Bloque numero={2} titulo="Cuantía">
-        <Campo label="Tipo de cuantía" required error={errors.cuantia_tipo?.message}>
-          <Controller
-            name="cuantia_tipo"
-            control={control}
-            render={({ field }) => (
-              <Select
-                value={field.value}
-                onChange={field.onChange}
-                options={[
-                  { value: "indeterminada", label: "Indeterminada" },
-                  { value: "determinada",   label: "Determinada" },
-                ]}
-              />
-            )}
+      {/* Cuantía (Sección 3) — traída del título CUANTÍA del traslado */}
+      <Bloque icono={<FileText className="w-4 h-4" />} titulo="Cuantía">
+        <Campo label="Cuantía (Sección 3 del documento)">
+          <textarea
+            value={cuantiaTexto}
+            onChange={(e) => setCuantiaTexto(e.target.value)}
+            rows={3}
+            placeholder="La cuantía fue estimada por la parte actora, en ___. (Se trae del título «CUANTÍA» / «COMPETENCIA Y CUANTÍA» del traslado; puede ser en moneda o en SMLMV.)"
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-ring resize-y min-h-[80px]"
           />
         </Campo>
+        <p className="text-[11px] text-muted-foreground flex items-start gap-1">
+          <AlertCircle className="w-3 h-3 shrink-0 mt-0.5" />
+          {cuantiaSugerida
+            ? "Cuantía sugerida a partir del traslado. Revísala antes de continuar; podrás editarla."
+            : "Sube el «Traslado de la demanda» en el paso 1 y pulsa «Analizar con IA» para traer aquí la cuantía."}
+        </p>
+      </Bloque>
 
-        {cuantiaTipo === "determinada" && (
-          <Campo label="Valor de la cuantía (COP)" required error={errors.cuantia_valor?.message}>
-            <Controller
-              name="cuantia_valor"
-              control={control}
-              render={({ field }) => (
-                <Input
-                  type="number"
-                  min={0}
-                  placeholder="Ej: 15000000"
-                  value={field.value ?? ""}
-                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
-                />
-              )}
-            />
-          </Campo>
-        )}
-
-        {cuantiaTipo === "indeterminada" && (
-          <p className="text-xs text-muted-foreground bg-muted/40 px-3 py-2 rounded-md">
-            La sección 3 se generará con el texto legal estándar de cuantía indeterminada (art. 20 C.G.P.)
-          </p>
-        )}
+      {/* Presuntas normas violadas (Sección 4) — del título FUNDAMENTOS Y RAZONES DE DERECHO / NORMAS VIOLADAS */}
+      <Bloque icono={<FileText className="w-4 h-4" />} titulo="Presuntas normas violadas">
+        <Campo label="Presuntas normas violadas (Sección 4 del documento)">
+          <textarea
+            value={normasTexto}
+            onChange={(e) => setNormasTexto(e.target.value)}
+            rows={8}
+            placeholder="Se relacionan las leyes, decretos, artículos y normatividad citada en el título «FUNDAMENTOS Y RAZONES DE DERECHO» / «NORMAS VIOLADAS» / «CONCEPTO DE VIOLACIÓN» del traslado (una por línea)."
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-ring resize-y min-h-[140px]"
+          />
+        </Campo>
+        <p className="text-[11px] text-muted-foreground flex items-start gap-1">
+          <AlertCircle className="w-3 h-3 shrink-0 mt-0.5" />
+          {normasSugerida
+            ? "Normas sugeridas a partir del traslado. Revísalas antes de continuar; podrás editarlas."
+            : "Sube el «Traslado de la demanda» en el paso 1 y pulsa «Analizar con IA» para traer aquí las normas."}
+        </p>
       </Bloque>
 
       {/* ── Bloque 4: Pretensiones adicionales ── */}
-      <Bloque numero={3} titulo="Pretensiones adicionales">
+      <Bloque numero={2} titulo="Pretensiones adicionales">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <Campo label="¿Intereses moratorios?" required>
             <Controller
@@ -876,7 +889,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
 
       {/* ── Paso 3: Tipo de proceso ── */}
       {paso === 3 && (
-      <Bloque numero={4} titulo="Tipo de proceso">
+      <Bloque numero={3} titulo="Tipo de proceso">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Campo label="Jurisdicción" required error={errors.jurisdiccion?.message}>
             <Controller
