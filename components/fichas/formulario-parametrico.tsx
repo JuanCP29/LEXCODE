@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn, limpiarDespacho } from "@/lib/utils";
-import { Loader2, ArrowRight, ArrowLeft, ChevronDown, FileSignature, CheckCircle2, AlertCircle, ExternalLink, Mail, Clock, Handshake } from "lucide-react";
+import { Loader2, ArrowRight, ArrowLeft, ChevronDown, FileSignature, CheckCircle2, AlertCircle, ExternalLink, Mail, Clock, Handshake, Check, ClipboardList } from "lucide-react";
 import { ConsultaRadicado } from "@/components/fichas/consulta-radicado";
 import { VistaPreviaDocumento } from "@/components/fichas/vista-previa-documento";
 
@@ -88,7 +88,7 @@ function Select({
 
 function Bloque({ numero, titulo, children, icono }: { numero?: number; titulo: string; children: React.ReactNode; icono?: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-border bg-card overflow-hidden">
+    <div className="rounded-xl border border-border bg-card overflow-hidden card-shadow">
       <div className="flex items-center gap-3 px-5 py-4 border-b border-border bg-primary/5 border-l-4 border-l-primary">
         <span className="w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shrink-0">
           {icono ?? numero}
@@ -400,30 +400,38 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
 
       {/* ── Asistente por pasos ── */}
-      <div className="flex items-center gap-2 flex-wrap text-sm border-b border-border pb-4">
+      <div className="flex items-center border-b border-border pb-5">
         {PASOS.map((nombre, i) => {
           const n = i + 1;
           const activo = n === paso;
           const hecho = n < paso;
           return (
-            <div key={n} className="flex items-center gap-2">
+            <div key={n} className="flex items-center flex-1 last:flex-none">
               <button
                 type="button"
                 onClick={() => setPaso(n)}
-                className={cn(
-                  "flex items-center gap-1.5 transition-colors",
-                  activo ? "text-foreground font-semibold" : "text-muted-foreground hover:text-foreground"
-                )}
+                className="flex items-center gap-2 group shrink-0"
               >
                 <span className={cn(
-                  "w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0",
-                  activo ? "bg-primary text-primary-foreground" : hecho ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"
+                  "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-all",
+                  activo
+                    ? "bg-primary text-primary-foreground ring-4 ring-primary/10"
+                    : hecho
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground border border-border"
                 )}>
-                  {n}
+                  {hecho ? <Check className="w-3.5 h-3.5" /> : n}
                 </span>
-                <span className="hidden sm:inline">{nombre}</span>
+                <span className={cn(
+                  "hidden sm:inline text-sm transition-colors",
+                  activo ? "text-foreground font-semibold" : hecho ? "text-foreground/70" : "text-muted-foreground group-hover:text-foreground"
+                )}>
+                  {nombre}
+                </span>
               </button>
-              {n < totalPasos && <span className="text-muted-foreground/40">/</span>}
+              {n < totalPasos && (
+                <div className={cn("flex-1 h-px mx-3 min-w-[16px]", hecho ? "bg-primary/40" : "bg-border")} />
+              )}
             </div>
           );
         })}
@@ -433,9 +441,15 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
       {paso === 1 && (<>
 
       {/* ── Información del proceso (encabezado v3) ── */}
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <div className="rounded-xl border border-border bg-card overflow-hidden card-shadow">
         <div className="flex items-center gap-3 px-5 py-3.5 border-b border-border bg-muted/30">
-          <h3 className="text-sm font-semibold text-foreground">Información del proceso</h3>
+          <span className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+            <ClipboardList className="w-4 h-4 text-muted-foreground" />
+          </span>
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">Información del proceso</h3>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Datos de la cabecera de la ficha</p>
+          </div>
         </div>
         <div className="px-5 py-4 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -507,7 +521,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
       </div>
 
       {/* ── Bloque 0: Documentos previos ── */}
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <div className="rounded-xl border border-border bg-card overflow-hidden card-shadow">
         {/* Header del bloque — estilo diferenciado del bloque de datos */}
         <div className="flex items-center gap-3 px-5 py-4 border-b border-border bg-primary/5 border-l-4 border-l-primary">
           <div className="w-9 h-9 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shrink-0">
