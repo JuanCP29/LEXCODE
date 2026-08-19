@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn, limpiarDespacho } from "@/lib/utils";
 import { Loader2, ArrowRight, ArrowLeft, ChevronDown, FileSignature, CheckCircle2, AlertCircle, ExternalLink, Mail, Clock } from "lucide-react";
+import { ConsultaRadicado } from "@/components/fichas/consulta-radicado";
 
 // ─── Componentes base ──────────────────────────────────────────────────────────
 
@@ -447,7 +448,10 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
               <Input value={encabezado.radicado_bizagi} onChange={(e) => setEnc("radicado_bizagi", e.target.value)} placeholder="Ej: 2025_1398203" />
             </Campo>
             <Campo label="Radicación del proceso (23 dígitos)">
-              <Input value={encabezado.radicado} onChange={(e) => setEnc("radicado", e.target.value)} placeholder="Número de radicación completo" />
+              <div className="flex items-center gap-2">
+                <Input className="flex-1" value={encabezado.radicado} onChange={(e) => setEnc("radicado", e.target.value)} placeholder="Número de radicación completo" />
+                <ConsultaRadicado radicado={encabezado.radicado} />
+              </div>
             </Campo>
             <Campo label="Nombre del demandante">
               <Input value={encabezado.nombre_demandante} onChange={(e) => setEnc("nombre_demandante", e.target.value)} placeholder="Ej: Wilson Lugo" />
