@@ -105,7 +105,7 @@ function Campo({ label, required, error, children }: {
 }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-sm font-medium">
+      <Label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
         {label}{required && <span className="text-destructive ml-0.5">*</span>}
       </Label>
       {children}
@@ -118,7 +118,7 @@ function Campo({ label, required, error, children }: {
 function CampoLectura({ label, valor }: { label: string; valor?: string | null }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-sm font-medium">{label}</Label>
+      <Label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</Label>
       <div className="w-full rounded-md border border-input bg-muted/40 px-3 py-2 text-sm text-foreground/80 min-h-[38px] break-words">
         {valor && valor.trim() ? valor : <span className="text-muted-foreground">—</span>}
       </div>
@@ -443,8 +443,8 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
       {/* ── Información del proceso (encabezado v3) ── */}
       <div className="rounded-xl border border-border bg-card overflow-hidden card-shadow">
         <div className="flex items-center gap-3 px-5 py-3.5 border-b border-border bg-muted/30">
-          <span className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
-            <ClipboardList className="w-4 h-4 text-muted-foreground" />
+          <span className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+            <ClipboardList className="w-4 h-4" />
           </span>
           <div>
             <h3 className="text-sm font-semibold text-foreground">Información del proceso</h3>
