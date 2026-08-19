@@ -29,21 +29,18 @@ export default async function GeneradorParamsPage({
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          {caso.radicado}
+          Volver al caso
         </Link>
       </div>
 
       <div>
-        <h1 className="text-xl font-bold text-foreground">Parámetros de la ficha</h1>
+        <h1 className="text-xl font-bold text-foreground">Ficha conciliación</h1>
         <p className="text-muted-foreground mt-0.5">
           {caso.nombre_demandante}
           {caso.cedula_demandante && (
             <span className="text-muted-foreground/60"> · C.C. {caso.cedula_demandante}</span>
           )}
         </p>
-        {caso.despacho && (
-          <p className="text-sm text-muted-foreground mt-0.5">{caso.despacho}</p>
-        )}
       </div>
 
       <GeneradorParamsView
