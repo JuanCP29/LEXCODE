@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 import { extraerTextoPDF } from "@/lib/ia/extraer-pdf";
 import { PDFDocument } from "pdf-lib";
 
-export const maxDuration = 300;
+export const maxDuration = 120;
 export const dynamic = "force-dynamic";
 
 // Recorta un PDF a sus primeras N páginas y lo devuelve en base64 (para leer escaneados con visión).
