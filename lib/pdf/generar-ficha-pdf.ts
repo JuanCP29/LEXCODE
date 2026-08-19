@@ -124,7 +124,7 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
     const logo = logoBuffer();
     if (logo) {
       try {
-        doc.image(logo, left + 12, y0 + 8, { fit: [wLogo - 24, hTit - 16], align: "center", valign: "center" });
+        doc.image(logo, left + 14, y0 + 8, { fit: [wLogo * 0.62, hTit - 22], align: "left", valign: "center" });
       } catch {
         doc.fillColor(NEGRO).font(FONT_BOLD).fontSize(9).text("COLPENSIONES", left, y0 + hTit / 2 - 6, { width: wLogo, align: "center" });
       }
