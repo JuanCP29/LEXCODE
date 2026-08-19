@@ -602,7 +602,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
                       trasladoBizagi === opt
                         ? opt
                           ? "bg-green-600 text-white"
-                          : "bg-blue-600 text-white"
+                          : "bg-[#6b93de] text-white"
                         : "bg-background text-muted-foreground hover:bg-muted"
                     )}
                   >
@@ -616,7 +616,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
             {trasladoBizagi === false && (
               <>
                 {/* Memorial */}
-                <div className="rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800 px-4 py-3 space-y-3">
+                <div className="rounded-lg border border-[#c5d8f4] bg-[#eef3fc] dark:bg-blue-950/20 dark:border-blue-800 px-4 py-3 space-y-3">
                   {/* Fila: generar memorial */}
                   <div className="flex items-center justify-between gap-3">
                     <div>
@@ -641,7 +641,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
                         type="button"
                         disabled={generandoMemorial}
                         onClick={handleGenerarMemorial}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-60"
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-[#6b93de] text-white hover:bg-[#5a82d0] transition-colors disabled:opacity-60"
                       >
                         {generandoMemorial
                           ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Generando...</>
@@ -655,7 +655,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
 
                   {/* Botones de envío — se muestran tras generar el memorial */}
                   {memorialGenerado && (
-                    <div className="border-t border-blue-200 dark:border-blue-800 pt-3 space-y-2">
+                    <div className="border-t border-[#c5d8f4] dark:border-blue-800 pt-3 space-y-2">
                       {envioUsado ? (
                         <div className="flex items-center justify-between gap-3">
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -676,7 +676,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
                         </div>
                       ) : (
                         <>
-                          <p className="text-[11px] font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide">
+                          <p className="text-[11px] font-semibold text-[#4a6fc0] dark:text-blue-400 uppercase tracking-wide">
                             Enviar documentos
                           </p>
                           <div className="flex flex-col sm:flex-row gap-2">
