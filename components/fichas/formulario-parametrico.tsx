@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import {
   parametrosSchema,
   type ParametrosFormData,
-  CLASES_POR_PRETENSION,
   DIRECTRICES,
 } from "@/lib/ia/parametros-schema";
 import { Button } from "@/components/ui/button";
@@ -226,10 +225,8 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
   });
 
   const conciliable      = watch("conciliable");
-  const pretension       = watch("pretension");
   const cuantiaTipo      = watch("cuantia_tipo");
   const hayFallo         = watch("hay_fallo");
-  const mostrarTasas     = pretension === "vejez" || pretension === "invalidez";
 
   async function handleGenerarPoder() {
     setGenerandoPoder(true);
@@ -258,11 +255,6 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
     }
   }
 
-  // Resetear clase al cambiar pretensión
-  useEffect(() => {
-    setValue("clase_pretension", "");
-  }, [pretension, setValue]);
-
   // Aplicar valores pre-llenados desde PDFs cuando cambian
   useEffect(() => {
     if (!valoresPrellenados || valoresPrellenados === prevPrellenados.current) return;
@@ -289,11 +281,6 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
       setPretensionesTexto(pretensionesSugerida);
     }
   }, [pretensionesSugerida, pretensionesTexto]);
-
-  const clasesDisponibles = (CLASES_POR_PRETENSION[pretension] ?? []).map((c) => ({
-    value: c,
-    label: c,
-  }));
 
   async function handleGenerarMemorial() {
     setGenerandoMemorial(true);
@@ -387,14 +374,6 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
       setGenerando(false);
     }
   }
-
-  const pretensionOpts = [
-    { value: "vejez",           label: "Vejez" },
-    { value: "invalidez",       label: "Invalidez" },
-    { value: "sobrevivientes",  label: "Sobrevivientes" },
-    { value: "indemnizacion",   label: "Indemnización sustitutiva" },
-    { value: "devolucion",      label: "Devolución de saldos" },
-  ];
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
@@ -822,109 +801,9 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
         </p>
       </Bloque>
 
-      <Bloque numero={2} titulo="Pretensión (parámetros)">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Campo label="Pretensión" required error={errors.pretension?.message}>
-            <Controller
-              name="pretension"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  value={field.value}
-                  onChange={field.onChange}
-                  options={pretensionOpts}
-                  error={errors.pretension?.message}
-                />
-              )}
-            />
-          </Campo>
-
-          <Campo label="Clase" required error={errors.clase_pretension?.message}>
-            <Controller
-              name="clase_pretension"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  value={field.value}
-                  onChange={field.onChange}
-                  placeholder="Selecciona la clase..."
-                  options={clasesDisponibles}
-                  error={errors.clase_pretension?.message}
-                />
-              )}
-            />
-          </Campo>
-        </div>
-
-        <Campo label="Número de resolución (SUB o equivalente)">
-          <Controller
-            name="resolucion_prestacion"
-            control={control}
-            render={({ field }) => (
-              <Input {...field} value={field.value ?? ""} placeholder="Ej: SUB-123456" />
-            )}
-          />
-        </Campo>
-
-        <Campo label="Semanas cotizadas">
-          <Controller
-            name="semanas_cotizadas"
-            control={control}
-            render={({ field }) => (
-              <Input
-                type="number"
-                min={0}
-                placeholder="Ej: 1300"
-                value={field.value ?? ""}
-                onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
-              />
-            )}
-          />
-        </Campo>
-
-        {mostrarTasas && (
-          <div className="grid grid-cols-2 gap-4">
-            <Campo label="Tasa aplicada (%)" error={errors.tasa_aplicada?.message}>
-              <Controller
-                name="tasa_aplicada"
-                control={control}
-                render={({ field }) => (
-                  <Input
-                    type="number"
-                    min={0}
-                    max={100}
-                    step={0.01}
-                    placeholder="Ej: 45.00"
-                    value={field.value ?? ""}
-                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
-                  />
-                )}
-              />
-            </Campo>
-
-            <Campo label="Tasa solicitada (%)" error={errors.tasa_solicitada?.message}>
-              <Controller
-                name="tasa_solicitada"
-                control={control}
-                render={({ field }) => (
-                  <Input
-                    type="number"
-                    min={0}
-                    max={100}
-                    step={0.01}
-                    placeholder="Ej: 75.00"
-                    value={field.value ?? ""}
-                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
-                  />
-                )}
-              />
-            </Campo>
-          </div>
-        )}
-      </Bloque>
 
       {/* ── Bloque 3: Cuantía ── */}
-      <Bloque numero={3} titulo="Cuantía">
+      <Bloque numero={2} titulo="Cuantía">
         <Campo label="Tipo de cuantía" required error={errors.cuantia_tipo?.message}>
           <Controller
             name="cuantia_tipo"
@@ -968,7 +847,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
       </Bloque>
 
       {/* ── Bloque 4: Pretensiones adicionales ── */}
-      <Bloque numero={4} titulo="Pretensiones adicionales">
+      <Bloque numero={3} titulo="Pretensiones adicionales">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <Campo label="¿Intereses moratorios?" required>
             <Controller
@@ -997,7 +876,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
 
       {/* ── Paso 3: Tipo de proceso ── */}
       {paso === 3 && (
-      <Bloque numero={5} titulo="Tipo de proceso">
+      <Bloque numero={4} titulo="Tipo de proceso">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Campo label="Jurisdicción" required error={errors.jurisdiccion?.message}>
             <Controller

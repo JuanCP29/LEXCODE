@@ -41,7 +41,7 @@ export const parametrosSchema = z.object({
 
   // Bloque 2 — Pretensión
   pretension:              z.enum(["vejez", "invalidez", "sobrevivientes", "indemnizacion", "devolucion"]),
-  clase_pretension:        z.string().min(1, "Selecciona la clase de pretensión"),
+  clase_pretension:        z.string(),
   resolucion_prestacion:   z.string().optional(),
   semanas_cotizadas:       z.number().positive().optional().nullable(),
   tasa_aplicada:           z.number().min(0).max(100).optional().nullable(),
