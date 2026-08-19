@@ -96,7 +96,7 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
     const left = M;
     const W = doc.page.width - 2 * M;
     const bottom = doc.page.height - M;
-    doc.lineWidth(0.7);
+    doc.lineWidth(0.6);
 
     // ── Bloque de título (logo · título · meta) — proporciones del modelo ──
     const hTit = 72;
@@ -124,7 +124,7 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
     // meta: 3 filas (código, versión, fecha)
     const metaX = left + wLogo + wTitulo;
     const wMetaL = wMeta * 0.50, wMetaV = wMeta - wMetaL;
-    const metaRows = [["CÓDIGO:", "GDJ-GPO-FMT-005"], ["VERSIÓN:", "3"], ["FECHA:", "07/04/2025"]];
+    const metaRows = [["Código:", "GDJ-GPO-FMT-005"], ["Versión:", "3"], ["Fecha:", "07/04/2025"]];
     const hMetaRow = hTit / 3;
     metaRows.forEach((mr, i) => {
       const my = y0 + i * hMetaRow;
@@ -182,18 +182,19 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
       doc.y = ty + hTitS;
       doc.x = left;
 
-      // Caja de respuesta (alta, justificada)
+      // Caja de respuesta (justificada, con interlineado cómodo)
       doc.font("Helvetica").fontSize(9);
-      const hCont = doc.heightOfString(contenido, { width: W - 12, align: "justify" });
+      const opts = { width: W - 12, align: "justify" as const, lineGap: 2.5 };
+      const hCont = doc.heightOfString(contenido, opts);
       const cajaH = Math.max(hCont + 12, MIN_CAJA);
       let cy = doc.y;
       if (cy + cajaH > bottom && cajaH <= bottom - M) { doc.addPage(); doc.y = M; cy = doc.y; }
       const cajaHFinal = Math.min(cajaH, bottom - cy);
       doc.rect(left, cy, W, cajaHFinal).stroke(BORDE);
-      doc.fillColor(NEGRO).text(contenido, left + 6, cy + 6, { width: W - 12, align: "justify" });
+      doc.fillColor(NEGRO).text(contenido, left + 6, cy + 6, opts);
       doc.x = left;
       doc.y = Math.max(doc.y, cy + cajaHFinal);
-      doc.moveDown(0.2);
+      doc.moveDown(0.45);
     }
 
     doc.end();
