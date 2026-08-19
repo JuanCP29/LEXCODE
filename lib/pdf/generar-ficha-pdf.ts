@@ -109,11 +109,11 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
     const left = M;
     const W = doc.page.width - 2 * M;
     const bottom = doc.page.height - M;
-    doc.lineWidth(0.6);
+    doc.lineWidth(0.4);
 
-    // ── Bloque de título (logo · título · meta) — proporciones del modelo ──
-    const hTit = 72;
-    const wLogo = W * 0.40, wTitulo = W * 0.38, wMeta = W - wLogo - wTitulo;
+    // ── Bloque de título (logo · título · meta) ──
+    const hTit = 92;
+    const wLogo = W * 0.26, wTitulo = W * 0.52, wMeta = W - wLogo - wTitulo;
     const y0 = doc.y;
     // celdas externas
     doc.rect(left, y0, wLogo, hTit).stroke(BORDE);
@@ -122,7 +122,7 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
     const logo = logoBuffer();
     if (logo) {
       try {
-        doc.image(logo, left + 10, y0 + 10, { fit: [wLogo - 20, hTit - 20], align: "center", valign: "center" });
+        doc.image(logo, left + 8, y0 + 8, { fit: [wLogo - 16, hTit - 16], align: "center", valign: "center" });
       } catch {
         doc.fillColor(NEGRO).font(FONT_BOLD).fontSize(11).text("COLPENSIONES", left, y0 + hTit / 2 - 7, { width: wLogo, align: "center" });
       }
@@ -175,9 +175,9 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
       doc.x = left;
     }
 
-    doc.moveDown(0.6);
+    doc.moveDown(0.3);
 
-    // ── 14 secciones: título centrado negro + caja de respuesta alta ──
+    // ── 14 secciones contiguas (sin espacios entre ellas) ──
     const MIN_CAJA = 34;
     for (const s of SECCIONES_PDF) {
       const contenido = (datos[s.key] ?? "").toString().trim() || "N/A";
@@ -207,7 +207,7 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
       doc.fillColor(NEGRO).text(contenido, left + 6, cy + 6, opts);
       doc.x = left;
       doc.y = Math.max(doc.y, cy + cajaHFinal);
-      doc.moveDown(0.45);
+      // sin moveDown: las secciones quedan contiguas
     }
 
     doc.end();
