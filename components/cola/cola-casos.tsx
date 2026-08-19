@@ -116,7 +116,9 @@ export function ColaCasos() {
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(buf, { type: "array" });
       const sheet = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: null });
+      // raw:false → los números (radicados de 23 dígitos) llegan como texto formateado,
+      // evitando la notación científica.
+      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: null, raw: false });
       const parsed = rows.map(parsearFila).filter((c): c is NonNullable<typeof c> => c !== null);
       if (parsed.length === 0) {
         setError("No se encontraron casos válidos (revisa que existan columnas de radicado y demandante).");

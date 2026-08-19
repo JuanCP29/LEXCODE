@@ -105,7 +105,8 @@ export function ImportarExcelModal({ onClose }: ImportarExcelModalProps) {
       const buffer = await file.arrayBuffer();
       const wb    = XLSX.read(buffer, { type: "array" });
       const ws    = wb.Sheets[wb.SheetNames[0]];
-      const rows  = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: "" });
+      // raw:false → radicados de 23 dígitos como texto, sin notación científica
+      const rows  = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: "", raw: false });
 
       const parsed = rows
         .map(parsearFila)
