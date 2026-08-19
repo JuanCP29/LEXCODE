@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { Plus, FileSpreadsheet } from "lucide-react";
+import { FileSpreadsheet } from "lucide-react";
 import { ImportarExcelModal } from "@/components/casos/importar-excel-modal";
 
 interface CasosHeaderProps {
@@ -31,15 +30,6 @@ export function CasosHeader({ total }: CasosHeaderProps) {
             <FileSpreadsheet className="w-4 h-4 text-green-600" />
             Importar Excel
           </button>
-
-          {/* Nuevo caso manual */}
-          <Link
-            href="/casos/nuevo"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Nuevo caso
-          </Link>
         </div>
       </div>
 
