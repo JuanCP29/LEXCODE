@@ -507,12 +507,15 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
 
       {/* ── Bloque 0: Documentos previos ── */}
       <div className="rounded-xl border border-border bg-card overflow-hidden">
-        {/* Header del bloque */}
-        <div className="flex items-center gap-3 px-5 py-3.5 border-b border-border bg-muted/30">
-          <div className="w-6 h-6 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-            <FileSignature className="w-3.5 h-3.5 text-primary" />
+        {/* Header del bloque — estilo diferenciado del bloque de datos */}
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-border bg-primary/5 border-l-4 border-l-primary">
+          <div className="w-9 h-9 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+            <FileSignature className="w-4 h-4" />
           </div>
-          <h3 className="text-sm font-semibold text-foreground">Documentos previos</h3>
+          <div className="min-w-0">
+            <h3 className="text-[15px] font-bold text-foreground leading-tight">Documentos previos</h3>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Poder de sustitución y traslado de la demanda</p>
+          </div>
         </div>
 
         <div className="px-5 py-4 space-y-4">
