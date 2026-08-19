@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Bookmark, Star, FileText, Lock } from "lucide-react";
+import { FileText, Lock } from "lucide-react";
 
 // Quita la ciudad repetida y el departamento del despacho
 // ("JUZGADO ... DE CALI — CALI — VALLE DEL CAUCA" → "JUZGADO ... DE CALI")
@@ -147,27 +147,17 @@ export function TablaCasos({ casos }: TablaCasosProps) {
 
                 {/* Estado ficha */}
                 <td className="px-3 py-3">
-                  <div className="flex items-center gap-2">
-                    {fichaLista ? (
-                      <span title="Ficha de conciliación lista">
-                        <Bookmark className="w-4 h-4" fill="#16a34a" color="#16a34a" />
-                      </span>
-                    ) : fichaEnProceso ? (
-                      <span title="Ficha en proceso">
-                        <Bookmark className="w-4 h-4" fill="#f59e0b" color="#f59e0b" />
-                      </span>
-                    ) : (
-                      <span title="Sin ficha generada">
-                        <Star className="w-4 h-4" fill="#ef4444" color="#ef4444" />
-                      </span>
-                    )}
-                    <Link
-                      href={`/casos/${caso.id}`}
-                      className="text-[10px] text-muted-foreground hover:text-primary transition-colors font-medium"
-                    >
-                      Ver
-                    </Link>
-                  </div>
+                  <Link href={`/casos/${caso.id}`} title="Ver caso"
+                    className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold transition-opacity hover:opacity-80 ${
+                      fichaLista
+                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                        : fichaEnProceso
+                        ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                        : "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+                    }`}
+                  >
+                    {fichaLista ? "Completado" : fichaEnProceso ? "En proceso" : "Pendiente"}
+                  </Link>
                 </td>
 
                 {/* Radicado */}
@@ -207,15 +197,15 @@ export function TablaCasos({ casos }: TablaCasosProps) {
       {/* Leyenda */}
       <div className="flex flex-wrap items-center gap-5 px-4 py-3 border-t border-border bg-muted/20 text-[11px] text-muted-foreground">
         <span className="flex items-center gap-1.5">
-          <Bookmark className="w-3.5 h-3.5" fill="#16a34a" color="#16a34a" />
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Completado</span>
           Conciliación lista — Contestación Dda habilitada
         </span>
         <span className="flex items-center gap-1.5">
-          <Bookmark className="w-3.5 h-3.5" fill="#f59e0b" color="#f59e0b" />
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">En proceso</span>
           Ficha en proceso
         </span>
         <span className="flex items-center gap-1.5">
-          <Star className="w-3.5 h-3.5" fill="#ef4444" color="#ef4444" />
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">Pendiente</span>
           Sin ficha generada
         </span>
         <span className="flex items-center gap-1.5 ml-auto">
