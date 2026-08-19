@@ -180,12 +180,17 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
     doc.moveDown(0.3);
 
     // ── 14 secciones contiguas (sin espacios entre ellas) ──
-    // Estandarizadas: Sentencia (5) y Argumentos de la apelación (6) → "No aplica" centrado
-    const ESTANDAR_NA = new Set(["sec_6_sentencia", "sec_5_apelacion"]);
+    // Secciones estandarizadas con texto fijo (y si va centrado)
+    const ESTANDAR: Record<string, { texto: string; centrado: boolean }> = {
+      sec_6_sentencia: { texto: "No aplica", centrado: true },
+      sec_5_apelacion: { texto: "No aplica", centrado: true },
+      sec_9_caducidad: { texto: "Se establece que la acción a la fecha no se afectado con la caducidad atendiendo la naturaleza de lo pretendido.", centrado: false },
+    };
     const MIN_CAJA = 34;
     for (const s of SECCIONES_PDF) {
-      const estandar = ESTANDAR_NA.has(s.key);
-      const contenido = estandar ? "No aplica" : ((datos[s.key] ?? "").toString().trim() || "N/A");
+      const est = ESTANDAR[s.key];
+      const centrarEst = est?.centrado ?? false;
+      const contenido = est ? est.texto : ((datos[s.key] ?? "").toString().trim() || "N/A");
       const tituloFull = `${s.n}. ${s.titulo}`;
 
       doc.font(FONT_BOLD).fontSize(9);
@@ -202,7 +207,7 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
 
       // Caja de respuesta (justificada; centrada para las estandarizadas)
       doc.font(FONT).fontSize(9);
-      const opts = { width: W - 12, align: (estandar ? "center" : "justify") as "center" | "justify", lineGap: 2.5 };
+      const opts = { width: W - 12, align: (centrarEst ? "center" : "justify") as "center" | "justify", lineGap: 2.5 };
       const hCont = doc.heightOfString(contenido, opts);
       const cajaH = Math.max(hCont + 12, MIN_CAJA);
       let cy = doc.y;

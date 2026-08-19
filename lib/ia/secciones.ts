@@ -23,7 +23,7 @@ export const SECCIONES: DefSeccion[] = [
   { numero: 5,  key: "sec_6_sentencia",        label: "Sentencia",                   tipo: "DEFAULT", descripcion: "Estandarizada: No aplica.", oculta: true, textoFijo: "No aplica", centrado: true },
   { numero: 6,  key: "sec_5_apelacion",        label: "Arg. de apelación",           tipo: "DEFAULT", descripcion: "Estandarizada: No aplica.", oculta: true, textoFijo: "No aplica", centrado: true },
   { numero: 7,  key: "sec_8_problema",         label: "Problema jurídico",           tipo: "AUTO",    descripcion: "IA plantea el problema jurídico central." },
-  { numero: 8,  key: "sec_9_caducidad",        label: "Análisis de caducidad",       tipo: "DEFAULT", descripcion: "Texto por defecto según jurisdicción." },
+  { numero: 8,  key: "sec_9_caducidad",        label: "Análisis de caducidad",       tipo: "DEFAULT", descripcion: "Estandarizada.", oculta: true, textoFijo: "Se establece que la acción a la fecha no se afectado con la caducidad atendiendo la naturaleza de lo pretendido." },
   { numero: 9,  key: "sec_11_jurisprudencia",  label: "Jurisprudencia",              tipo: "MANUAL",  descripcion: "El abogado cita la jurisprudencia aplicable." },
   { numero: 10, key: "sec_15_politicas",       label: "Políticas / llamamientos",    tipo: "DEFAULT", descripcion: "Texto por defecto con políticas de Colpensiones." },
   { numero: 11, key: "sec_16_consideraciones", label: "Consideraciones",             tipo: "AUTO",    descripcion: "IA genera las consideraciones jurídicas." },

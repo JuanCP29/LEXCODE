@@ -100,9 +100,10 @@ export async function POST(request: NextRequest) {
       ? parsearRespuestaV2(respuestaTexto, plan)
       : parsearRespuestaV2("{}", plan.filter((p) => p.accion !== "generar"));
 
-    // Secciones estandarizadas: Sentencia y Argumentos de la apelación → "No aplica"
+    // Secciones estandarizadas con texto fijo
     secciones["sec_6_sentencia"] = "No aplica";
     secciones["sec_5_apelacion"] = "No aplica";
+    secciones["sec_9_caducidad"] = "Se establece que la acción a la fecha no se afectado con la caducidad atendiendo la naturaleza de lo pretendido.";
 
     // 6. Crear ficha en BD
     const {
