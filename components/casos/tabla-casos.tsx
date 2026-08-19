@@ -3,6 +3,13 @@
 import Link from "next/link";
 import { Bookmark, Star, FileText, Lock } from "lucide-react";
 
+// Quita la ciudad repetida y el departamento del despacho
+// ("JUZGADO ... DE CALI — CALI — VALLE DEL CAUCA" → "JUZGADO ... DE CALI")
+function limpiarDespacho(texto: string | null | undefined): string {
+  if (!texto) return "";
+  return texto.split(/\s*[—–]\s*/)[0].trim();
+}
+
 // Convierte texto en MAYÚSCULAS a "Nombre Propio" (deja conectores en minúscula)
 const MINUSCULAS = new Set(["de", "del", "la", "las", "los", "y", "e", "el", "en", "a"]);
 function aNombrePropio(texto: string | null | undefined): string {
@@ -189,7 +196,7 @@ export function TablaCasos({ casos }: TablaCasosProps) {
 
                 {/* Despacho */}
                 <td className="px-4 py-3 text-sm text-muted-foreground min-w-[280px]">
-                  {caso.despacho ? aNombrePropio(caso.despacho) : "—"}
+                  {caso.despacho ? aNombrePropio(limpiarDespacho(caso.despacho)) : "—"}
                 </td>
               </tr>
             );
