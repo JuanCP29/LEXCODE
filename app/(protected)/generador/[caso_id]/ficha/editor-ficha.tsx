@@ -6,7 +6,7 @@ import { SECCIONES, BADGE_TIPO, generarTextoDefault } from "@/lib/ia/secciones";
 import { CajaIA } from "@/components/fichas/caja-ia";
 import { VistaPreviaFicha } from "@/components/fichas/vista-previa-ficha";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, FileText, FileSpreadsheet, Save, Loader2, CheckCircle2, RotateCcw, Eye } from "lucide-react";
+import { ArrowLeft, FileText, FileSpreadsheet, FileDown, Save, Loader2, CheckCircle2, RotateCcw, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 
@@ -277,10 +277,17 @@ export function EditorFicha({ caso, fichaInicial }: EditorFichaProps) {
                 </Button>
                 <Button
                   size="sm"
+                  className="bg-[#1a4a8a] hover:bg-[#163d73] text-white"
+                  onClick={() => descargar(`/api/exportar-ficha-pdf/${fichaId}`, `${nombreArchivo || "FICHA_CONCILIACION"}.pdf`)}
+                >
+                  <FileDown className="w-3.5 h-3.5 mr-1" /> Exportar PDF
+                </Button>
+                <Button
+                  size="sm"
                   variant="outline"
                   onClick={() => descargar(`/api/exportar-ficha/${fichaId}`, `${nombreArchivo || "FICHA_CONCILIACION"}.docx`)}
                 >
-                  <FileText className="w-3.5 h-3.5 mr-1" /> Exportar .docx
+                  <FileText className="w-3.5 h-3.5 mr-1" /> .docx
                 </Button>
                 <Button
                   size="sm"
@@ -288,7 +295,7 @@ export function EditorFicha({ caso, fichaInicial }: EditorFichaProps) {
                   className="border-green-300 text-green-700 hover:bg-green-50"
                   onClick={() => descargar(`/api/exportar-ficha-xlsx/${fichaId}`, `${nombreArchivo || "FICHA_CONCILIACION"}.xlsx`)}
                 >
-                  <FileSpreadsheet className="w-3.5 h-3.5 mr-1" /> Exportar .xlsx
+                  <FileSpreadsheet className="w-3.5 h-3.5 mr-1" /> .xlsx
                 </Button>
               </>
             )}
