@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { caso_id, params } = body as {
+    const { caso_id, params, caso_override } = body as {
       caso_id: string;
       params: ParametrosFichaV2 & {
         expediente_pensional_aplica?: string | null;
@@ -48,10 +48,30 @@ export async function POST(request: NextRequest) {
         clase_pretension?: string;
         jurisdiccion?: string;
       };
+      caso_override?: {
+        radicado_bizagi?: string | null;
+        radicado?: string | null;
+        nombre_demandante?: string | null;
+        cedula_demandante?: string | null;
+        despacho?: string | null;
+      };
     };
 
     if (!caso_id || !params) {
       return NextResponse.json({ error: "Faltan parámetros requeridos" }, { status: 400 });
+    }
+
+    // 0. Persistir ajustes del encabezado editados en el formulario (best-effort)
+    if (caso_override && typeof caso_override === "object") {
+      const CAMPOS_OVERRIDE = ["radicado_bizagi", "radicado", "nombre_demandante", "cedula_demandante", "despacho"] as const;
+      const cambios: Record<string, string | null> = {};
+      for (const k of CAMPOS_OVERRIDE) {
+        if (k in caso_override) cambios[k] = caso_override[k] ?? null;
+      }
+      if (Object.keys(cambios).length > 0) {
+        const { error: updErr } = await supabase.from("casos").update(cambios).eq("id", caso_id);
+        if (updErr) console.error("caso_override (no bloqueante):", updErr.message);
+      }
     }
 
     // 1. Cargar datos del caso

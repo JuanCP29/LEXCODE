@@ -144,6 +144,17 @@ interface FormularioParametricoProps {
 
 const DEMANDADO_FIJO = "Administradora Colombiana de Pensiones — COLPENSIONES. NIT 900.336.004-7";
 
+// Corrige radicados que llegaron en notación científica (ej. 7.6e+22)
+function limpiarNum(v: string | null | undefined): string {
+  if (!v) return "";
+  const s = String(v).trim();
+  if (/e\+?\d+/i.test(s)) {
+    const n = Number(s);
+    if (!Number.isNaN(n)) return n.toLocaleString("fullwide", { useGrouping: false });
+  }
+  return s;
+}
+
 export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: FormularioParametricoProps) {
   const router = useRouter();
   const [generando, setGenerando] = useState(false);
@@ -157,6 +168,17 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
   const [enviandoPendiente, setEnviandoPendiente] = useState(false);
   const [pendienteId, setPendienteId] = useState<string | null>(null);
   const prevPrellenados = useRef<Partial<ParametrosFormData> | undefined>(undefined);
+
+  // Encabezado del proceso (editable) — arranca con los datos del CSV/caso
+  const [encabezado, setEncabezado] = useState({
+    radicado_bizagi:   casoData.radicado_bizagi ?? "",
+    radicado:          limpiarNum(casoData.radicado),
+    nombre_demandante: casoData.nombre_demandante ?? "",
+    cedula_demandante: casoData.cedula_demandante ?? "",
+    despacho:          casoData.despacho ?? "",
+  });
+  const setEnc = (k: keyof typeof encabezado, v: string) =>
+    setEncabezado((prev) => ({ ...prev, [k]: v }));
 
   // Asistente por pasos
   const PASOS = ["Información del proceso", "Pretensión y cuantía", "Tipo de proceso"];
@@ -316,7 +338,17 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
       const res = await fetch("/api/generar-ficha", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ caso_id: casoId, params: data }),
+        body: JSON.stringify({
+          caso_id: casoId,
+          params: data,
+          caso_override: {
+            radicado_bizagi:   encabezado.radicado_bizagi.trim() || null,
+            radicado:          encabezado.radicado.trim() || null,
+            nombre_demandante: encabezado.nombre_demandante.trim() || null,
+            cedula_demandante: encabezado.cedula_demandante.trim() || null,
+            despacho:          encabezado.despacho.trim() || null,
+          },
+        }),
       });
 
       if (!res.ok) {
@@ -389,10 +421,18 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
                   <Input type="date" value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} />
                 )} />
             </Campo>
-            <CampoLectura label="Radicación de demanda en Bizagi" valor={casoData.radicado_bizagi} />
-            <CampoLectura label="Radicación del proceso (23 dígitos)" valor={casoData.radicado} />
-            <CampoLectura label="Nombre e identificación demandante"
-              valor={[casoData.nombre_demandante, casoData.cedula_demandante ? `C.C. ${casoData.cedula_demandante}` : ""].filter(Boolean).join(". ")} />
+            <Campo label="Radicación de demanda en Bizagi">
+              <Input value={encabezado.radicado_bizagi} onChange={(e) => setEnc("radicado_bizagi", e.target.value)} placeholder="Ej: 2025_1398203" />
+            </Campo>
+            <Campo label="Radicación del proceso (23 dígitos)">
+              <Input value={encabezado.radicado} onChange={(e) => setEnc("radicado", e.target.value)} placeholder="Número de radicación completo" />
+            </Campo>
+            <Campo label="Nombre del demandante">
+              <Input value={encabezado.nombre_demandante} onChange={(e) => setEnc("nombre_demandante", e.target.value)} placeholder="Ej: Wilson Lugo" />
+            </Campo>
+            <Campo label="Cédula del demandante">
+              <Input value={encabezado.cedula_demandante} onChange={(e) => setEnc("cedula_demandante", e.target.value)} placeholder="Ej: 16628522" />
+            </Campo>
             <Campo label="Nombre e identificación causante y/o afiliado">
               <Controller name="causante_afiliado" control={control}
                 render={({ field }) => (
@@ -400,7 +440,9 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
                 )} />
             </Campo>
             <CampoLectura label="Nombre e identificación demandado" valor={DEMANDADO_FIJO} />
-            <CampoLectura label="Autoridad que efectúa la citación" valor={casoData.despacho} />
+            <Campo label="Autoridad que efectúa la citación">
+              <Input value={encabezado.despacho} onChange={(e) => setEnc("despacho", e.target.value)} placeholder="Juzgado / autoridad que cita" />
+            </Campo>
             <Campo label="Juez (nombre)">
               <Controller name="juez" control={control}
                 render={({ field }) => (
