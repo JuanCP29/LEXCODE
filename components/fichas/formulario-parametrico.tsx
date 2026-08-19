@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { Loader2, ArrowRight, ChevronDown, FileSignature, CheckCircle2, AlertCircle, ExternalLink, Mail, Clock } from "lucide-react";
+import { Loader2, ArrowRight, ArrowLeft, ChevronDown, FileSignature, CheckCircle2, AlertCircle, ExternalLink, Mail, Clock } from "lucide-react";
 
 // ─── Componentes base ──────────────────────────────────────────────────────────
 
@@ -138,6 +138,11 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
   const [enviandoPendiente, setEnviandoPendiente] = useState(false);
   const [pendienteId, setPendienteId] = useState<string | null>(null);
   const prevPrellenados = useRef<Partial<ParametrosFormData> | undefined>(undefined);
+
+  // Asistente por pasos
+  const PASOS = ["Documentos previos", "Conciliabilidad", "Pretensión y cuantía", "Tipo de proceso"];
+  const [paso, setPaso] = useState(1);
+  const totalPasos = PASOS.length;
 
   const {
     control,
@@ -319,6 +324,38 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
 
+      {/* ── Asistente por pasos ── */}
+      <div className="flex items-center gap-2 flex-wrap text-sm border-b border-border pb-4">
+        {PASOS.map((nombre, i) => {
+          const n = i + 1;
+          const activo = n === paso;
+          const hecho = n < paso;
+          return (
+            <div key={n} className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setPaso(n)}
+                className={cn(
+                  "flex items-center gap-1.5 transition-colors",
+                  activo ? "text-foreground font-semibold" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <span className={cn(
+                  "w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0",
+                  activo ? "bg-[#1a4a8a] text-white" : hecho ? "bg-[#1a4a8a]/20 text-[#1a4a8a]" : "bg-muted text-muted-foreground"
+                )}>
+                  {n}
+                </span>
+                <span className="hidden sm:inline">{nombre}</span>
+              </button>
+              {n < totalPasos && <span className="text-muted-foreground/40">/</span>}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── Paso 1: Documentos previos ── */}
+      {paso === 1 && (<>
       {/* ── Bloque 0: Documentos previos ── */}
       <div className="rounded-xl border border-border bg-card overflow-hidden">
         {/* Header del bloque */}
@@ -536,8 +573,10 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
           </div>
         </div>
       </div>
+      </>)}
 
-      {/* ── Bloque 1: Conciliabilidad ── */}
+      {/* ── Paso 2: Conciliabilidad ── */}
+      {paso === 2 && (
       <Bloque numero={1} titulo="Conciliabilidad">
         <Campo label="¿El asunto es conciliable?" required>
           <Controller
@@ -571,8 +610,10 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
           </Campo>
         )}
       </Bloque>
+      )}
 
-      {/* ── Bloque 2: Pretensión ── */}
+      {/* ── Paso 3: Pretensión y cuantía ── */}
+      {paso === 3 && (<>
       <Bloque numero={2} titulo="Pretensión">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Campo label="Pretensión" required error={errors.pretension?.message}>
@@ -744,8 +785,10 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
           </Campo>
         </div>
       </Bloque>
+      </>)}
 
-      {/* ── Bloque 5: Tipo de proceso ── */}
+      {/* ── Paso 4: Tipo de proceso ── */}
+      {paso === 4 && (
       <Bloque numero={5} titulo="Tipo de proceso">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Campo label="Jurisdicción" required error={errors.jurisdiccion?.message}>
@@ -935,6 +978,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
           </div>
         </div>
       </Bloque>
+      )}
 
       {error && (
         <div className="rounded-md bg-destructive/10 border border-destructive/30 px-4 py-3 text-sm text-destructive">
@@ -942,18 +986,34 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
         </div>
       )}
 
-      <Button type="submit" className="w-full h-11" disabled={generando}>
-        {generando ? (
-          <>
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Generando ficha con IA...
-          </>
+      {/* ── Navegación del asistente ── */}
+      <div className="flex items-center justify-between gap-3 pt-2">
+        <Button
+          type="button"
+          variant="outline"
+          disabled={paso === 1}
+          onClick={() => setPaso((p) => Math.max(1, p - 1))}
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" /> Atrás
+        </Button>
+
+        {paso < totalPasos ? (
+          <Button
+            type="button"
+            onClick={() => setPaso((p) => Math.min(totalPasos, p + 1))}
+          >
+            Siguiente <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
         ) : (
-          <>
-            Generar ficha <ArrowRight className="w-4 h-4 ml-2" />
-          </>
+          <Button type="submit" className="h-11" disabled={generando}>
+            {generando ? (
+              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generando ficha con IA...</>
+            ) : (
+              <>Generar ficha <ArrowRight className="w-4 h-4 ml-2" /></>
+            )}
+          </Button>
         )}
-      </Button>
+      </div>
     </form>
   );
 }
