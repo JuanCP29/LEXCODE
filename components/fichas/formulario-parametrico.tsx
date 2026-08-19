@@ -143,6 +143,7 @@ interface FormularioParametricoProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   valoresPrellenados?: Record<string, any>;
   sintesisHechosSugerida?: string | null;
+  pretensionesSugerida?: string | null;
 }
 
 const DEMANDADO_FIJO = "Administradora Colombiana de Pensiones — COLPENSIONES. NIT 900.336.004-7";
@@ -158,7 +159,7 @@ function limpiarNum(v: string | null | undefined): string {
   return s;
 }
 
-export function FormularioParametrico({ casoId, casoData, valoresPrellenados, sintesisHechosSugerida }: FormularioParametricoProps) {
+export function FormularioParametrico({ casoId, casoData, valoresPrellenados, sintesisHechosSugerida, pretensionesSugerida }: FormularioParametricoProps) {
   const router = useRouter();
   const [generando, setGenerando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -171,6 +172,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
   const [enviandoPendiente, setEnviandoPendiente] = useState(false);
   const [pendienteId, setPendienteId] = useState<string | null>(null);
   const [sintesisHechos, setSintesisHechos] = useState("");
+  const [pretensionesTexto, setPretensionesTexto] = useState("");
   const prevPrellenados = useRef<Partial<ParametrosFormData> | undefined>(undefined);
 
   // Encabezado del proceso (editable) — arranca con los datos del CSV/caso
@@ -281,6 +283,13 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
     }
   }, [sintesisHechosSugerida, sintesisHechos]);
 
+  // Traer las pretensiones extraídas del traslado al cuadro de texto (Sección 2).
+  useEffect(() => {
+    if (pretensionesSugerida && !pretensionesTexto.trim()) {
+      setPretensionesTexto(pretensionesSugerida);
+    }
+  }, [pretensionesSugerida, pretensionesTexto]);
+
   const clasesDisponibles = (CLASES_POR_PRETENSION[pretension] ?? []).map((c) => ({
     value: c,
     label: c,
@@ -361,6 +370,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
           },
           secciones_manual: {
             sec_1_hechos: sintesisHechos.trim() || null,
+            sec_2_pretensiones: pretensionesTexto.trim() || null,
           },
         }),
       });
@@ -793,7 +803,26 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
         </p>
       </Bloque>
 
-      <Bloque numero={2} titulo="Pretensión">
+      {/* Pretensiones (Sección 2) — traídas del título PRETENSIONES del traslado */}
+      <Bloque icono={<FileText className="w-4 h-4" />} titulo="Pretensiones">
+        <Campo label="Resumen de las pretensiones (Sección 2 del documento)">
+          <textarea
+            value={pretensionesTexto}
+            onChange={(e) => setPretensionesTexto(e.target.value)}
+            rows={8}
+            placeholder="Se traerá automáticamente desde el documento «Traslado de la demanda» (título PRETENSIONES) al analizar los PDFs en el paso 1. También puedes escribirlo o editarlo aquí."
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-ring resize-y min-h-[140px]"
+          />
+        </Campo>
+        <p className="text-[11px] text-muted-foreground flex items-start gap-1">
+          <AlertCircle className="w-3 h-3 shrink-0 mt-0.5" />
+          {pretensionesSugerida
+            ? "Pretensiones sugeridas a partir del traslado. Revísalas antes de continuar; podrás editarlas."
+            : "Sube el «Traslado de la demanda» en el paso 1 y pulsa «Analizar con IA» para traer aquí las pretensiones."}
+        </p>
+      </Bloque>
+
+      <Bloque numero={2} titulo="Pretensión (parámetros)">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Campo label="Pretensión" required error={errors.pretension?.message}>
             <Controller

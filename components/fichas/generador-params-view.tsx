@@ -23,6 +23,7 @@ interface GeneradorParamsViewProps {
 export function GeneradorParamsView({ casoId, casoData }: GeneradorParamsViewProps) {
   const [valoresPrellenados, setValoresPrellenados] = useState<CamposExtraidos | null>(null);
   const [sintesisHechos, setSintesisHechos] = useState<string | null>(null);
+  const [pretensiones, setPretensiones] = useState<string | null>(null);
 
   function handleCampos(campos: CamposExtraidos) {
     setValoresPrellenados(campos);
@@ -31,6 +32,7 @@ export function GeneradorParamsView({ casoId, casoData }: GeneradorParamsViewPro
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function handleSugerencias(s: any) {
     setSintesisHechos(s?.sintesis_hechos ?? null);
+    setPretensiones(s?.pretensiones ?? null);
   }
 
   return (
@@ -41,6 +43,7 @@ export function GeneradorParamsView({ casoId, casoData }: GeneradorParamsViewPro
         casoData={casoData}
         valoresPrellenados={valoresPrellenados ?? undefined}
         sintesisHechosSugerida={sintesisHechos}
+        pretensionesSugerida={pretensiones}
       />
 
       {/* Panel lateral: prerrellenar desde PDFs */}

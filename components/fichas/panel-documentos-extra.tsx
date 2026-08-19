@@ -7,6 +7,7 @@ import { subirArchivoStorage } from "@/lib/supabase/subir-storage";
 
 type Sugerencias = {
   sintesis_hechos?: string | null;
+  pretensiones?: string | null;
   consideraciones?: string | null;
   evaluacion_riesgo?: string | null;
   recomendacion?: string | null;
@@ -14,6 +15,7 @@ type Sugerencias = {
 
 const LABEL_SUGERENCIA: Record<string, string> = {
   sintesis_hechos:   "Síntesis de hechos (sec. 1)",
+  pretensiones:      "Pretensiones (sec. 2)",
   consideraciones:   "Consideraciones (sec. 16)",
   evaluacion_riesgo: "Evaluación del riesgo (sec. 17)",
   recomendacion:     "Recomendación (sec. 18)",

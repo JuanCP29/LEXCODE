@@ -26,34 +26,41 @@ async function recortarPaginasBase64(buffer: Buffer, maxPaginas = 30): Promise<{
   }
 }
 
-// Lee un traslado ESCANEADO con visión de Claude: localiza la sección HECHOS y la resume.
-async function sintesisHechosDesdeVision(
+// Reglas de redaccion comunes a HECHOS y PRETENSIONES (secciones 1 y 2 de la ficha).
+const REGLAS_REDACCION = `- ENUMERA cada punto con el formato "1)", "2)", "3)"... en el MISMO orden de la demanda, separando cada uno del siguiente con una LINEA EN BLANCO (doble salto de linea).
+- Debe haber EXACTAMENTE el MISMO numero de puntos que enumera la demanda en esa seccion (si la demanda lista 14, deben ser 14, de 1) a 14)). NO unas dos en uno, NO omitas ninguno, NO agregues puntos que no existan. Resume cada uno en 1 o 2 frases.
+- Escribe en TERCERA PERSONA. Refierete al demandante como "el senor <NOMBRE>" o "la senora <NOMBRE>" (o "el/la demandante"). NUNCA uses "mi apoderado", "mi poderdante", "mi representado", "mi mandante" ni primera persona: es un resumen elaborado por la parte demandada (Colpensiones), no por el abogado que presento la demanda.
+- Usa TIEMPO PASADO.
+- Recoge UNICAMENTE lo que consta en el documento (fechas, resoluciones, semanas, montos, negativas). No inventes ni interpretes.`;
+
+// Lee un traslado ESCANEADO con visión de Claude: localiza las secciones HECHOS y PRETENSIONES y las resume.
+async function analizarTrasladoVision(
   anthropic: Anthropic,
   pdfs: { nombre: string; buffer: Buffer }[]
-): Promise<string | null> {
-  if (pdfs.length === 0) return null;
+): Promise<{ sintesis_hechos: string | null; pretensiones: string | null }> {
+  const vacio = { sintesis_hechos: null, pretensiones: null };
+  if (pdfs.length === 0) return vacio;
   // Prioriza el documento cuyo nombre sugiere "traslado"; si no, el primero.
   const doc = pdfs.find((p) => /traslad/i.test(p.nombre)) ?? pdfs[0];
   const recorte = await recortarPaginasBase64(doc.buffer, 30);
-  if (!recorte) return null;
+  if (!recorte) return vacio;
 
   const prompt = `Este documento es el TRASLADO de una demanda laboral/pensional (puede estar escaneado, en imagenes).
-Localiza la seccion titulada "HECHOS" (encabezado que puede aparecer como "HECHOS", "HECHOS DE LA DEMANDA" o "III. HECHOS").
+Debes localizar y resumir DOS secciones de la demanda:
+  A) La seccion titulada "HECHOS" (o "HECHOS DE LA DEMANDA", "III. HECHOS") -> va en el campo "sintesis_hechos".
+  B) La seccion titulada "PRETENSIONES" (o "PETICIONES", "PRETENSIONES DE LA DEMANDA") -> va en el campo "pretensiones".
 
-Redacta una SINTESIS de los hechos cumpliendo EXACTAMENTE estas reglas:
-1. ENUMERA cada hecho con el formato "1)", "2)", "3)"... en el MISMO orden de la demanda, separando cada hecho del siguiente con una LINEA EN BLANCO (doble salto de linea).
-2. Debe haber EXACTAMENTE el MISMO numero de hechos que la demanda enumera. Si la demanda tiene 14 hechos, tu sintesis debe tener 14 puntos (de 1) a 14)). NO unas dos hechos en uno, NO omitas ninguno, NO agregues hechos que no existan. Resume cada hecho en 1 o 2 frases.
-3. Escribe en TERCERA PERSONA. Refierete al demandante como "el senor <NOMBRE>" o "la senora <NOMBRE>" (o "el/la demandante"). NUNCA uses "mi apoderado", "mi poderdante", "mi representado", "mi mandante" ni primera persona: recuerda que es un resumen elaborado por la parte demandada (Colpensiones), no por el abogado que presento la demanda.
-4. Usa TIEMPO PASADO (p. ej. "cotizo", "solicito", "presento", "nego", "reconocio").
-5. Recoge UNICAMENTE lo que consta en el documento (fechas, resoluciones, numeros de semanas, montos, negativas). No inventes ni interpretes.
+Para AMBAS secciones aplica EXACTAMENTE estas reglas de redaccion:
+${REGLAS_REDACCION}
 
-Si NO logras ubicar la seccion HECHOS o el documento es ilegible, responde exactamente null.
-Devuelve UNICAMENTE un JSON: { "sintesis_hechos": "1) ...\\n\\n2) ...\\n\\n3) ..." }  o  { "sintesis_hechos": null }`;
+Si NO logras ubicar alguna de las dos secciones o es ilegible, pon ese campo en null (no inventes).
+Devuelve UNICAMENTE un JSON con esta forma exacta:
+{ "sintesis_hechos": "1) ...\\n\\n2) ...", "pretensiones": "1) ...\\n\\n2) ..." }`;
 
   try {
     const message = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 3000,
+      max_tokens: 4000,
       messages: [{
         role: "user",
         content: [
@@ -64,13 +71,17 @@ Devuelve UNICAMENTE un JSON: { "sintesis_hechos": "1) ...\\n\\n2) ...\\n\\n3) ..
     });
     const txt = message.content[0]?.type === "text" ? message.content[0].text : "";
     const m = txt.match(/\{[\s\S]*\}/);
-    if (!m) return null;
+    if (!m) return vacio;
     const parsed = JSON.parse(m[0]);
-    const s = parsed?.sintesis_hechos;
-    return s && String(s).trim() && String(s).trim().toLowerCase() !== "null" ? String(s).trim() : null;
+    const limpiar = (s: unknown) =>
+      s && String(s).trim() && String(s).trim().toLowerCase() !== "null" ? String(s).trim() : null;
+    return {
+      sintesis_hechos: limpiar(parsed?.sintesis_hechos),
+      pretensiones: limpiar(parsed?.pretensiones),
+    };
   } catch (e) {
-    console.error("sintesisHechosDesdeVision:", e);
-    return null;
+    console.error("analizarTrasladoVision:", e);
+    return vacio;
   }
 }
 
@@ -169,15 +180,16 @@ export async function POST(request: NextRequest) {
 
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
-    // ── Documento ESCANEADO (sin capa de texto): leer la sección HECHOS con visión ──
+    // ── Documento ESCANEADO (sin capa de texto): leer HECHOS y PRETENSIONES con visión ──
     if (caracteresExtraidos < 200) {
-      const sintesis = await sintesisHechosDesdeVision(anthropic, pdfs);
+      const vision = await analizarTrasladoVision(anthropic, pdfs);
+      const algo = vision.sintesis_hechos || vision.pretensiones;
       return NextResponse.json({
         campos: {},
-        suggestions: { sintesis_hechos: sintesis ?? null },
+        suggestions: { sintesis_hechos: vision.sintesis_hechos, pretensiones: vision.pretensiones },
         fieldsFound: 0,
-        suggestionsFound: sintesis ? 1 : 0,
-        caracteres_extraidos: sintesis ? 999 : caracteresExtraidos,
+        suggestionsFound: [vision.sintesis_hechos, vision.pretensiones].filter(Boolean).length,
+        caracteres_extraidos: algo ? 999 : caracteresExtraidos,
         escaneado: true,
         archivos_procesados: textos.length,
       });
@@ -214,6 +226,7 @@ Devuelve UNICAMENTE un objeto JSON valido con esta forma exacta (sin texto adici
   },
   "suggestions": {
     "sintesis_hechos": "sintesis de los HECHOS de la demanda (busca la seccion 'HECHOS' del traslado). ENUMERA cada hecho con formato '1)', '2)', '3)'... separando cada hecho con una LINEA EN BLANCO (doble salto de linea, \\n\\n), con EXACTAMENTE el mismo numero de hechos que la demanda. Tercera persona ('el senor <NOMBRE>' / 'la senora <NOMBRE>'), tiempo pasado, sin usar 'mi apoderado', 'mi poderdante' ni primera persona (lo redacta la parte demandada). Solo lo que conste. Devuelve el texto o null.",
+    "pretensiones": "sintesis de las PRETENSIONES de la demanda (busca la seccion 'PRETENSIONES' o 'PETICIONES' del traslado). Mismas reglas que sintesis_hechos: ENUMERA '1)', '2)', '3)'... separando cada una con LINEA EN BLANCO (\\n\\n), con EXACTAMENTE el mismo numero de pretensiones que la demanda, tercera persona, tiempo pasado, sin 'mi apoderado'/'mi poderdante' ni primera persona. Solo lo que conste. Devuelve el texto o null.",
     "consideraciones": "consideraciones juridicas basadas en las fuentes, o null",
     "evaluacion_riesgo": "evaluacion del riesgo procesal segun lo que consta, o null",
     "recomendacion": "recomendacion de conciliacion fundamentada en las fuentes, o null"
