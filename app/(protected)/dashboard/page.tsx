@@ -4,7 +4,6 @@ import {
   FileText, FolderOpen, TrendingUp, CheckCircle,
   FilePlus, ArrowRight,
 } from "lucide-react";
-import { CollegiaLogo } from "@/components/ui/collegia-logo";
 
 // ── Queries ───────────────────────────────────────────────────────────────────
 async function getDashboardData(userId: string) {
@@ -44,19 +43,13 @@ export default async function DashboardPage() {
     <div className="space-y-6 max-w-5xl">
 
       {/* ── Encabezado ──────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-foreground">
-            Bienvenido, {nombre.charAt(0).toUpperCase() + nombre.slice(1)}
-          </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Actividad de Collegia Abogados y tu actividad personal.
-          </p>
-        </div>
-        {/* Logo Collegia */}
-        <div className="hidden sm:flex items-center gap-3 px-4 py-2.5 bg-card rounded-xl border border-border card-shadow">
-          <CollegiaLogo size="sm" />
-        </div>
+      <div>
+        <h1 className="text-xl font-bold text-foreground">
+          Bienvenido, {nombre.charAt(0).toUpperCase() + nombre.slice(1)}
+        </h1>
+        <p className="text-sm text-muted-foreground mt-0.5">
+          Actividad de Collegia Abogados y tu actividad personal.
+        </p>
       </div>
 
       {/* ── Sección empresa ──────────────────────────────────────────────── */}
