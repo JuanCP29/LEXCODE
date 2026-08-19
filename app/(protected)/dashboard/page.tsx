@@ -2,30 +2,18 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import {
   FileText, FolderOpen, TrendingUp, CheckCircle,
-  Users, ChevronRight, FilePlus, ArrowRight,
+  FilePlus, ArrowRight,
 } from "lucide-react";
-import { estadoBadgeClases } from "@/lib/ui/estado-badge";
-import { formatDate } from "@/lib/utils";
 import { CollegiaLogo } from "@/components/ui/collegia-logo";
 
 // ── Queries ───────────────────────────────────────────────────────────────────
 async function getDashboardData(userId: string) {
   const supabase = createClient();
 
-  const [casosRes, fichasRes, actividadCasosRes, actividadFichasRes] =
+  const [casosRes, fichasRes] =
     await Promise.all([
       supabase.from("casos").select("estado", { count: "exact" }).eq("abogado_id", userId),
       supabase.from("fichas_conciliacion").select("estado", { count: "exact" }).eq("creado_por", userId),
-      supabase.from("casos")
-        .select("id, radicado, nombre_demandante, pretension, estado, created_at")
-        .eq("abogado_id", userId)
-        .order("created_at", { ascending: false })
-        .limit(5),
-      supabase.from("fichas_conciliacion")
-        .select("id, caso_id, estado, created_at, casos(radicado, nombre_demandante)")
-        .eq("creado_por", userId)
-        .order("created_at", { ascending: false })
-        .limit(5),
     ]);
 
   const casos  = casosRes.data  ?? [];
@@ -38,22 +26,17 @@ async function getDashboardData(userId: string) {
       totalFichas:  fichasRes.count ?? 0,
       fichasListas: fichas.filter((f) => f.estado === "listo").length,
     },
-    ultimosCasos:  actividadCasosRes.data  ?? [],
-    ultimasFichas: actividadFichasRes.data ?? [],
   };
 }
-
-type CasoRow  = { id: string; radicado: string; nombre_demandante: string; pretension: string | null; estado: string; created_at: string };
-type FichaRow = { id: string; caso_id: string; estado: string; created_at: string; casos: { radicado: string; nombre_demandante: string } | { radicado: string; nombre_demandante: string }[] | null };
 
 // ── Página ────────────────────────────────────────────────────────────────────
 export default async function DashboardPage() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { stats, ultimosCasos, ultimasFichas } = user
+  const { stats } = user
     ? await getDashboardData(user.id)
-    : { stats: { totalCasos: 0, casosActivos: 0, totalFichas: 0, fichasListas: 0 }, ultimosCasos: [], ultimasFichas: [] };
+    : { stats: { totalCasos: 0, casosActivos: 0, totalFichas: 0, fichasListas: 0 } };
 
   const nombre = user?.email?.split("@")[0] ?? "abogado";
 
@@ -89,107 +72,26 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Fila principal ───────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-
-        {/* Casos recientes — 3 cols */}
-        <div className="lg:col-span-3 bg-card rounded-xl border border-border card-shadow">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-            <h2 className="text-sm font-semibold text-foreground">Casos recientes</h2>
-            <Link href="/casos" className="text-xs text-primary hover:underline flex items-center gap-0.5 font-medium">
-              Ver todos <ChevronRight className="w-3 h-3" />
-            </Link>
-          </div>
-
-          {ultimosCasos.length === 0 ? (
-            <Empty icon={FolderOpen} texto="No hay casos aún" link={{ href: "/casos/nuevo", label: "Crear primer caso" }} />
-          ) : (
-            <ul className="divide-y divide-border">
-              {(ultimosCasos as CasoRow[]).map((c) => (
-                <li key={c.id}>
-                  <Link href={`/casos/${c.id}`} className="flex items-center gap-3 px-5 py-3 hover:bg-muted/50 transition-colors group">
-                    <div className="w-8 h-8 rounded-lg bg-primary-subtle flex items-center justify-center shrink-0">
-                      <FolderOpen className="w-4 h-4 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
-                        {c.nombre_demandante}
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-end gap-1 shrink-0">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${estadoBadgeClases(c.estado)}`}>
-                        {c.estado}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground">{formatDate(c.created_at)}</span>
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        {/* Columna derecha — 2 cols */}
-        <div className="lg:col-span-2 space-y-4">
-
-          {/* Acciones rápidas */}
-          <div className="bg-card rounded-xl border border-border card-shadow p-1">
-            <QuickAction
-              href="/casos/nuevo"
-              icon={FilePlus}
-              label="Nueva pretensión"
-              desc="Registrar un nuevo caso"
-            />
-            <QuickAction
-              href="/documentos"
-              icon={FileText}
-              label="Historial"
-              desc="Ver todos los documentos generados"
-            />
-            <QuickAction
-              href="/casos"
-              icon={FolderOpen}
-              label="Cola de casos"
-              desc="Gestionar casos activos"
-            />
-          </div>
-
-          {/* Fichas recientes */}
-          <div className="bg-card rounded-xl border border-border card-shadow">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-              <h2 className="text-sm font-semibold text-foreground">Fichas recientes</h2>
-              <Link href="/documentos" className="text-xs text-primary hover:underline font-medium">
-                Ver todas
-              </Link>
-            </div>
-            {ultimasFichas.length === 0 ? (
-              <Empty icon={FileText} texto="Sin fichas generadas" />
-            ) : (
-              <ul className="divide-y divide-border">
-                {(ultimasFichas as FichaRow[]).map((f) => {
-                  const caso = Array.isArray(f.casos) ? f.casos[0] : f.casos;
-                  return (
-                    <li key={f.id}>
-                      <Link href={`/generador/${f.caso_id}/ficha?ficha_id=${f.id}`}
-                        className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors group">
-                        <FileText className="w-4 h-4 text-primary shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-foreground truncate group-hover:text-primary transition-colors">
-                            {caso?.nombre_demandante ?? "—"}
-                          </p>
-                          <p className="text-[10px] text-muted-foreground mt-0.5">{formatDate(f.created_at)}</p>
-                        </div>
-                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${estadoBadgeClases(f.estado)}`}>
-                          {f.estado.replace("_", " ")}
-                        </span>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
-        </div>
+      {/* ── Accesos rápidos ──────────────────────────────────────────────── */}
+      <div className="bg-card rounded-xl border border-border card-shadow p-1 max-w-md">
+        <QuickAction
+          href="/casos/nuevo"
+          icon={FilePlus}
+          label="Nueva pretensión"
+          desc="Registrar un nuevo caso"
+        />
+        <QuickAction
+          href="/documentos"
+          icon={FileText}
+          label="Historial"
+          desc="Ver todos los documentos generados"
+        />
+        <QuickAction
+          href="/casos"
+          icon={FolderOpen}
+          label="Cola de casos"
+          desc="Gestionar casos activos"
+        />
       </div>
     </div>
   );
@@ -232,17 +134,5 @@ function QuickAction({ href, icon: Icon, label, desc }: {
         Abrir <ArrowRight className="w-3.5 h-3.5" />
       </div>
     </Link>
-  );
-}
-
-function Empty({ icon: Icon, texto, link }: {
-  icon: React.ElementType; texto: string; link?: { href: string; label: string };
-}) {
-  return (
-    <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
-      <Icon className="w-7 h-7 text-muted-foreground/40" />
-      <p className="text-sm text-muted-foreground">{texto}</p>
-      {link && <Link href={link.href} className="text-xs text-primary hover:underline">{link.label}</Link>}
-    </div>
   );
 }
