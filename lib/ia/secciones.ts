@@ -28,8 +28,8 @@ export const SECCIONES: DefSeccion[] = [
   { numero: 10, key: "sec_15_politicas",       label: "Políticas / llamamientos",    tipo: "DEFAULT", descripcion: "Texto por defecto con políticas de Colpensiones." },
   { numero: 11, key: "sec_16_consideraciones", label: "Consideraciones",             tipo: "AUTO",    descripcion: "IA genera las consideraciones jurídicas." },
   { numero: 12, key: "sec_17_riesgo",          label: "Evaluación de riesgo",        tipo: "DEFAULT", descripcion: "Texto por defecto según el nivel de riesgo estimado." },
-  { numero: 13, key: "sec_18_recomendacion",   label: "Recomendación",               tipo: "AUTO",    descripcion: "IA genera la recomendación de conciliación." },
-  { numero: 14, key: "sec_19_elaboro",         label: "Elaboró",                     tipo: "MANUAL",  descripcion: "El abogado firma y registra quién elaboró la ficha." },
+  { numero: 13, key: "sec_18_recomendacion",   label: "Recomendación",               tipo: "AUTO",    descripcion: "IA genera la recomendación de conciliación.", oculta: true },
+  { numero: 14, key: "sec_19_elaboro",         label: "Elaboró",                     tipo: "MANUAL",  descripcion: "El abogado firma y registra quién elaboró la ficha.", oculta: true },
 ];
 
 export const BADGE_TIPO: Record<TipoSeccion, { label: string; clase: string }> = {
