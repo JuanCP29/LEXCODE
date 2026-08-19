@@ -10,7 +10,7 @@ import { LogOut, ChevronRight, Search, Menu, Sun, Moon, Bell } from "lucide-reac
 
 const breadcrumbMap: Record<string, string> = {
   dashboard:     "Inicio",
-  casos:         "Casos",
+  casos:         "Reparto",
   nuevo:         "Nuevo caso",
   documentos:    "Historial",
   configuracion: "Configuración",

@@ -18,7 +18,7 @@ import {
 
 const navItems = [
   { href: "/dashboard",                     label: "Inicio",         icon: LayoutDashboard },
-  { href: "/casos",                         label: "Casos",           icon: FolderOpen },
+  { href: "/casos",                         label: "Reparto",         icon: FolderOpen },
   { href: "/documentos",                    label: "Historial",       icon: FileText },
   { href: "/cola-de-casos",                  label: "Cola de casos",   icon: ListChecks },
   { href: "/pendientes",                     label: "Pendientes",      icon: Clock },
