@@ -167,6 +167,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
   const [envioUsado, setEnvioUsado] = useState<"portal" | "gmail" | null>(null);
   const [enviandoPendiente, setEnviandoPendiente] = useState(false);
   const [pendienteId, setPendienteId] = useState<string | null>(null);
+  const [causanteSugerido, setCausanteSugerido] = useState<string | null>(null);
   const prevPrellenados = useRef<Partial<ParametrosFormData> | undefined>(undefined);
 
   // Encabezado del proceso (editable) — arranca con los datos del CSV/caso
@@ -221,9 +222,18 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
 
   const conciliable      = watch("conciliable");
   const pretension       = watch("pretension");
+  const clasePretension  = watch("clase_pretension");
   const cuantiaTipo      = watch("cuantia_tipo");
   const hayFallo         = watch("hay_fallo");
+  const causanteActual   = watch("causante_afiliado");
   const mostrarTasas     = pretension === "vejez" || pretension === "invalidez";
+
+  // El causante/afiliado difiere del demandante en sobrevivientes, postmortem y auxilio funerario.
+  // En esos casos se sugiere el nombre extraído de los PDFs y se pide validarlo.
+  const causanteDistinto = (() => {
+    const t = `${pretension ?? ""} ${clasePretension ?? ""}`.toLowerCase();
+    return t.includes("sobreviviente") || t.includes("postmortem") || t.includes("post mortem") || t.includes("funerario");
+  })();
 
   async function handleGenerarPoder() {
     setGenerandoPoder(true);
@@ -263,12 +273,24 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
     prevPrellenados.current = valoresPrellenados;
     (Object.entries(valoresPrellenados) as [keyof ParametrosFormData, unknown][]).forEach(
       ([key, val]) => {
-        if (val !== null && val !== undefined) {
-          setValue(key, val as never, { shouldDirty: true });
+        if (val === null || val === undefined) return;
+        // El causante se guarda como sugerencia y solo se aplica en casos que lo requieren.
+        if (key === "causante_afiliado") {
+          setCausanteSugerido(String(val));
+          return;
         }
+        setValue(key, val as never, { shouldDirty: true });
       }
     );
   }, [valoresPrellenados, setValue]);
+
+  // Aplicar el causante sugerido solo cuando el tipo de pretensión lo requiere (sobrevivientes/postmortem/funerario)
+  // y el campo aún está vacío (no pisar lo que el abogado escriba).
+  useEffect(() => {
+    if (causanteDistinto && causanteSugerido && !(causanteActual ?? "").trim()) {
+      setValue("causante_afiliado", causanteSugerido, { shouldDirty: true });
+    }
+  }, [causanteDistinto, causanteSugerido, causanteActual, setValue]);
 
   const clasesDisponibles = (CLASES_POR_PRETENSION[pretension] ?? []).map((c) => ({
     value: c,
@@ -436,8 +458,22 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
             <Campo label="Nombre e identificación causante y/o afiliado">
               <Controller name="causante_afiliado" control={control}
                 render={({ field }) => (
-                  <Input value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} placeholder="Solo si difiere del demandante (ej. sobrevivientes)" />
+                  <Input
+                    value={field.value ?? ""}
+                    onChange={(e) => field.onChange(e.target.value || null)}
+                    placeholder="Solo si difiere del demandante (ej. sobrevivientes)"
+                    className={causanteDistinto ? "border-orange-400 focus:ring-orange-400 bg-orange-50 dark:border-orange-600 dark:bg-orange-950/20" : undefined}
+                  />
                 )} />
+              {causanteDistinto && (
+                <p className="text-[11px] text-orange-600 dark:text-orange-400 flex items-start gap-1 mt-1">
+                  <AlertCircle className="w-3 h-3 shrink-0 mt-0.5" />
+                  <span>
+                    Validar nombre del causante y/o afiliado
+                    {causanteSugerido ? " — sugerido desde los documentos cargados." : ". Cárgalo desde los PDFs para obtener la sugerencia."}
+                  </span>
+                </p>
+              )}
             </Campo>
             <CampoLectura label="Nombre e identificación demandado" valor={DEMANDADO_FIJO} />
             <Campo label="Autoridad que efectúa la citación">

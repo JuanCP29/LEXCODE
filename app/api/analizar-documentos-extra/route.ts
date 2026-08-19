@@ -112,7 +112,8 @@ Devuelve UNICAMENTE un objeto JSON valido con esta forma exacta (sin texto adici
     "hay_fallo": true si hay sentencia de primera instancia o false o null,
     "sintesis_fallo": "resumen del fallo en 2-3 oraciones o null",
     "pretende_intereses": true o false o null,
-    "pretende_indexacion": true o false o null
+    "pretende_indexacion": true o false o null,
+    "causante_afiliado": "SOLO para pension de sobrevivientes, pension postmortem o auxilio funerario: nombre completo y numero de identificacion de la persona CAUSANTE o AFILIADO (el afiliado fallecido cuya prestacion se reclama, que NO es el demandante). Formato 'NOMBRE COMPLETO. C.C. NUMERO'. En cualquier otro tipo de pretension devuelve null."
   },
   "suggestions": {
     "sintesis_hechos": "sintesis de los hechos del caso, redactada a partir de los documentos, o null",
