@@ -63,16 +63,10 @@ function parsearFila(row: Record<string, unknown>) {
 }
 
 function EstadoBadge({ estado }: { estado: string }) {
-  const iconos: Record<string, React.ElementType> = {
-    pendiente:  Clock,
-    en_proceso: RefreshCw,
-    completado: CheckCircle2,
-  };
   const est = WORKFLOW_ESTADO[estado] ?? WORKFLOW_ESTADO.pendiente;
-  const Icon = iconos[estado] ?? Clock;
   return (
-    <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold", est.clase)}>
-      <Icon className="w-2.5 h-2.5" /> {est.label}
+    <span className={cn("inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold", est.clase)}>
+      {est.label}
     </span>
   );
 }

@@ -152,8 +152,7 @@ export function TablaCasos({ casos }: TablaCasosProps) {
                     const clave = fichaLista ? "completado" : fichaEnProceso ? "en_proceso" : "pendiente";
                     const est = WORKFLOW_ESTADO[clave];
                     return (
-                      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap ${est.clase}`}>
-                        <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0" />
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold whitespace-nowrap ${est.clase}`}>
                         {est.label}
                       </span>
                     );
@@ -197,15 +196,15 @@ export function TablaCasos({ casos }: TablaCasosProps) {
       {/* Leyenda */}
       <div className="flex flex-wrap items-center gap-5 px-4 py-3 border-t border-border bg-muted/20 text-[11px] text-muted-foreground">
         <span className="flex items-center gap-1.5">
-          <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${WORKFLOW_ESTADO.completado.clase}`}>Completado</span>
+          <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${WORKFLOW_ESTADO.completado.clase}`}>Completado</span>
           Conciliación lista — Contestación Dda habilitada
         </span>
         <span className="flex items-center gap-1.5">
-          <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${WORKFLOW_ESTADO.en_proceso.clase}`}>En proceso</span>
+          <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${WORKFLOW_ESTADO.en_proceso.clase}`}>En proceso</span>
           Ficha en proceso
         </span>
         <span className="flex items-center gap-1.5">
-          <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${WORKFLOW_ESTADO.pendiente.clase}`}>Pendiente</span>
+          <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${WORKFLOW_ESTADO.pendiente.clase}`}>Pendiente</span>
           Sin ficha generada
         </span>
         <span className="flex items-center gap-1.5 ml-auto">
