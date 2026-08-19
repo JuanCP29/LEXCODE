@@ -147,8 +147,8 @@ export function TablaCasos({ casos }: TablaCasosProps) {
 
                 {/* Estado ficha */}
                 <td className="px-3 py-3">
-                  <Link href={`/casos/${caso.id}`} title="Ver caso"
-                    className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold transition-opacity hover:opacity-80 ${
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap ${
                       fichaLista
                         ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                         : fichaEnProceso
@@ -156,8 +156,9 @@ export function TablaCasos({ casos }: TablaCasosProps) {
                         : "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
                     }`}
                   >
+                    <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0" />
                     {fichaLista ? "Completado" : fichaEnProceso ? "En proceso" : "Pendiente"}
-                  </Link>
+                  </span>
                 </td>
 
                 {/* Radicado */}
