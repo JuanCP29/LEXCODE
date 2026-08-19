@@ -479,12 +479,6 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
             <Campo label="Autoridad que efectúa la citación">
               <Input value={encabezado.despacho} onChange={(e) => setEnc("despacho", e.target.value)} placeholder="Juzgado / autoridad que cita" />
             </Campo>
-            <Campo label="Juez (nombre)">
-              <Controller name="juez" control={control}
-                render={({ field }) => (
-                  <Input value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} placeholder="Ej: Dr. Jaime García Pardo" />
-                )} />
-            </Campo>
             <Campo label="Caducidad">
               <Controller name="caducidad" control={control}
                 render={({ field }) => (
