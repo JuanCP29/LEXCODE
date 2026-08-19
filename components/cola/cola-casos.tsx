@@ -186,7 +186,7 @@ export function ColaCasos() {
           type="button"
           disabled={subiendo}
           onClick={() => inputRef.current?.click()}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#171717] text-white text-sm font-semibold hover:bg-[#2d2d2d] transition-colors disabled:opacity-60"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-60"
         >
           {subiendo ? <><Loader2 className="w-4 h-4 animate-spin" /> Importando...</> : <><Upload className="w-4 h-4" /> Subir CSV / Excel</>}
         </button>
@@ -276,7 +276,7 @@ export function ColaCasos() {
                   type="button"
                   onClick={() => iniciar(c)}
                   disabled={c.cola_estado === "completado"}
-                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-[#171717] text-[#171717] text-xs font-semibold hover:bg-[#171717] hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-primary text-primary text-xs font-semibold hover:bg-primary hover:text-primary-foreground transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
                 >
                   <Play className="w-3 h-3" /> {c.cola_estado === "completado" ? "Hecho" : "Iniciar"}
                 </button>

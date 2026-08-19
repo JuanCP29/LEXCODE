@@ -82,7 +82,7 @@ export default async function DashboardPage() {
           Mi actividad
         </p>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <StatCard label="Documentos"    value={stats.totalFichas}  icon={FileText}   color="#171717" />
+          <StatCard label="Documentos"    value={stats.totalFichas}  icon={FileText}   color="#71717a" />
           <StatCard label="Casos activos" value={stats.casosActivos} icon={TrendingUp}  color="#059669" />
           <StatCard label="Total casos"   value={stats.totalCasos}   icon={FolderOpen}  color="#7c3aed" />
           <StatCard label="Fichas listas" value={stats.fichasListas} icon={CheckCircle} color="#d97706" />
@@ -115,7 +115,6 @@ export default async function DashboardPage() {
                       <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
                         {c.nombre_demandante}
                       </p>
-                      <p className="text-xs text-muted-foreground font-mono mt-0.5 truncate">{c.radicado}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1 shrink-0">
                       <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${estadoBadgeClases(c.estado)}`}>

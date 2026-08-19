@@ -44,7 +44,7 @@ export function TablaCasos({ casos }: TablaCasosProps) {
         <p className="text-sm">No hay casos registrados</p>
         <Link
           href="/casos/nuevo"
-          className="text-sm text-[#171717] hover:underline font-medium"
+          className="text-sm text-primary hover:underline font-medium"
         >
           Registrar primer caso →
         </Link>
@@ -106,7 +106,7 @@ export function TablaCasos({ casos }: TablaCasosProps) {
                 <td className="px-4 py-3 whitespace-nowrap">
                   <Link
                     href={`/generador/${caso.id}/params`}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-semibold transition-colors border-[#171717] text-[#171717] hover:bg-[#171717] hover:text-white"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-semibold transition-colors border-primary text-primary hover:bg-primary hover:text-primary-foreground"
                   >
                     F. Conciliación
                   </Link>
@@ -117,7 +117,7 @@ export function TablaCasos({ casos }: TablaCasosProps) {
                   {fichaLista ? (
                     <Link
                       href={`/demanda/${caso.id}`}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-semibold transition-colors border-[#7c3aed] text-[#7c3aed] hover:bg-[#7c3aed] hover:text-white"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-semibold transition-colors border-[#7c3aed] text-[#7c3aed] hover:bg-[#7c3aed] hover:text-primary-foreground"
                     >
                       Contestación Dda
                     </Link>
@@ -154,7 +154,7 @@ export function TablaCasos({ casos }: TablaCasosProps) {
                     )}
                     <Link
                       href={`/casos/${caso.id}`}
-                      className="text-[10px] text-muted-foreground hover:text-[#171717] transition-colors font-medium"
+                      className="text-[10px] text-muted-foreground hover:text-primary transition-colors font-medium"
                     >
                       Ver
                     </Link>
