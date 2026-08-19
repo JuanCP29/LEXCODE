@@ -53,10 +53,8 @@ function parsearFila(row: Record<string, unknown>): CasoPreview | null {
   const nombre   = str(row["NOMBRE_DEMANDANTE"]);
   if (!radicado || !nombre) return null;
 
-  const municipio    = str(row["MUNICIPIO"])?.replace(/_/g, " ") ?? "";
-  const departamento = str(row["DEPARTAMENTO"])?.replace(/_/g, " ") ?? "";
   const despachoBase = str(row["DESPACHOACTUAL"]) ?? str(row["NOMBRE_DESPACHO_INICIAL"]) ?? "";
-  const despacho     = [despachoBase, municipio, departamento].filter(Boolean).join(" — ") || null;
+  const despacho     = despachoBase.trim() || null;
 
   return {
     radicado,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { limpiarDespacho } from "@/lib/utils";
 import PDFDocument from "pdfkit";
 
 function createSupabaseServer() {
@@ -82,7 +83,7 @@ export async function POST(request: NextRequest) {
         .text(`Señores`)
         .font("Helvetica-Bold")
         .fillColor(AZUL)
-        .text((caso.despacho ?? "JUZGADO COMPETENTE").toUpperCase());
+        .text((limpiarDespacho(caso.despacho) ?? "JUZGADO COMPETENTE").toUpperCase());
 
       doc.moveDown(0.3);
       doc.font("Helvetica").fillColor(GRIS).fontSize(9).text("E. S. D.");

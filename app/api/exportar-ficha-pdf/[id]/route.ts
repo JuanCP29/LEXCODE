@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { limpiarDespacho } from "@/lib/utils";
 import { generarFichaPdf, type DatosFichaPdf } from "@/lib/pdf/generar-ficha-pdf";
 
 function sb() {
@@ -40,7 +41,7 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
       nombre_demandante:  caso.nombre_demandante ?? null,
       cedula_demandante:  caso.cedula_demandante ?? null,
       causante_afiliado:  ficha.causante_afiliado ?? null,
-      autoridad_citacion: [caso.despacho, ficha.juez].filter(Boolean).join(" — ") || null,
+      autoridad_citacion: [limpiarDespacho(caso.despacho), ficha.juez].filter(Boolean).join(" — ") || null,
       caducidad:          ficha.caducidad ?? null,
       reconsideracion:    ficha.reconsideracion ?? null,
       // 14 secciones (por clave de BD)

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { limpiarDespacho } from "@/lib/utils";
 import PDFDocument from "pdfkit";
 
 function createSupabaseServer() {
@@ -129,7 +130,7 @@ export async function POST(request: NextRequest) {
       fila("Radicación Bizagi",       caso.radicado_bizagi ?? "—");
       fila("Demandante",              caso.nombre_demandante ?? "—");
       fila("Cédula demandante",       caso.cedula_demandante ?? "—");
-      fila("Despacho / Autoridad",    caso.despacho ?? "—");
+      fila("Despacho / Autoridad",    limpiarDespacho(caso.despacho) ?? "—");
       fila("Pretensión",              [caso.pretension, caso.clase_pretension].filter(Boolean).join(" — ") || "—");
       fila("Jurisdicción",            caso.jurisdiccion ?? "—");
 
@@ -145,7 +146,7 @@ export async function POST(request: NextRequest) {
       doc.moveDown(0.5);
 
       const cuerpo = [
-        `En la ciudad de Cali, a los ${fechaHoy}, yo, ${nombreAbogado}, abogado(a) en ejercicio, identificado(a) con tarjeta profesional del Consejo Superior de la Judicatura, actuando como apoderado(a) externo(a) de COLPENSIONES dentro del proceso identificado con el radicado No. ${caso.radicado ?? "_______________"}, que cursa ante ${caso.despacho ?? "el despacho competente"}, en el que figura como demandante ${caso.nombre_demandante ?? "_______________"}, identificado(a) con C.C. No. ${caso.cedula_demandante ?? "_______________"},`,
+        `En la ciudad de Cali, a los ${fechaHoy}, yo, ${nombreAbogado}, abogado(a) en ejercicio, identificado(a) con tarjeta profesional del Consejo Superior de la Judicatura, actuando como apoderado(a) externo(a) de COLPENSIONES dentro del proceso identificado con el radicado No. ${caso.radicado ?? "_______________"}, que cursa ante ${limpiarDespacho(caso.despacho) ?? "el despacho competente"}, en el que figura como demandante ${caso.nombre_demandante ?? "_______________"}, identificado(a) con C.C. No. ${caso.cedula_demandante ?? "_______________"},`,
         `CONFIERO PODER ESPECIAL DE SUSTITUCIÓN`,
         `a un(a) abogado(a) debidamente facultado(a) para representar a COLPENSIONES en todas las actuaciones judiciales del proceso anteriormente descrito, con plenas facultades para presentar y contestar demandas, proponer excepciones, interponer recursos, asistir a audiencias, celebrar acuerdos conciliatorios, recibir notificaciones y demás actuaciones que el proceso requiera, en los términos del artículo 77 del C.P.T. y S.S.`,
         `El presente poder de sustitución se otorga con el fin de garantizar la adecuada representación de COLPENSIONES ante la autoridad competente que conoce del proceso, de conformidad con lo establecido en el Código General del Proceso y demás normas concordantes.`,

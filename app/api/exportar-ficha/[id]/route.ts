@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { limpiarDespacho } from "@/lib/utils";
 import { generarFichaDocx } from "@/lib/docx/generar-ficha-docx";
 
 function createSupabaseServer() {
@@ -64,7 +65,7 @@ export async function GET(
       nombre_demandante:    caso.nombre_demandante ?? "",
       cedula_demandante:    caso.cedula_demandante,
       expediente_pensional: caso.expediente_pensional,
-      despacho:             caso.despacho,
+      despacho:             limpiarDespacho(caso.despacho),
       jurisdiccion:         caso.jurisdiccion,
       pretension:           caso.pretension,
       clase_pretension:     caso.clase_pretension,

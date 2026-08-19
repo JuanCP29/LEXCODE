@@ -46,10 +46,8 @@ function parsearFila(row: Record<string, unknown>) {
   const radicado = str(row["DIGITOS_23"]) ?? str(row["ID PROCESO"]) ?? str(row["RADICADO"]);
   const nombre = str(row["NOMBRE_DEMANDANTE"]) ?? str(row["DEMANDANTE"]);
   if (!radicado || !nombre) return null;
-  const municipio = str(row["MUNICIPIO"])?.replace(/_/g, " ") ?? "";
-  const depto = str(row["DEPARTAMENTO"])?.replace(/_/g, " ") ?? "";
   const despachoBase = str(row["DESPACHOACTUAL"]) ?? str(row["NOMBRE_DESPACHO_INICIAL"]) ?? str(row["DESPACHO"]) ?? "";
-  const despacho = [despachoBase, municipio, depto].filter(Boolean).join(" — ") || null;
+  const despacho = despachoBase.trim() || null;
   return {
     radicado,
     radicado_bizagi: str(row["NO_BIZAGI"]),

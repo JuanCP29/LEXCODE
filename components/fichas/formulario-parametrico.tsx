@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
+import { cn, limpiarDespacho } from "@/lib/utils";
 import { Loader2, ArrowRight, ArrowLeft, ChevronDown, FileSignature, CheckCircle2, AlertCircle, ExternalLink, Mail, Clock } from "lucide-react";
 
 // ─── Componentes base ──────────────────────────────────────────────────────────
@@ -175,7 +175,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
     radicado:          limpiarNum(casoData.radicado),
     nombre_demandante: casoData.nombre_demandante ?? "",
     cedula_demandante: casoData.cedula_demandante ?? "",
-    despacho:          casoData.despacho ?? "",
+    despacho:          limpiarDespacho(casoData.despacho) ?? "",
   });
   const setEnc = (k: keyof typeof encabezado, v: string) =>
     setEncabezado((prev) => ({ ...prev, [k]: v }));

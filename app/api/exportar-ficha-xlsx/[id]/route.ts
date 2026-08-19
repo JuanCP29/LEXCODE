@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { limpiarDespacho } from "@/lib/utils";
 import path from "path";
 import fs from "fs";
 import { generarFichaXlsx } from "@/lib/xlsx/generar-ficha-xlsx";
@@ -54,7 +55,7 @@ export async function GET(
       radicado:                    caso.radicado ?? "",
       nombre_demandante:           caso.nombre_demandante ?? "",
       expediente_pensional_aplica: ficha.expediente_pensional_aplica ?? (caso.expediente_pensional ? "SI" : "NO APLICA"),
-      despacho:                    caso.despacho ?? "",
+      despacho:                    limpiarDespacho(caso.despacho) ?? "",
       caducidad:                   ficha.caducidad ?? "",
       sec_1:  ficha.sec_1_hechos ?? "",
       sec_2:  ficha.sec_2_pretensiones ?? "",

@@ -13,6 +13,14 @@ export function formatDate(dateString: string): string {
   });
 }
 
+// Quita la ciudad repetida y el departamento del despacho
+// ("JUZGADO ... DE CALI — CALI — VALLE DEL CAUCA" → "JUZGADO ... DE CALI")
+export function limpiarDespacho(texto: string | null | undefined): string | null {
+  if (!texto) return null;
+  const base = texto.split(/\s*[—–]\s*/)[0].trim();
+  return base || null;
+}
+
 export function formatCurrency(value: number): string {
   return new Intl.NumberFormat("es-CO", {
     style: "currency",
