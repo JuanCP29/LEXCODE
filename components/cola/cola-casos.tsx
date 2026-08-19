@@ -164,7 +164,7 @@ export function ColaCasos() {
       {/* Header + progreso */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-xl font-bold text-foreground">Cola de casos</h1>
+          <h1 className="text-xl font-bold text-foreground">Asignaciones</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             Sube una base (CSV/Excel), asigna casos al equipo y trabaja tu cola.
           </p>

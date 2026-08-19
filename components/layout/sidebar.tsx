@@ -20,7 +20,7 @@ const navItems = [
   { href: "/dashboard",                     label: "Inicio",         icon: LayoutDashboard },
   { href: "/casos",                         label: "Reparto",         icon: FolderOpen },
   { href: "/documentos",                    label: "Historial",       icon: FileText },
-  { href: "/cola-de-casos",                  label: "Cola de casos",   icon: ListChecks },
+  { href: "/cola-de-casos",                  label: "Asignaciones",    icon: ListChecks },
   { href: "/pendientes",                     label: "Pendientes",      icon: Clock },
   { href: "/configuracion",                 label: "Configuración",   icon: Settings },
   { href: "/configuracion/directrices",     label: "Directrices",     icon: BookMarked, sub: true },

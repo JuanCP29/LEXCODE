@@ -82,7 +82,7 @@ export default async function DashboardPage() {
         <QuickAction
           href="/casos"
           icon={FolderOpen}
-          label="Cola de casos"
+          label="Asignaciones"
           desc="Gestionar casos activos"
         />
       </div>
