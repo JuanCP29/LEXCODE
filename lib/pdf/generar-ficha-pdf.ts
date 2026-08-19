@@ -93,6 +93,19 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
 
+    // Fuente Roboto (más limpia) si está disponible; si no, Helvetica.
+    let FONT = "Helvetica", FONT_BOLD = "Helvetica-Bold";
+    try {
+      const dir = path.join(process.cwd(), "public", "fonts");
+      const reg = path.join(dir, "Roboto-Regular.ttf");
+      const bold = path.join(dir, "Roboto-Bold.ttf");
+      if (fs.existsSync(reg) && fs.existsSync(bold)) {
+        doc.registerFont("Roboto", reg);
+        doc.registerFont("Roboto-Bold", bold);
+        FONT = "Roboto"; FONT_BOLD = "Roboto-Bold";
+      }
+    } catch { /* fallback Helvetica */ }
+
     const left = M;
     const W = doc.page.width - 2 * M;
     const bottom = doc.page.height - M;
@@ -111,14 +124,14 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
       try {
         doc.image(logo, left + 10, y0 + 10, { fit: [wLogo - 20, hTit - 20], align: "center", valign: "center" });
       } catch {
-        doc.fillColor(NEGRO).font("Helvetica-Bold").fontSize(11).text("COLPENSIONES", left, y0 + hTit / 2 - 7, { width: wLogo, align: "center" });
+        doc.fillColor(NEGRO).font(FONT_BOLD).fontSize(11).text("COLPENSIONES", left, y0 + hTit / 2 - 7, { width: wLogo, align: "center" });
       }
     } else {
-      doc.fillColor(NEGRO).font("Helvetica-Bold").fontSize(11)
+      doc.fillColor(NEGRO).font(FONT_BOLD).fontSize(11)
         .text("COLPENSIONES", left, y0 + hTit / 2 - 7, { width: wLogo, align: "center" });
     }
     // título a la izquierda, centrado verticalmente
-    doc.fillColor(NEGRO).font("Helvetica-Bold").fontSize(13);
+    doc.fillColor(NEGRO).font(FONT_BOLD).fontSize(13);
     const hTitleTxt = doc.heightOfString("FICHA DE CONCILIACIÓN JUDICIAL", { width: wTitulo - 16 });
     doc.text("FICHA DE CONCILIACIÓN JUDICIAL", left + wLogo + 8, y0 + (hTit - hTitleTxt) / 2, { width: wTitulo - 16, align: "left" });
     // meta: 3 filas (código, versión, fecha)
@@ -130,9 +143,9 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
       const my = y0 + i * hMetaRow;
       doc.rect(metaX, my, wMetaL, hMetaRow).stroke(BORDE);
       doc.rect(metaX + wMetaL, my, wMetaV, hMetaRow).stroke(BORDE);
-      doc.font("Helvetica-Bold").fontSize(7.5).fillColor(NEGRO)
+      doc.font(FONT_BOLD).fontSize(7.5).fillColor(NEGRO)
         .text(mr[0], metaX + 3, my + 5, { width: wMetaL - 6 });
-      doc.font("Helvetica").fontSize(7.5)
+      doc.font(FONT).fontSize(7.5)
         .text(mr[1], metaX + wMetaL + 3, my + 5, { width: wMetaV - 6 });
     });
     doc.y = y0 + hTit + 10;
@@ -143,9 +156,9 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
     const valueW = W - labelW;
     for (const row of ENCABEZADO_ROWS) {
       const valor = row.get(datos);
-      doc.font("Helvetica-Bold").fontSize(9);
+      doc.font(FONT_BOLD).fontSize(9);
       const hLabel = doc.heightOfString(row.label, { width: labelW - 10 });
-      doc.font("Helvetica").fontSize(9);
+      doc.font(FONT).fontSize(9);
       const hValue = doc.heightOfString(valor || " ", { width: valueW - 10 });
       const rowH = Math.max(hLabel, hValue, 14) + 8;
       if (doc.y + rowH > bottom) { doc.addPage(); doc.y = M; }
@@ -154,9 +167,9 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
       doc.rect(left + labelW, ry, valueW, rowH).stroke(BORDE);
       const labelY = ry + (rowH - hLabel) / 2;
       const valueY = ry + (rowH - hValue) / 2;
-      doc.fillColor(NEGRO).font("Helvetica-Bold").fontSize(9)
+      doc.fillColor(NEGRO).font(FONT_BOLD).fontSize(9)
         .text(row.label, left + 5, labelY, { width: labelW - 10 });
-      doc.font("Helvetica").fontSize(9)
+      doc.font(FONT).fontSize(9)
         .text(valor, left + labelW + 5, valueY, { width: valueW - 10 });
       doc.y = ry + rowH;
       doc.x = left;
@@ -170,20 +183,20 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
       const contenido = (datos[s.key] ?? "").toString().trim() || "N/A";
       const tituloFull = `${s.n}. ${s.titulo}`;
 
-      doc.font("Helvetica-Bold").fontSize(9);
+      doc.font(FONT_BOLD).fontSize(9);
       const hTitS = doc.heightOfString(tituloFull, { width: W - 12 }) + 8;
       if (doc.y + hTitS + MIN_CAJA > bottom) { doc.addPage(); doc.y = M; }
 
       // Título (centrado, negro, bordeado, blanco)
       let ty = doc.y;
       doc.rect(left, ty, W, hTitS).stroke(BORDE);
-      doc.fillColor(NEGRO).font("Helvetica-Bold").fontSize(9)
+      doc.fillColor(NEGRO).font(FONT_BOLD).fontSize(9)
         .text(tituloFull, left + 6, ty + 4, { width: W - 12, align: "center" });
       doc.y = ty + hTitS;
       doc.x = left;
 
       // Caja de respuesta (justificada, con interlineado cómodo)
-      doc.font("Helvetica").fontSize(9);
+      doc.font(FONT).fontSize(9);
       const opts = { width: W - 12, align: "justify" as const, lineGap: 2.5 };
       const hCont = doc.heightOfString(contenido, opts);
       const cajaH = Math.max(hCont + 12, MIN_CAJA);
