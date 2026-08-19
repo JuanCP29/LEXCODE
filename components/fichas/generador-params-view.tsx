@@ -8,6 +8,11 @@ interface GeneradorParamsViewProps {
     pretension: string | null;
     clase_pretension: string | null;
     jurisdiccion: string | null;
+    radicado?: string | null;
+    radicado_bizagi?: string | null;
+    nombre_demandante?: string | null;
+    cedula_demandante?: string | null;
+    despacho?: string | null;
   };
 }
 

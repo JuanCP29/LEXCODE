@@ -112,6 +112,18 @@ function Campo({ label, required, error, children }: {
   );
 }
 
+// Campo de solo lectura (datos que llegan del CSV/caso importado)
+function CampoLectura({ label, valor }: { label: string; valor?: string | null }) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-sm font-medium">{label}</Label>
+      <div className="w-full rounded-md border border-input bg-muted/40 px-3 py-2 text-sm text-foreground/80 min-h-[38px] break-words">
+        {valor && valor.trim() ? valor : <span className="text-muted-foreground">—</span>}
+      </div>
+    </div>
+  );
+}
+
 // ─── Formulario principal ──────────────────────────────────────────────────────
 
 interface FormularioParametricoProps {
@@ -120,10 +132,17 @@ interface FormularioParametricoProps {
     pretension: string | null;
     clase_pretension: string | null;
     jurisdiccion: string | null;
+    radicado?: string | null;
+    radicado_bizagi?: string | null;
+    nombre_demandante?: string | null;
+    cedula_demandante?: string | null;
+    despacho?: string | null;
   };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   valoresPrellenados?: Record<string, any>;
 }
+
+const DEMANDADO_FIJO = "Administradora Colombiana de Pensiones — COLPENSIONES. NIT 900.336.004-7";
 
 export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: FormularioParametricoProps) {
   const router = useRouter();
@@ -140,7 +159,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
   const prevPrellenados = useRef<Partial<ParametrosFormData> | undefined>(undefined);
 
   // Asistente por pasos
-  const PASOS = ["Documentos previos", "Conciliabilidad", "Pretensión y cuantía", "Tipo de proceso"];
+  const PASOS = ["Información del proceso", "Pretensión y cuantía", "Tipo de proceso"];
   const [paso, setPaso] = useState(1);
   const totalPasos = PASOS.length;
 
@@ -354,8 +373,62 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
         })}
       </div>
 
-      {/* ── Paso 1: Documentos previos ── */}
+      {/* ── Paso 1: Información del proceso + Documentos previos + Conciliabilidad ── */}
       {paso === 1 && (<>
+
+      {/* ── Información del proceso (encabezado v3) ── */}
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <div className="flex items-center gap-3 px-5 py-3.5 border-b border-border bg-muted/30">
+          <h3 className="text-sm font-semibold text-foreground">Información del proceso</h3>
+        </div>
+        <div className="px-5 py-4 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Campo label="Fecha de la diligencia">
+              <Controller name="fecha_diligencia" control={control}
+                render={({ field }) => (
+                  <Input type="date" value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} />
+                )} />
+            </Campo>
+            <CampoLectura label="Radicación de demanda en Bizagi" valor={casoData.radicado_bizagi} />
+            <CampoLectura label="Radicación del proceso (23 dígitos)" valor={casoData.radicado} />
+            <CampoLectura label="Nombre e identificación demandante"
+              valor={[casoData.nombre_demandante, casoData.cedula_demandante ? `C.C. ${casoData.cedula_demandante}` : ""].filter(Boolean).join(". ")} />
+            <Campo label="Nombre e identificación causante y/o afiliado">
+              <Controller name="causante_afiliado" control={control}
+                render={({ field }) => (
+                  <Input value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} placeholder="Solo si difiere del demandante (ej. sobrevivientes)" />
+                )} />
+            </Campo>
+            <CampoLectura label="Nombre e identificación demandado" valor={DEMANDADO_FIJO} />
+            <CampoLectura label="Autoridad que efectúa la citación" valor={casoData.despacho} />
+            <Campo label="Juez (nombre)">
+              <Controller name="juez" control={control}
+                render={({ field }) => (
+                  <Input value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} placeholder="Ej: Dr. Jaime García Pardo" />
+                )} />
+            </Campo>
+            <Campo label="Caducidad">
+              <Controller name="caducidad" control={control}
+                render={({ field }) => (
+                  <Select value={field.value ?? ""} onChange={field.onChange} placeholder="Selecciona..."
+                    options={[
+                      { value: "SI",        label: "SÍ — Opera la caducidad" },
+                      { value: "NO",        label: "NO — No opera" },
+                      { value: "NO APLICA", label: "NO APLICA — Proceso ordinario" },
+                    ]} />
+                )} />
+            </Campo>
+            <Campo label="Reconsideración">
+              <Controller name="reconsideracion" control={control}
+                render={({ field }) => (
+                  <Select value={field.value ?? ""} onChange={field.onChange} placeholder="Selecciona..."
+                    options={[{ value: "SI", label: "SÍ" }, { value: "NO", label: "NO" }]} />
+                )} />
+            </Campo>
+          </div>
+        </div>
+      </div>
+
       {/* ── Bloque 0: Documentos previos ── */}
       <div className="rounded-xl border border-border bg-card overflow-hidden">
         {/* Header del bloque */}
@@ -573,10 +646,8 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
           </div>
         </div>
       </div>
-      </>)}
 
-      {/* ── Paso 2: Conciliabilidad ── */}
-      {paso === 2 && (
+      {/* ── Conciliabilidad (dentro del paso 1) ── */}
       <Bloque numero={1} titulo="Conciliabilidad">
         <Campo label="¿El asunto es conciliable?" required>
           <Controller
@@ -610,10 +681,10 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
           </Campo>
         )}
       </Bloque>
-      )}
+      </>)}
 
-      {/* ── Paso 3: Pretensión y cuantía ── */}
-      {paso === 3 && (<>
+      {/* ── Paso 2: Pretensión y cuantía ── */}
+      {paso === 2 && (<>
       <Bloque numero={2} titulo="Pretensión">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Campo label="Pretensión" required error={errors.pretension?.message}>
@@ -787,8 +858,8 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
       </Bloque>
       </>)}
 
-      {/* ── Paso 4: Tipo de proceso ── */}
-      {paso === 4 && (
+      {/* ── Paso 3: Tipo de proceso ── */}
+      {paso === 3 && (
       <Bloque numero={5} titulo="Tipo de proceso">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Campo label="Jurisdicción" required error={errors.jurisdiccion?.message}>
@@ -866,21 +937,6 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
           </p>
         )}
 
-        <Campo label="Fecha de la diligencia">
-          <Controller
-            name="fecha_diligencia"
-            control={control}
-            render={({ field }) => (
-              <Input
-                type="date"
-                value={field.value ?? ""}
-                onChange={(e) => field.onChange(e.target.value || null)}
-              />
-            )}
-          />
-          <p className="text-xs text-muted-foreground">Fecha de la audiencia de conciliación</p>
-        </Campo>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Campo label="Expediente pensional en Bizagi">
             <Controller
@@ -900,82 +956,6 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
               )}
             />
           </Campo>
-
-          <Campo label="Caducidad">
-            <Controller
-              name="caducidad"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  value={field.value ?? ""}
-                  onChange={field.onChange}
-                  placeholder="Selecciona..."
-                  options={[
-                    { value: "SI",        label: "SÍ — Opera la caducidad" },
-                    { value: "NO",        label: "NO — No opera" },
-                    { value: "NO APLICA", label: "NO APLICA — Proceso ordinario" },
-                  ]}
-                />
-              )}
-            />
-          </Campo>
-        </div>
-
-        {/* ── Campos formato v3 (GDJ-GPO-FMT-005 v3) ── */}
-        <div className="pt-2 border-t border-border">
-          <p className="text-[11px] font-semibold text-[#1a4a8a] dark:text-[#93c5fd] uppercase tracking-wide mb-3">
-            Encabezado formato v3
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Campo label="Causante y/o afiliado">
-              <Controller
-                name="causante_afiliado"
-                control={control}
-                render={({ field }) => (
-                  <Input
-                    value={field.value ?? ""}
-                    onChange={(e) => field.onChange(e.target.value || null)}
-                    placeholder="Nombre y C.C. del causante/afiliado"
-                  />
-                )}
-              />
-              <p className="text-xs text-muted-foreground">Solo si difiere del demandante (ej. sobrevivientes)</p>
-            </Campo>
-
-            <Campo label="Reconsideración">
-              <Controller
-                name="reconsideracion"
-                control={control}
-                render={({ field }) => (
-                  <Select
-                    value={field.value ?? ""}
-                    onChange={field.onChange}
-                    placeholder="Selecciona..."
-                    options={[
-                      { value: "SI", label: "SÍ" },
-                      { value: "NO", label: "NO" },
-                    ]}
-                  />
-                )}
-              />
-            </Campo>
-          </div>
-
-          <div className="mt-4">
-            <Campo label="Juez (autoridad que realiza la citación)">
-              <Controller
-                name="juez"
-                control={control}
-                render={({ field }) => (
-                  <Input
-                    value={field.value ?? ""}
-                    onChange={(e) => field.onChange(e.target.value || null)}
-                    placeholder="Ej: Dr. Jaime García Pardo"
-                  />
-                )}
-              />
-            </Campo>
-          </div>
         </div>
       </Bloque>
       )}

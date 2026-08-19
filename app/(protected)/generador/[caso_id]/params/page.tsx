@@ -13,7 +13,7 @@ export default async function GeneradorParamsPage({
 
   const { data: caso } = await supabase
     .from("casos")
-    .select("id, radicado, nombre_demandante, cedula_demandante, pretension, clase_pretension, jurisdiccion, despacho")
+    .select("id, radicado, radicado_bizagi, nombre_demandante, cedula_demandante, pretension, clase_pretension, jurisdiccion, despacho")
     .eq("id", params.caso_id)
     .single();
 
@@ -52,6 +52,11 @@ export default async function GeneradorParamsPage({
           pretension: caso.pretension,
           clase_pretension: caso.clase_pretension,
           jurisdiccion: caso.jurisdiccion,
+          radicado: caso.radicado,
+          radicado_bizagi: caso.radicado_bizagi,
+          nombre_demandante: caso.nombre_demandante,
+          cedula_demandante: caso.cedula_demandante,
+          despacho: caso.despacho,
         }}
       />
     </div>
