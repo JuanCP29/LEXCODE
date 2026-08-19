@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   Upload, Loader2, Play, CheckCircle2, Clock, RefreshCw,
-  ListChecks, AlertCircle, UserCheck,
+  ListChecks, AlertCircle, UserCheck, Search, X, Building2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { WORKFLOW_ESTADO } from "@/lib/ui/estado-badge";
@@ -77,11 +77,15 @@ export function ColaCasos() {
   const [casos, setCasos] = useState<CasoCola[]>([]);
   const [resumen, setResumen] = useState<Resumen>({ total: 0, completados: 0, enProceso: 0, pendientes: 0, progreso: 0 });
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
-  const [scope, setScope] = useState<"mios" | "todos">("mios");
+  const [scope, setScope] = useState<"mios" | "todos">("todos");
   const [cargando, setCargando] = useState(true);
   const [subiendo, setSubiendo] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [busqueda, setBusqueda] = useState("");
+  const [seleccion, setSeleccion] = useState<Set<string>>(new Set());
+  const [asignarA, setAsignarA] = useState("");
+  const [asignando, setAsignando] = useState(false);
 
   const cargar = useCallback(async () => {
     setCargando(true);
@@ -135,13 +139,52 @@ export function ColaCasos() {
     }
   }
 
-  async function asignar(casoId: string, usuarioId: string) {
-    await fetch(`/api/cola/${casoId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ asignado_a: usuarioId || null }),
+  // Filtro por nombre de despacho
+  const casosFiltrados = casos.filter((c) =>
+    !busqueda.trim() || (c.despacho ?? "").toLowerCase().includes(busqueda.toLowerCase())
+  );
+
+  const todosSeleccionados = casosFiltrados.length > 0 && casosFiltrados.every((c) => seleccion.has(c.id));
+
+  function toggleTodos() {
+    setSeleccion((prev) => {
+      const next = new Set(prev);
+      if (todosSeleccionados) casosFiltrados.forEach((c) => next.delete(c.id));
+      else casosFiltrados.forEach((c) => next.add(c.id));
+      return next;
     });
-    setCasos((prev) => prev.map((c) => (c.id === casoId ? { ...c, asignado_a: usuarioId || null } : c)));
+  }
+  function toggleUno(id: string) {
+    setSeleccion((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  async function asignarLote() {
+    if (seleccion.size === 0 || !asignarA) return;
+    setAsignando(true);
+    setError(null);
+    setMsg(null);
+    try {
+      const ids = Array.from(seleccion);
+      const res = await fetch("/api/cola/asignar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ caso_ids: ids, asignado_a: asignarA }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error ?? "Error al asignar");
+      setCasos((prev) => prev.map((c) => (seleccion.has(c.id) ? { ...c, asignado_a: asignarA } : c)));
+      setMsg(`${ids.length} caso${ids.length !== 1 ? "s" : ""} asignado${ids.length !== 1 ? "s" : ""} a ${nombreUsuario(asignarA)}.`);
+      setSeleccion(new Set());
+      setAsignarA("");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al asignar");
+    } finally {
+      setAsignando(false);
+    }
   }
 
   async function iniciar(caso: CasoCola) {
@@ -214,19 +257,76 @@ export function ColaCasos() {
 
       {/* Filtros */}
       <div className="bg-card rounded-xl border border-border overflow-hidden">
-        <div className="flex items-center gap-1 px-4 py-3 border-b border-border bg-muted/20">
-          {(["mios", "todos"] as const).map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => setScope(s)}
-              className={cn("px-3 py-1 rounded-md text-xs font-medium transition-colors",
-                scope === s ? "bg-card border border-border text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
-            >
-              {s === "mios" ? "Mis casos" : "Todos (empresa)"}
-            </button>
-          ))}
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-muted/20 flex-wrap">
+          <div className="flex items-center gap-1">
+            {(["todos", "mios"] as const).map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setScope(s)}
+                className={cn("px-3 py-1 rounded-md text-xs font-medium transition-colors",
+                  scope === s ? "bg-card border border-border text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
+              >
+                {s === "mios" ? "Mis casos" : "Todos (empresa)"}
+              </button>
+            ))}
+          </div>
+
+          {/* Búsqueda por despacho */}
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+            <input
+              type="text"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              placeholder="Buscar por despacho…"
+              className="w-full rounded-md border border-input bg-background pl-8 pr-8 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+            {busqueda && (
+              <button type="button" onClick={() => setBusqueda("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+          <span className="text-[11px] text-muted-foreground shrink-0">
+            {casosFiltrados.length} de {casos.length}
+          </span>
         </div>
+
+        {/* Barra de asignación masiva */}
+        {seleccion.size > 0 && (
+          <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border bg-primary/5 flex-wrap">
+            <span className="text-xs font-semibold text-foreground">
+              {seleccion.size} seleccionado{seleccion.size !== 1 ? "s" : ""}
+            </span>
+            <div className="flex items-center gap-2 ml-auto">
+              <select
+                value={asignarA}
+                onChange={(e) => setAsignarA(e.target.value)}
+                className="text-xs rounded-md border border-input bg-background px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-ring"
+              >
+                <option value="">Asignar a…</option>
+                {usuarios.map((u) => (
+                  <option key={u.id} value={u.id}>{u.esYo ? "Yo" : u.nombre}{u.rol ? ` · ${u.rol}` : ""}</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={asignarLote}
+                disabled={!asignarA || asignando}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50"
+              >
+                {asignando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserCheck className="w-3.5 h-3.5" />}
+                Asignar
+              </button>
+              <button type="button" onClick={() => setSeleccion(new Set())}
+                className="text-xs text-muted-foreground hover:text-foreground">
+                Limpiar
+              </button>
+            </div>
+          </div>
+        )}
 
         {cargando ? (
           <div className="flex items-center justify-center py-16 gap-2 text-muted-foreground">
@@ -238,44 +338,62 @@ export function ColaCasos() {
             <p className="text-sm font-medium text-muted-foreground">La cola está vacía</p>
             <p className="text-xs text-muted-foreground/60">Sube una base CSV/Excel para empezar</p>
           </div>
+        ) : casosFiltrados.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
+            <Search className="w-10 h-10 text-muted-foreground/30" />
+            <p className="text-sm font-medium text-muted-foreground">Ningún despacho coincide con “{busqueda}”</p>
+          </div>
         ) : (
-          <div className="divide-y divide-border">
-            {casos.map((c) => (
-              <div key={c.id} className="flex items-center gap-3 px-4 py-3">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-foreground truncate">{c.nombre_demandante}</p>
-                  <p className="text-[11px] font-mono text-muted-foreground truncate">
-                    {c.radicado}{c.despacho ? ` · ${c.despacho}` : ""}
-                  </p>
-                </div>
-                <EstadoBadge estado={c.cola_estado} />
-                {scope === "todos" && (
-                  <select
-                    value={c.asignado_a ?? ""}
-                    onChange={(e) => asignar(c.id, e.target.value)}
-                    className="text-[11px] rounded-md border border-input bg-background px-1.5 py-1 max-w-[130px] focus:outline-none focus:ring-1 focus:ring-ring"
+          <div>
+            {/* Cabecera de selección */}
+            <div className="flex items-center gap-3 px-4 py-2 border-b border-border bg-muted/10">
+              <input
+                type="checkbox"
+                checked={todosSeleccionados}
+                onChange={toggleTodos}
+                className="w-4 h-4 rounded border-input accent-[color:var(--primary)] cursor-pointer"
+              />
+              <span className="text-[11px] font-medium text-muted-foreground">
+                Seleccionar {busqueda ? "filtrados" : "todos"}
+              </span>
+            </div>
+
+            <div className="divide-y divide-border">
+              {casosFiltrados.map((c) => (
+                <div key={c.id} className={cn("flex items-center gap-3 px-4 py-3 transition-colors",
+                  seleccion.has(c.id) ? "bg-primary/5" : "hover:bg-muted/30")}>
+                  <input
+                    type="checkbox"
+                    checked={seleccion.has(c.id)}
+                    onChange={() => toggleUno(c.id)}
+                    className="w-4 h-4 rounded border-input accent-[color:var(--primary)] cursor-pointer shrink-0"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">{c.nombre_demandante}</p>
+                    <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1">
+                      <span className="font-mono">{c.radicado}</span>
+                      {c.despacho && <><Building2 className="w-3 h-3 shrink-0" /> {c.despacho}</>}
+                    </p>
+                  </div>
+                  <EstadoBadge estado={c.cola_estado} />
+                  {c.asignado_a ? (
+                    <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground max-w-[120px] truncate">
+                      <UserCheck className="w-3 h-3 shrink-0" /> {nombreUsuario(c.asignado_a)}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-muted-foreground/50 italic">Sin asignar</span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => iniciar(c)}
+                    disabled={c.cola_estado === "completado"}
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-primary text-primary text-xs font-semibold hover:bg-primary hover:text-primary-foreground transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
                   >
-                    <option value="">Asignar a…</option>
-                    {usuarios.map((u) => (
-                      <option key={u.id} value={u.id}>{u.esYo ? "Yo" : u.nombre}</option>
-                    ))}
-                  </select>
-                )}
-                {scope === "mios" && c.asignado_a && (
-                  <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
-                    <UserCheck className="w-3 h-3" /> {nombreUsuario(c.asignado_a)}
-                  </span>
-                )}
-                <button
-                  type="button"
-                  onClick={() => iniciar(c)}
-                  disabled={c.cola_estado === "completado"}
-                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-primary text-primary text-xs font-semibold hover:bg-primary hover:text-primary-foreground transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
-                >
-                  <Play className="w-3 h-3" /> {c.cola_estado === "completado" ? "Hecho" : "Iniciar"}
-                </button>
-              </div>
-            ))}
+                    <Play className="w-3 h-3" /> {c.cola_estado === "completado" ? "Hecho" : "Iniciar"}
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
