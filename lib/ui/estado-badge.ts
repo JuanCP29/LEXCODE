@@ -17,7 +17,7 @@ export function estadoBadgeClases(estado: string): string {
 // Colores unificados para el estado de trabajo del caso (pendiente / en proceso / completado)
 // Usados en Reparto y en Cola de casos para que sean idénticos en toda la app.
 export const WORKFLOW_ESTADO: Record<string, { label: string; clase: string }> = {
-  pendiente:  { label: "Pendiente",  clase: "bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900" },
-  en_proceso: { label: "En proceso", clase: "bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900" },
-  completado: { label: "Completado", clase: "bg-green-50 text-green-700 border border-green-200 dark:bg-green-950/40 dark:text-green-300 dark:border-green-900" },
+  pendiente:  { label: "Pendiente",  clase: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
+  en_proceso: { label: "En proceso", clase: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" },
+  completado: { label: "Completado", clase: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
 };
