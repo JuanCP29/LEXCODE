@@ -382,6 +382,9 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
             cedula_demandante: encabezado.cedula_demandante.trim() || null,
             despacho:          encabezado.despacho.trim() || null,
           },
+          secciones_manual: {
+            sec_1_hechos: sintesisHechos.trim() || null,
+          },
         }),
       });
 

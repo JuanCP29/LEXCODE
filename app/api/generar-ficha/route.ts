@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { caso_id, params, caso_override } = body as {
+    const { caso_id, params, caso_override, secciones_manual } = body as {
       caso_id: string;
       params: ParametrosFichaV2 & {
         expediente_pensional_aplica?: string | null;
@@ -55,6 +55,8 @@ export async function POST(request: NextRequest) {
         cedula_demandante?: string | null;
         despacho?: string | null;
       };
+      // Secciones diligenciadas manualmente en el formulario (reemplazan lo generado por IA)
+      secciones_manual?: Record<string, string | null>;
     };
 
     if (!caso_id || !params) {
@@ -124,6 +126,14 @@ export async function POST(request: NextRequest) {
     secciones["sec_6_sentencia"] = "No aplica";
     secciones["sec_5_apelacion"] = "No aplica";
     secciones["sec_9_caducidad"] = "Se establece que la acción a la fecha no se afectado con la caducidad atendiendo la naturaleza de lo pretendido.";
+
+    // Secciones diligenciadas manualmente en el formulario (p. ej. Síntesis de hechos)
+    // reemplazan lo generado por la IA.
+    if (secciones_manual && typeof secciones_manual === "object") {
+      for (const [key, val] of Object.entries(secciones_manual)) {
+        if (val && String(val).trim()) secciones[key] = String(val);
+      }
+    }
 
     // 6. Crear ficha en BD
     const {
