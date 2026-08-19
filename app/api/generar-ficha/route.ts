@@ -100,6 +100,10 @@ export async function POST(request: NextRequest) {
       ? parsearRespuestaV2(respuestaTexto, plan)
       : parsearRespuestaV2("{}", plan.filter((p) => p.accion !== "generar"));
 
+    // Secciones estandarizadas: Sentencia y Argumentos de la apelación → "No aplica"
+    secciones["sec_6_sentencia"] = "No aplica";
+    secciones["sec_5_apelacion"] = "No aplica";
+
     // 6. Crear ficha en BD
     const {
       pretension: _p,

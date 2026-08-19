@@ -224,7 +224,7 @@ export async function generarFichaDocx(datos: DatosFicha): Promise<Buffer> {
         // ── 19 Secciones ──────────────────────────────────────────────────
         tituloCampo("SECCIONES DE LA FICHA"),
         ...SECCIONES.flatMap((s) => {
-          const contenido = (datos as unknown as Record<string, string | null>)[s.key] ?? "";
+          const contenido = s.textoFijo ?? ((datos as unknown as Record<string, string | null>)[s.key] ?? "");
           return [
             new Paragraph({
               children: [
@@ -242,7 +242,11 @@ export async function generarFichaDocx(datos: DatosFicha): Promise<Buffer> {
               ],
               spacing: { before: 280, after: 80 },
             }),
-            contenidoSeccion(contenido),
+            new Paragraph({
+              children: [new TextRun({ text: contenido || "Pendiente de diligenciar.", size: 18, color: NEGRO })],
+              spacing: { after: 120 },
+              alignment: s.centrado ? AlignmentType.CENTER : undefined,
+            }),
           ];
         }),
 

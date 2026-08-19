@@ -34,15 +34,18 @@ interface EditorFichaProps {
 export function EditorFicha({ caso, fichaInicial }: EditorFichaProps) {
   const supabase = createClient();
 
-  // Estado de todas las secciones
+  // Estado de todas las secciones. Las ocultas/estandarizadas toman su texto fijo.
   const [secciones, setSecciones] = useState<Record<string, string>>(() => {
-    if (fichaInicial) {
-      const vals: Record<string, string> = {};
-      SECCIONES.forEach((s) => { vals[s.key] = String(fichaInicial[s.key] ?? ""); });
-      return vals;
-    }
-    return Object.fromEntries(SECCIONES.map((s) => [s.key, ""]));
+    const vals: Record<string, string> = {};
+    SECCIONES.forEach((s) => {
+      if (s.oculta && s.textoFijo) { vals[s.key] = s.textoFijo; return; }
+      vals[s.key] = fichaInicial ? String(fichaInicial[s.key] ?? "") : "";
+    });
+    return vals;
   });
+
+  // Secciones visibles en el editor (excluye las ocultas/estandarizadas)
+  const SECCIONES_VISIBLES = SECCIONES.filter((s) => !s.oculta);
 
   const [seccionActiva, setSeccionActiva] = useState(SECCIONES[0].key);
   const [guardando, setGuardando] = useState(false);
@@ -200,7 +203,7 @@ export function EditorFicha({ caso, fichaInicial }: EditorFichaProps) {
         </div>
 
         <nav className="flex-1 px-2 pb-4 space-y-0.5">
-          {SECCIONES.map((s) => {
+          {SECCIONES_VISIBLES.map((s) => {
             const badge = BADGE_TIPO[s.tipo];
             const activa = seccionActiva === s.key;
             const tieneContenido = !!secciones[s.key];
@@ -325,7 +328,7 @@ export function EditorFicha({ caso, fichaInicial }: EditorFichaProps) {
 
         {/* Secciones scrollables */}
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
-          {SECCIONES.map((s) => {
+          {SECCIONES_VISIBLES.map((s) => {
             const valorActual = secciones[s.key] ||
               (s.tipo === "DEFAULT" ? generarTextoDefault(s.key, optsDefault) : "");
 

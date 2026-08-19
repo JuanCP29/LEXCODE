@@ -81,13 +81,13 @@ export function VistaPreviaFicha({ abierto, onClose, secciones, encabezado }: Vi
           {/* 19 secciones */}
           <div className="space-y-4">
             {SECCIONES.map((s) => {
-              const contenido = secciones[s.key] ?? "";
+              const contenido = s.textoFijo ?? (secciones[s.key] ?? "");
               return (
                 <div key={s.key}>
                   <p className="text-[11px] font-bold text-gray-800 uppercase mb-1">
                     {s.numero}. {s.label}
                   </p>
-                  <p className="text-[11px] leading-relaxed text-gray-800 whitespace-pre-wrap">
+                  <p className={`text-[11px] leading-relaxed text-gray-800 whitespace-pre-wrap${s.centrado ? " text-center" : ""}`}>
                     {contenido.trim() ? contenido : <span className="text-gray-400 italic">N/A</span>}
                   </p>
                 </div>

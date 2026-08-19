@@ -7,6 +7,9 @@ export interface DefSeccion {
   label: string;
   tipo: TipoSeccion;
   descripcion: string;
+  oculta?: boolean;    // no se muestra como cuadro editable en el editor
+  textoFijo?: string;  // texto estandarizado que va en el documento
+  centrado?: boolean;  // el texto se centra en el documento
 }
 
 // Secciones eliminadas del formato (7 Soporte probatorio, 10 Mov. procesales,
@@ -17,8 +20,8 @@ export const SECCIONES: DefSeccion[] = [
   { numero: 2,  key: "sec_2_pretensiones",     label: "Pretensiones",                tipo: "AUTO",    descripcion: "IA extrae y lista las pretensiones." },
   { numero: 3,  key: "sec_3_cuantia",          label: "Cuantía",                     tipo: "AUTO",    descripcion: "IA calcula o describe la cuantía según los parámetros." },
   { numero: 4,  key: "sec_4_normas",           label: "Normas violadas",             tipo: "AUTO",    descripcion: "IA identifica las normas invocadas en la demanda." },
-  { numero: 5,  key: "sec_6_sentencia",        label: "Sentencia",                   tipo: "DEFAULT", descripcion: "Texto por defecto según si hay fallo de segunda instancia." },
-  { numero: 6,  key: "sec_5_apelacion",        label: "Arg. de apelación",           tipo: "DEFAULT", descripcion: "Texto por defecto según si hay fallo o no." },
+  { numero: 5,  key: "sec_6_sentencia",        label: "Sentencia",                   tipo: "DEFAULT", descripcion: "Estandarizada: No aplica.", oculta: true, textoFijo: "No aplica", centrado: true },
+  { numero: 6,  key: "sec_5_apelacion",        label: "Arg. de apelación",           tipo: "DEFAULT", descripcion: "Estandarizada: No aplica.", oculta: true, textoFijo: "No aplica", centrado: true },
   { numero: 7,  key: "sec_8_problema",         label: "Problema jurídico",           tipo: "AUTO",    descripcion: "IA plantea el problema jurídico central." },
   { numero: 8,  key: "sec_9_caducidad",        label: "Análisis de caducidad",       tipo: "DEFAULT", descripcion: "Texto por defecto según jurisdicción." },
   { numero: 9,  key: "sec_11_jurisprudencia",  label: "Jurisprudencia",              tipo: "MANUAL",  descripcion: "El abogado cita la jurisprudencia aplicable." },
