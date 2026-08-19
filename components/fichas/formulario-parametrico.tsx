@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { cn, limpiarDespacho } from "@/lib/utils";
 import { Loader2, ArrowRight, ArrowLeft, ChevronDown, FileSignature, CheckCircle2, AlertCircle, ExternalLink, Mail, Clock } from "lucide-react";
 import { ConsultaRadicado } from "@/components/fichas/consulta-radicado";
+import { VistaPreviaDocumento } from "@/components/fichas/vista-previa-documento";
 
 // ─── Componentes base ──────────────────────────────────────────────────────────
 
@@ -539,17 +540,25 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
                   <p className="text-xs font-medium text-foreground">Poder de Sustitución</p>
                   <p className="text-[11px] text-muted-foreground">Genera el documento Word con los datos del caso</p>
                 </div>
-                <button
-                  type="button"
-                  disabled={generandoPoder}
-                  onClick={handleGenerarPoder}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shrink-0 disabled:opacity-60"
-                >
-                  {generandoPoder
-                    ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Generando...</>
-                    : <><FileSignature className="w-3.5 h-3.5" /> Generar Poder</>
-                  }
-                </button>
+                <div className="flex items-center gap-2 shrink-0">
+                  <VistaPreviaDocumento
+                    endpoint="/api/generar-poder-sustitucion"
+                    casoId={casoId}
+                    titulo="Poder de Sustitución"
+                    filename={`PODER_SUSTITUCION_${casoId}.pdf`}
+                  />
+                  <button
+                    type="button"
+                    disabled={generandoPoder}
+                    onClick={handleGenerarPoder}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shrink-0 disabled:opacity-60"
+                  >
+                    {generandoPoder
+                      ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Generando...</>
+                      : <><FileSignature className="w-3.5 h-3.5" /> Generar Poder</>
+                    }
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -608,6 +617,12 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
                       {memorialGenerado && (
                         <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
                       )}
+                      <VistaPreviaDocumento
+                        endpoint="/api/generar-memorial-expediente"
+                        casoId={casoId}
+                        titulo="Memorial — Solicitud de acceso al expediente"
+                        filename={`MEMORIAL_EXPEDIENTE_${casoId}.pdf`}
+                      />
                       <button
                         type="button"
                         disabled={generandoMemorial}
