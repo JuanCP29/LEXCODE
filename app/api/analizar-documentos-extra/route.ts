@@ -3,6 +3,70 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { extraerTextoPDF } from "@/lib/ia/extraer-pdf";
+import { PDFDocument } from "pdf-lib";
+
+export const maxDuration = 300;
+export const dynamic = "force-dynamic";
+
+// Recorta un PDF a sus primeras N páginas y lo devuelve en base64 (para leer escaneados con visión).
+async function recortarPaginasBase64(buffer: Buffer, maxPaginas = 30): Promise<{ base64: string; paginas: number } | null> {
+  try {
+    const src = await PDFDocument.load(buffer, { ignoreEncryption: true });
+    const total = src.getPageCount();
+    const n = Math.min(maxPaginas, total);
+    const out = await PDFDocument.create();
+    const indices = Array.from({ length: n }, (_, i) => i);
+    const paginas = await out.copyPages(src, indices);
+    paginas.forEach((p) => out.addPage(p));
+    const bytes = await out.save();
+    return { base64: Buffer.from(bytes).toString("base64"), paginas: n };
+  } catch (e) {
+    console.error("recortarPaginasBase64:", e);
+    return null;
+  }
+}
+
+// Lee un traslado ESCANEADO con visión de Claude: localiza la sección HECHOS y la resume.
+async function sintesisHechosDesdeVision(
+  anthropic: Anthropic,
+  pdfs: { nombre: string; buffer: Buffer }[]
+): Promise<string | null> {
+  if (pdfs.length === 0) return null;
+  // Prioriza el documento cuyo nombre sugiere "traslado"; si no, el primero.
+  const doc = pdfs.find((p) => /traslad/i.test(p.nombre)) ?? pdfs[0];
+  const recorte = await recortarPaginasBase64(doc.buffer, 30);
+  if (!recorte) return null;
+
+  const prompt = `Este documento es el TRASLADO de una demanda laboral/pensional escaneada (imagenes).
+Localiza en el documento la seccion titulada "HECHOS" (encabezado que puede aparecer como "HECHOS", "HECHOS DE LA DEMANDA" o "III. HECHOS").
+Lee los hechos numerados de esa seccion y redacta una SINTESIS clara, formal y en tercera persona, en 4 a 8 frases,
+recogiendo unicamente lo que consta en el documento (fechas, prestacion reclamada, resoluciones, semanas, negativas de Colpensiones, etc.).
+No inventes datos. Si NO logras ubicar la seccion HECHOS o el documento es ilegible, responde exactamente con null.
+Devuelve UNICAMENTE un JSON: { "sintesis_hechos": "<texto>" }  o  { "sintesis_hechos": null }`;
+
+  try {
+    const message = await anthropic.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1500,
+      messages: [{
+        role: "user",
+        content: [
+          { type: "document", source: { type: "base64", media_type: "application/pdf", data: recorte.base64 } },
+          { type: "text", text: prompt },
+        ],
+      }],
+    });
+    const txt = message.content[0]?.type === "text" ? message.content[0].text : "";
+    const m = txt.match(/\{[\s\S]*\}/);
+    if (!m) return null;
+    const parsed = JSON.parse(m[0]);
+    const s = parsed?.sintesis_hechos;
+    return s && String(s).trim() && String(s).trim().toLowerCase() !== "null" ? String(s).trim() : null;
+  } catch (e) {
+    console.error("sintesisHechosDesdeVision:", e);
+    return null;
+  }
+}
 
 function createSupabaseServer() {
   const cookieStore = cookies();
@@ -35,6 +99,7 @@ export async function POST(request: NextRequest) {
     // Formato legacy: FormData con archivos (clientes con JS en caché).
     const contentType = request.headers.get("content-type") ?? "";
     const textos: string[] = [];
+    const pdfs: { nombre: string; buffer: Buffer }[] = [];
     let rutasTmp: string[] = [];
 
     if (contentType.includes("application/json")) {
@@ -52,6 +117,7 @@ export async function POST(request: NextRequest) {
             .download(path);
           if (dlErr || !archivoData) throw new Error(dlErr?.message);
           const buffer = Buffer.from(await archivoData.arrayBuffer());
+          pdfs.push({ nombre, buffer });
           const texto = await extraerTextoPDF(buffer);
           textos.push(`=== ${nombre} ===\n${texto}`);
         } catch (e) {
@@ -69,6 +135,7 @@ export async function POST(request: NextRequest) {
       for (const archivo of archivos) {
         try {
           const buffer = Buffer.from(await archivo.arrayBuffer());
+          pdfs.push({ nombre: archivo.name, buffer });
           const texto = await extraerTextoPDF(buffer);
           textos.push(`=== ${archivo.name} ===\n${texto}`);
         } catch (e) {
@@ -84,6 +151,24 @@ export async function POST(request: NextRequest) {
     }
 
     const textoCompleto = textos.join("\n\n");
+    // Caracteres de texto realmente extraídos (sin los encabezados "=== nombre ===")
+    const caracteresExtraidos = textoCompleto.replace(/=== .*? ===/g, "").trim().length;
+
+    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+
+    // ── Documento ESCANEADO (sin capa de texto): leer la sección HECHOS con visión ──
+    if (caracteresExtraidos < 200) {
+      const sintesis = await sintesisHechosDesdeVision(anthropic, pdfs);
+      return NextResponse.json({
+        campos: {},
+        suggestions: { sintesis_hechos: sintesis ?? null },
+        fieldsFound: 0,
+        suggestionsFound: sintesis ? 1 : 0,
+        caracteres_extraidos: sintesis ? 999 : caracteresExtraidos,
+        escaneado: true,
+        archivos_procesados: textos.length,
+      });
+    }
 
     // Extracción de DOS NIVELES (análisis multi-documento en una sola pasada):
     //  - data: hechos textuales verificables (null si no aparecen) → prellenan el formulario
@@ -96,25 +181,6 @@ REGLAS ESTRICTAS:
 - En "data" solo van datos TEXTUALES y verificables que aparezcan en los documentos. Si un dato no aparece, devuelve null.
 - En "suggestions" redacta prosa juridica formal basada UNICAMENTE en lo que dicen los documentos. No inventes hechos,
   cifras, normas ni jurisprudencia que no consten en las fuentes.
-
-COMO IDENTIFICAR AL CAUSANTE / AFILIADO (campo "causante_afiliado"):
-- Busca principalmente en el documento denominado "TRASLADO" (traslado de la demanda). Puede venir titulado como "Traslado",
-  "Traslado de la demanda" o similar.
-- Dentro de ese documento, ubica las secciones tituladas "PRETENSIONES" y "FUNDAMENTO Y RAZONES DE DERECHO O DE LA DEFENSA"
-  (tambien pueden aparecer como "Fundamentos de derecho" o "Razones de la defensa"). Ahi se menciona a la persona AFILIADA a
-  Colpensiones sobre cuya afiliacion/cotizaciones se reclama la prestacion (el CAUSANTE o AFILIADO).
-- Extrae SIEMPRE ese nombre, aunque coincida con el demandante:
-    * En pension de sobrevivientes, postmortem o auxilio funerario el causante es la persona FALLECIDA y normalmente DIFIERE del
-      demandante (p. ej. "la pension causada por el senor/la senora <NOMBRE>", "en calidad de conyuge/hijo(a) del causante <NOMBRE>",
-      "el afiliado fallecido <NOMBRE> identificado con C.C. ...").
-    * En los demas casos (vejez, invalidez, indemnizacion, devolucion) el afiliado suele ser el MISMO demandante; devuelve igual su
-      nombre completo tal como aparece en el traslado. Reconoce patrones como:
-        - "Teniendo en cuenta que el senor/la senora <NOMBRE>, cumplio los requisitos para acceder a la Pension de Vejez/Invalidez..."
-        - "el senor/la senora <NOMBRE>, tiene derecho a que su monto, IBL y mesada pensional sea liquidada..."
-        - "el afiliado/la afiliada <NOMBRE> cotizo/acredito ... semanas".
-      El nombre suele venir en MAYUSCULAS (p. ej. "JOSE LEONCIO GARCES VALENCIA"). Ese es el afiliado/causante.
-- Devuelve el nombre completo y, si aparece, su numero de identificacion. Solo devuelve null si el documento no permite
-  identificar al afiliado/causante.
 
 DOCUMENTOS:
 ${textoCompleto.slice(0, 30000)}
@@ -131,8 +197,7 @@ Devuelve UNICAMENTE un objeto JSON valido con esta forma exacta (sin texto adici
     "hay_fallo": true si hay sentencia de primera instancia o false o null,
     "sintesis_fallo": "resumen del fallo en 2-3 oraciones o null",
     "pretende_intereses": true o false o null,
-    "pretende_indexacion": true o false o null,
-    "causante_afiliado": "Nombre completo (y numero de identificacion si aparece) del afiliado/causante, ubicado en el documento TRASLADO dentro de las secciones 'PRETENSIONES' y 'FUNDAMENTO Y RAZONES DE DERECHO O DE LA DEFENSA', segun las reglas indicadas arriba. Extraelo SIEMPRE aunque coincida con el demandante. Formato 'NOMBRE COMPLETO. C.C. NUMERO', o null solo si no se puede identificar."
+    "pretende_indexacion": true o false o null
   },
   "suggestions": {
     "sintesis_hechos": "sintesis de los hechos del caso, redactada a partir de los documentos, o null",
@@ -142,7 +207,6 @@ Devuelve UNICAMENTE un objeto JSON valido con esta forma exacta (sin texto adici
   }
 }`;
 
-    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
     const message = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 4096,
@@ -167,9 +231,6 @@ Devuelve UNICAMENTE un objeto JSON valido con esta forma exacta (sin texto adici
 
     const fieldsFound = Object.values(campos).filter((v) => v !== null && v !== undefined).length;
     const suggestionsFound = Object.values(suggestions).filter((v) => v !== null && v !== undefined && String(v).trim() !== "").length;
-
-    // Caracteres de texto realmente extraídos (sin los encabezados "=== nombre ===")
-    const caracteresExtraidos = textoCompleto.replace(/=== .*? ===/g, "").trim().length;
 
     return NextResponse.json({
       campos,          // se mantiene para el prellenado del formulario (retrocompatible)

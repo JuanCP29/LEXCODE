@@ -30,7 +30,6 @@ type CamposExtraidos = {
   sintesis_fallo?: string | null;
   pretende_intereses?: boolean | null;
   pretende_indexacion?: boolean | null;
-  causante_afiliado?: string | null;
 };
 
 interface PanelDocumentosExtraProps {
@@ -51,7 +50,6 @@ const LABEL_CAMPO: Record<string, string> = {
   sintesis_fallo:        "Síntesis del fallo",
   pretende_intereses:    "Intereses moratorios",
   pretende_indexacion:   "Indexación",
-  causante_afiliado:     "Causante / afiliado",
 };
 
 function valorLegible(val: unknown): string {
