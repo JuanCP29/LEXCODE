@@ -3,14 +3,6 @@
 import Link from "next/link";
 import { Bookmark, Star, FileText, Lock } from "lucide-react";
 
-const pretensionLabel: Record<string, string> = {
-  vejez:          "Vejez",
-  invalidez:      "Invalidez",
-  sobrevivientes: "Sobrevivientes",
-  indemnizacion:  "Indemnización",
-  devolucion:     "Devolución",
-};
-
 // Convierte texto en MAYÚSCULAS a "Nombre Propio" (deja conectores en minúscula)
 const MINUSCULAS = new Set(["de", "del", "la", "las", "los", "y", "e", "el", "en", "a"]);
 function aNombrePropio(texto: string | null | undefined): string {
@@ -92,13 +84,7 @@ export function TablaCasos({ casos }: TablaCasosProps) {
               Cédula
             </th>
             <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
-              Expediente
-            </th>
-            <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
               Despacho
-            </th>
-            <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
-              Pretensión
             </th>
           </tr>
         </thead>
@@ -201,25 +187,9 @@ export function TablaCasos({ casos }: TablaCasosProps) {
                   {caso.cedula_demandante ?? "—"}
                 </td>
 
-                {/* Expediente */}
-                <td className="px-4 py-3 text-sm text-muted-foreground">
-                  {caso.expediente_pensional ?? "—"}
-                </td>
-
                 {/* Despacho */}
-                <td className="px-4 py-3 text-sm text-muted-foreground max-w-[180px] truncate">
+                <td className="px-4 py-3 text-sm text-muted-foreground min-w-[280px]">
                   {caso.despacho ? aNombrePropio(caso.despacho) : "—"}
-                </td>
-
-                {/* Pretensión */}
-                <td className="px-4 py-3">
-                  {caso.pretension ? (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
-                      {pretensionLabel[caso.pretension] ?? caso.pretension}
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
                 </td>
               </tr>
             );
