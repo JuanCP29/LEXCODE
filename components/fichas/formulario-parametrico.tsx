@@ -212,7 +212,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
       hay_fallo: false,
       sintesis_fallo: "",
       fecha_diligencia: null,
-      caducidad: null,
+      caducidad: "NO",
       expediente_pensional_aplica: null,
       causante_afiliado: null,
       reconsideracion: null,
@@ -482,10 +482,10 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
             <Campo label="Caducidad">
               <Controller name="caducidad" control={control}
                 render={({ field }) => (
-                  <Select value={field.value ?? ""} onChange={field.onChange} placeholder="Selecciona..."
+                  <Select value={field.value ?? "NO"} onChange={field.onChange}
                     options={[
+                      { value: "NO",        label: "NO" },
                       { value: "SI",        label: "SÍ — Opera la caducidad" },
-                      { value: "NO",        label: "NO — No opera" },
                       { value: "NO APLICA", label: "NO APLICA — Proceso ordinario" },
                     ]} />
                 )} />
