@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn, limpiarDespacho } from "@/lib/utils";
-import { Loader2, ArrowRight, ArrowLeft, ChevronDown, FileSignature, CheckCircle2, AlertCircle, ExternalLink, Mail, Clock, Handshake, Check, ClipboardList } from "lucide-react";
+import { Loader2, ArrowRight, ArrowLeft, ChevronDown, FileSignature, CheckCircle2, AlertCircle, ExternalLink, Mail, Clock, Handshake, Check, ClipboardList, FileText } from "lucide-react";
 import { ConsultaRadicado } from "@/components/fichas/consulta-radicado";
 import { VistaPreviaDocumento } from "@/components/fichas/vista-previa-documento";
 
@@ -142,6 +142,7 @@ interface FormularioParametricoProps {
   };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   valoresPrellenados?: Record<string, any>;
+  sintesisHechosSugerida?: string | null;
 }
 
 const DEMANDADO_FIJO = "Administradora Colombiana de Pensiones — COLPENSIONES. NIT 900.336.004-7";
@@ -157,7 +158,7 @@ function limpiarNum(v: string | null | undefined): string {
   return s;
 }
 
-export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: FormularioParametricoProps) {
+export function FormularioParametrico({ casoId, casoData, valoresPrellenados, sintesisHechosSugerida }: FormularioParametricoProps) {
   const router = useRouter();
   const [generando, setGenerando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -170,6 +171,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
   const [enviandoPendiente, setEnviandoPendiente] = useState(false);
   const [pendienteId, setPendienteId] = useState<string | null>(null);
   const [causanteSugerido, setCausanteSugerido] = useState<string | null>(null);
+  const [sintesisHechos, setSintesisHechos] = useState("");
   const prevPrellenados = useRef<Partial<ParametrosFormData> | undefined>(undefined);
 
   // Encabezado del proceso (editable) — arranca con los datos del CSV/caso
@@ -293,6 +295,14 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
       setValue("causante_afiliado", causanteSugerido, { shouldDirty: true });
     }
   }, [causanteSugerido, causanteActual, setValue]);
+
+  // Traer la síntesis de hechos extraída del traslado al cuadro de texto (Sección 1),
+  // mientras esté vacío (no pisar lo que el abogado escriba).
+  useEffect(() => {
+    if (sintesisHechosSugerida && !sintesisHechos.trim()) {
+      setSintesisHechos(sintesisHechosSugerida);
+    }
+  }, [sintesisHechosSugerida, sintesisHechos]);
 
   const clasesDisponibles = (CLASES_POR_PRETENSION[pretension] ?? []).map((c) => ({
     value: c,
@@ -793,6 +803,26 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
 
       {/* ── Paso 2: Pretensión y cuantía ── */}
       {paso === 2 && (<>
+
+      {/* Síntesis de los hechos (Sección 1) — traída del traslado por el API */}
+      <Bloque icono={<FileText className="w-4 h-4" />} titulo="Síntesis de los hechos">
+        <Campo label="Resumen de los hechos (Sección 1 del documento)">
+          <textarea
+            value={sintesisHechos}
+            onChange={(e) => setSintesisHechos(e.target.value)}
+            rows={8}
+            placeholder="Se traerá automáticamente desde el documento «Traslado de la demanda» (título HECHOS) al analizar los PDFs en el paso 1. También puedes escribirlo o editarlo aquí."
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-ring resize-y min-h-[140px]"
+          />
+        </Campo>
+        <p className="text-[11px] text-muted-foreground flex items-start gap-1">
+          <AlertCircle className="w-3 h-3 shrink-0 mt-0.5" />
+          {sintesisHechosSugerida
+            ? "Resumen sugerido a partir del traslado. Revísalo antes de continuar; podrás editarlo."
+            : "Sube el «Traslado de la demanda» en el paso 1 y pulsa «Analizar con IA» para traer aquí el resumen de los hechos."}
+        </p>
+      </Bloque>
+
       <Bloque numero={2} titulo="Pretensión">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Campo label="Pretensión" required error={errors.pretension?.message}>

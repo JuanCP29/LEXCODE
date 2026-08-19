@@ -35,6 +35,7 @@ type CamposExtraidos = {
 
 interface PanelDocumentosExtraProps {
   onCamposExtraidos: (campos: CamposExtraidos) => void;
+  onSugerencias?: (s: Sugerencias | null) => void;
 }
 
 type Estado = "idle" | "analizando" | "listo" | "error";
@@ -60,7 +61,7 @@ function valorLegible(val: unknown): string {
   return String(val);
 }
 
-export function PanelDocumentosExtra({ onCamposExtraidos }: PanelDocumentosExtraProps) {
+export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias }: PanelDocumentosExtraProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [archivos, setArchivos] = useState<File[]>([]);
   const [estado, setEstado] = useState<Estado>("idle");
@@ -127,6 +128,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos }: PanelDocumentosExtra
       const campos: CamposExtraidos = json.campos;
       setCamposExtraidos(campos);
       setSugerencias(json.suggestions ?? null);
+      onSugerencias?.(json.suggestions ?? null);
       setSinTexto((json.caracteres_extraidos ?? 0) < 200);
       setEstado("listo");
 
