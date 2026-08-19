@@ -266,7 +266,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos }: PanelDocumentosExtra
                 </div>
               ) : (
                 <p className="text-xs text-muted-foreground">
-                  No se detectaron campos reconocibles. Si es un caso de vejez/invalidez, el causante coincide con el demandante y este campo queda vacío por diseño.
+                  No se detectaron campos reconocibles en los documentos. Verifica que el traslado incluya las secciones de Pretensiones y Fundamentos, o revisa los datos manualmente.
                 </p>
               )}
             </div>

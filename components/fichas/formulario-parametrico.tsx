@@ -284,13 +284,13 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
     );
   }, [valoresPrellenados, setValue]);
 
-  // Aplicar el causante sugerido solo cuando el tipo de pretensión lo requiere (sobrevivientes/postmortem/funerario)
-  // y el campo aún está vacío (no pisar lo que el abogado escriba).
+  // Aplicar el causante sugerido en cualquier tipo de pretensión (se extrae siempre del traslado),
+  // mientras el campo esté vacío (no pisar lo que el abogado escriba).
   useEffect(() => {
-    if (causanteDistinto && causanteSugerido && !(causanteActual ?? "").trim()) {
+    if (causanteSugerido && !(causanteActual ?? "").trim()) {
       setValue("causante_afiliado", causanteSugerido, { shouldDirty: true });
     }
-  }, [causanteDistinto, causanteSugerido, causanteActual, setValue]);
+  }, [causanteSugerido, causanteActual, setValue]);
 
   const clasesDisponibles = (CLASES_POR_PRETENSION[pretension] ?? []).map((c) => ({
     value: c,

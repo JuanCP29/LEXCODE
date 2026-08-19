@@ -101,13 +101,16 @@ COMO IDENTIFICAR AL CAUSANTE / AFILIADO (campo "causante_afiliado"):
 - Busca principalmente en el documento denominado "TRASLADO" (traslado de la demanda). Puede venir titulado como "Traslado",
   "Traslado de la demanda" o similar.
 - Dentro de ese documento, ubica las secciones tituladas "PRETENSIONES" y "FUNDAMENTO Y RAZONES DE DERECHO O DE LA DEFENSA"
-  (tambien pueden aparecer como "Fundamentos de derecho" o "Razones de la defensa"). El nombre del CAUSANTE o AFILIADO fallecido
-  suele mencionarse en esas secciones (p. ej. "la pension de sobrevivientes causada por el senor/la senora <NOMBRE>",
-  "en calidad de conyuge/companero(a)/hijo(a) del causante <NOMBRE>", "el afiliado fallecido <NOMBRE> identificado con C.C. ...").
-- El causante/afiliado es la persona FALLECIDA cuya prestacion se reclama; NO es el demandante (que es el beneficiario que
-  reclama la pension). Extrae el nombre completo y, si aparece, su numero de identificacion.
-- Solo aplica para pension de sobrevivientes, pension postmortem o auxilio funerario. En cualquier otro tipo de pretension
-  devuelve null.
+  (tambien pueden aparecer como "Fundamentos de derecho" o "Razones de la defensa"). Ahi se menciona a la persona AFILIADA a
+  Colpensiones sobre cuya afiliacion/cotizaciones se reclama la prestacion (el CAUSANTE o AFILIADO).
+- Extrae SIEMPRE ese nombre, aunque coincida con el demandante:
+    * En pension de sobrevivientes, postmortem o auxilio funerario el causante es la persona FALLECIDA y normalmente DIFIERE del
+      demandante (p. ej. "la pension causada por el senor/la senora <NOMBRE>", "en calidad de conyuge/hijo(a) del causante <NOMBRE>",
+      "el afiliado fallecido <NOMBRE> identificado con C.C. ...").
+    * En los demas casos (vejez, invalidez, indemnizacion, devolucion) el afiliado suele ser el MISMO demandante; devuelve igual su
+      nombre completo tal como aparece en el traslado.
+- Devuelve el nombre completo y, si aparece, su numero de identificacion. Solo devuelve null si el documento no permite
+  identificar al afiliado/causante.
 
 DOCUMENTOS:
 ${textoCompleto.slice(0, 30000)}
@@ -125,7 +128,7 @@ Devuelve UNICAMENTE un objeto JSON valido con esta forma exacta (sin texto adici
     "sintesis_fallo": "resumen del fallo en 2-3 oraciones o null",
     "pretende_intereses": true o false o null,
     "pretende_indexacion": true o false o null,
-    "causante_afiliado": "Nombre completo (y numero de identificacion si aparece) del causante/afiliado fallecido, ubicado en el documento TRASLADO dentro de las secciones 'PRETENSIONES' y 'FUNDAMENTO Y RAZONES DE DERECHO O DE LA DEFENSA', segun las reglas indicadas arriba. Formato 'NOMBRE COMPLETO. C.C. NUMERO'. Solo para sobrevivientes/postmortem/auxilio funerario; en otro caso null."
+    "causante_afiliado": "Nombre completo (y numero de identificacion si aparece) del afiliado/causante, ubicado en el documento TRASLADO dentro de las secciones 'PRETENSIONES' y 'FUNDAMENTO Y RAZONES DE DERECHO O DE LA DEFENSA', segun las reglas indicadas arriba. Extraelo SIEMPRE aunque coincida con el demandante. Formato 'NOMBRE COMPLETO. C.C. NUMERO', o null solo si no se puede identificar."
   },
   "suggestions": {
     "sintesis_hechos": "sintesis de los hechos del caso, redactada a partir de los documentos, o null",
