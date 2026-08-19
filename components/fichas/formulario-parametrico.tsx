@@ -89,11 +89,11 @@ function Select({
 function Bloque({ numero, titulo, children }: { numero: number; titulo: string; children: React.ReactNode }) {
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden">
-      <div className="flex items-center gap-3 px-5 py-3.5 border-b border-border bg-muted/30">
-        <span className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shrink-0">
+      <div className="flex items-center gap-3 px-5 py-4 border-b border-border bg-primary/5 border-l-4 border-l-primary">
+        <span className="w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shrink-0">
           {numero}
         </span>
-        <h3 className="text-sm font-semibold">{titulo}</h3>
+        <h3 className="text-[15px] font-bold text-foreground">{titulo}</h3>
       </div>
       <div className="px-5 py-4 space-y-4">{children}</div>
     </div>
