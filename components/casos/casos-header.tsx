@@ -35,7 +35,7 @@ export function CasosHeader({ total }: CasosHeaderProps) {
           {/* Nuevo caso manual */}
           <Link
             href="/casos/nuevo"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#1a4a8a] text-white text-sm font-medium hover:bg-[#163d73] transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#171717] text-white text-sm font-medium hover:bg-[#2d2d2d] transition-colors"
           >
             <Plus className="w-4 h-4" />
             Nuevo caso

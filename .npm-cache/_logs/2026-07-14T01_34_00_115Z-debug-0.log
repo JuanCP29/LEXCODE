@@ -1,0 +1,263 @@
+0 verbose cli C:\Program Files\nodejs\node.exe C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js
+1 info using npm@10.9.2
+2 info using node@v22.14.0
+3 silly config load:file:C:\Program Files\nodejs\node_modules\npm\npmrc
+4 silly config load:file:C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\.npmrc
+5 silly config load:file:C:\Users\USER\.npmrc
+6 silly config load:file:C:\Users\USER\AppData\Roaming\npm\etc\npmrc
+7 verbose title npm install
+8 verbose argv "install" "--cache" ".npm-cache" "--no-audit" "--no-fund"
+9 verbose logfile logs-max:10 dir:C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\.npm-cache\_logs\2026-07-14T01_34_00_115Z-
+10 verbose logfile C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\.npm-cache\_logs\2026-07-14T01_34_00_115Z-debug-0.log
+11 silly logfile done cleaning log files
+12 silly packumentCache heap:2197815296 maxSize:549453824 maxEntrySize:274726912
+13 silly idealTree buildDeps
+14 verbose shrinkwrap failed to load node_modules/.package-lock.json out of date, updated: node_modules/@xmldom
+15 http fetch GET 200 https://registry.npmjs.org/npm 2630ms
+16 silly reify moves {}
+17 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\fsevents
+18 silly reify mark deleted [
+18 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\fsevents'
+18 silly reify ]
+19 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@unrs\resolver-binding-win32-ia32-msvc
+20 silly reify mark deleted [
+20 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@unrs\\resolver-binding-win32-ia32-msvc'
+20 silly reify ]
+21 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@unrs\resolver-binding-win32-arm64-msvc
+22 silly reify mark deleted [
+22 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@unrs\\resolver-binding-win32-arm64-msvc'
+22 silly reify ]
+23 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@unrs\resolver-binding-wasm32-wasi
+24 silly reify mark deleted [
+24 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@unrs\\resolver-binding-wasm32-wasi'
+24 silly reify ]
+25 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@emnapi\core
+26 silly reify mark deleted [
+26 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@emnapi\\core'
+26 silly reify ]
+27 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@emnapi\runtime
+28 silly reify mark deleted [
+28 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@emnapi\\runtime'
+28 silly reify ]
+29 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@napi-rs\wasm-runtime
+30 silly reify mark deleted [
+30 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@napi-rs\\wasm-runtime'
+30 silly reify ]
+31 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@emnapi\wasi-threads
+32 silly reify mark deleted [
+32 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@emnapi\\wasi-threads'
+32 silly reify ]
+33 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@tybys\wasm-util
+34 silly reify mark deleted [
+34 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@tybys\\wasm-util'
+34 silly reify ]
+35 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@unrs\resolver-binding-openharmony-arm64
+36 silly reify mark deleted [
+36 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@unrs\\resolver-binding-openharmony-arm64'
+36 silly reify ]
+37 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@unrs\resolver-binding-linux-x64-musl
+38 silly reify mark deleted [
+38 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@unrs\\resolver-binding-linux-x64-musl'
+38 silly reify ]
+39 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@unrs\resolver-binding-linux-x64-gnu
+40 silly reify mark deleted [
+40 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@unrs\\resolver-binding-linux-x64-gnu'
+40 silly reify ]
+41 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@unrs\resolver-binding-linux-s390x-gnu
+42 silly reify mark deleted [
+42 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@unrs\\resolver-binding-linux-s390x-gnu'
+42 silly reify ]
+43 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@unrs\resolver-binding-linux-riscv64-musl
+44 silly reify mark deleted [
+44 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@unrs\\resolver-binding-linux-riscv64-musl'
+44 silly reify ]
+45 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@unrs\resolver-binding-linux-riscv64-gnu
+46 silly reify mark deleted [
+46 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@unrs\\resolver-binding-linux-riscv64-gnu'
+46 silly reify ]
+47 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@unrs\resolver-binding-linux-ppc64-gnu
+48 silly reify mark deleted [
+48 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@unrs\\resolver-binding-linux-ppc64-gnu'
+48 silly reify ]
+49 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@unrs\resolver-binding-linux-loong64-musl
+50 silly reify mark deleted [
+50 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@unrs\\resolver-binding-linux-loong64-musl'
+50 silly reify ]
+51 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@unrs\resolver-binding-linux-loong64-gnu
+52 silly reify mark deleted [
+52 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@unrs\\resolver-binding-linux-loong64-gnu'
+52 silly reify ]
+53 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@unrs\resolver-binding-linux-arm64-musl
+54 silly reify mark deleted [
+54 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@unrs\\resolver-binding-linux-arm64-musl'
+54 silly reify ]
+55 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@unrs\resolver-binding-linux-arm64-gnu
+56 silly reify mark deleted [
+56 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@unrs\\resolver-binding-linux-arm64-gnu'
+56 silly reify ]
+57 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@unrs\resolver-binding-linux-arm-musleabihf
+58 silly reify mark deleted [
+58 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@unrs\\resolver-binding-linux-arm-musleabihf'
+58 silly reify ]
+59 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@unrs\resolver-binding-linux-arm-gnueabihf
+60 silly reify mark deleted [
+60 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@unrs\\resolver-binding-linux-arm-gnueabihf'
+60 silly reify ]
+61 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@unrs\resolver-binding-freebsd-x64
+62 silly reify mark deleted [
+62 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@unrs\\resolver-binding-freebsd-x64'
+62 silly reify ]
+63 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@unrs\resolver-binding-darwin-x64
+64 silly reify mark deleted [
+64 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@unrs\\resolver-binding-darwin-x64'
+64 silly reify ]
+65 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@unrs\resolver-binding-darwin-arm64
+66 silly reify mark deleted [
+66 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@unrs\\resolver-binding-darwin-arm64'
+66 silly reify ]
+67 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@unrs\resolver-binding-android-arm64
+68 silly reify mark deleted [
+68 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@unrs\\resolver-binding-android-arm64'
+68 silly reify ]
+69 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@unrs\resolver-binding-android-arm-eabi
+70 silly reify mark deleted [
+70 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@unrs\\resolver-binding-android-arm-eabi'
+70 silly reify ]
+71 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@next\swc-win32-ia32-msvc
+72 silly reify mark deleted [
+72 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@next\\swc-win32-ia32-msvc'
+72 silly reify ]
+73 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@next\swc-win32-arm64-msvc
+74 silly reify mark deleted [
+74 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@next\\swc-win32-arm64-msvc'
+74 silly reify ]
+75 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@next\swc-linux-x64-musl
+76 silly reify mark deleted [
+76 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@next\\swc-linux-x64-musl'
+76 silly reify ]
+77 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@next\swc-linux-x64-gnu
+78 silly reify mark deleted [
+78 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@next\\swc-linux-x64-gnu'
+78 silly reify ]
+79 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@next\swc-linux-arm64-musl
+80 silly reify mark deleted [
+80 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@next\\swc-linux-arm64-musl'
+80 silly reify ]
+81 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@next\swc-linux-arm64-gnu
+82 silly reify mark deleted [
+82 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@next\\swc-linux-arm64-gnu'
+82 silly reify ]
+83 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@next\swc-darwin-x64
+84 silly reify mark deleted [
+84 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@next\\swc-darwin-x64'
+84 silly reify ]
+85 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@next\swc-darwin-arm64
+86 silly reify mark deleted [
+86 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@next\\swc-darwin-arm64'
+86 silly reify ]
+87 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@napi-rs\canvas-linux-x64-musl
+88 silly reify mark deleted [
+88 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@napi-rs\\canvas-linux-x64-musl'
+88 silly reify ]
+89 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@napi-rs\canvas-linux-x64-gnu
+90 silly reify mark deleted [
+90 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@napi-rs\\canvas-linux-x64-gnu'
+90 silly reify ]
+91 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@napi-rs\canvas-linux-riscv64-gnu
+92 silly reify mark deleted [
+92 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@napi-rs\\canvas-linux-riscv64-gnu'
+92 silly reify ]
+93 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@napi-rs\canvas-linux-arm64-musl
+94 silly reify mark deleted [
+94 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@napi-rs\\canvas-linux-arm64-musl'
+94 silly reify ]
+95 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@napi-rs\canvas-linux-arm64-gnu
+96 silly reify mark deleted [
+96 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@napi-rs\\canvas-linux-arm64-gnu'
+96 silly reify ]
+97 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@napi-rs\canvas-linux-arm-gnueabihf
+98 silly reify mark deleted [
+98 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@napi-rs\\canvas-linux-arm-gnueabihf'
+98 silly reify ]
+99 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@napi-rs\canvas-darwin-x64
+100 silly reify mark deleted [
+100 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@napi-rs\\canvas-darwin-x64'
+100 silly reify ]
+101 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@napi-rs\canvas-darwin-arm64
+102 silly reify mark deleted [
+102 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@napi-rs\\canvas-darwin-arm64'
+102 silly reify ]
+103 verbose reify failed optional dependency C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c\node_modules\@napi-rs\canvas-android-arm64
+104 silly reify mark deleted [
+104 silly reify   'C:\\Users\\CodexSandboxOnline\\.codex\\.sandbox\\cwd\\9e4d3a55f32cf11c\\node_modules\\@napi-rs\\canvas-android-arm64'
+104 silly reify ]
+105 http cache @tybys/wasm-util@https://registry.npmjs.org/@tybys/wasm-util/-/wasm-util-0.10.3.tgz 0ms (cache hit)
+106 http cache @napi-rs/wasm-runtime@https://registry.npmjs.org/@napi-rs/wasm-runtime/-/wasm-runtime-1.1.6.tgz 0ms (cache hit)
+107 http cache @emnapi/wasi-threads@https://registry.npmjs.org/@emnapi/wasi-threads/-/wasi-threads-1.2.1.tgz 0ms (cache hit)
+108 http cache @emnapi/runtime@https://registry.npmjs.org/@emnapi/runtime/-/runtime-1.10.0.tgz 0ms (cache hit)
+109 http cache @emnapi/core@https://registry.npmjs.org/@emnapi/core/-/core-1.10.0.tgz 0ms (cache hit)
+110 silly tarball no local data for @tybys/wasm-util@https://registry.npmjs.org/@tybys/wasm-util/-/wasm-util-0.10.3.tgz. Extracting by manifest.
+111 silly tarball no local data for @napi-rs/wasm-runtime@https://registry.npmjs.org/@napi-rs/wasm-runtime/-/wasm-runtime-1.1.6.tgz. Extracting by manifest.
+112 silly tarball no local data for @emnapi/wasi-threads@https://registry.npmjs.org/@emnapi/wasi-threads/-/wasi-threads-1.2.1.tgz. Extracting by manifest.
+113 silly tarball no local data for @emnapi/runtime@https://registry.npmjs.org/@emnapi/runtime/-/runtime-1.10.0.tgz. Extracting by manifest.
+114 silly tarball no local data for @emnapi/core@https://registry.npmjs.org/@emnapi/core/-/core-1.10.0.tgz. Extracting by manifest.
+115 http fetch GET 200 https://registry.npmjs.org/@tybys/wasm-util/-/wasm-util-0.10.3.tgz 581ms (cache miss)
+116 http fetch GET 200 https://registry.npmjs.org/@emnapi/wasi-threads/-/wasi-threads-1.2.1.tgz 710ms (cache miss)
+117 http fetch GET 200 https://registry.npmjs.org/@emnapi/runtime/-/runtime-1.10.0.tgz 847ms (cache miss)
+118 http fetch GET 200 https://registry.npmjs.org/@napi-rs/wasm-runtime/-/wasm-runtime-1.1.6.tgz 953ms (cache miss)
+119 http fetch GET 200 https://registry.npmjs.org/@emnapi/core/-/core-1.10.0.tgz 1050ms (cache miss)
+120 silly ADD
+121 silly ADD
+122 silly ADD
+123 silly ADD
+124 silly ADD
+125 silly ADD
+126 silly ADD
+127 silly ADD
+128 silly ADD
+129 silly ADD
+130 silly ADD
+131 silly ADD
+132 silly ADD
+133 silly ADD
+134 silly ADD
+135 silly ADD
+136 silly ADD
+137 silly ADD
+138 silly ADD
+139 silly ADD
+140 silly ADD
+141 silly ADD
+142 silly ADD
+143 silly ADD
+144 silly ADD
+145 silly ADD
+146 silly ADD
+147 silly ADD
+148 silly ADD
+149 silly ADD
+150 silly ADD
+151 silly ADD
+152 silly ADD
+153 silly ADD
+154 silly ADD
+155 silly ADD
+156 silly ADD
+157 silly ADD
+158 silly ADD
+159 silly ADD
+160 silly ADD
+161 silly ADD
+162 silly ADD
+163 silly ADD
+164 verbose cwd C:\Users\CodexSandboxOnline\.codex\.sandbox\cwd\9e4d3a55f32cf11c
+165 verbose os Windows_NT 10.0.19045
+166 verbose node v22.14.0
+167 verbose npm  v10.9.2
+168 notice
+168 notice New major version of npm available! 10.9.2 -> 12.0.1
+168 notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.1
+168 notice To update run: npm install -g npm@12.0.1
+168 notice  { force: true, [Symbol(proc-log.meta)]: true }
+169 verbose exit 0
+170 info ok

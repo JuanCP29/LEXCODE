@@ -82,7 +82,7 @@ export default async function DashboardPage() {
           Mi actividad
         </p>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <StatCard label="Documentos"    value={stats.totalFichas}  icon={FileText}   color="#1a4a8a" />
+          <StatCard label="Documentos"    value={stats.totalFichas}  icon={FileText}   color="#171717" />
           <StatCard label="Casos activos" value={stats.casosActivos} icon={TrendingUp}  color="#059669" />
           <StatCard label="Total casos"   value={stats.totalCasos}   icon={FolderOpen}  color="#7c3aed" />
           <StatCard label="Fichas listas" value={stats.fichasListas} icon={CheckCircle} color="#d97706" />

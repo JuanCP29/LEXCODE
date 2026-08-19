@@ -361,7 +361,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
               >
                 <span className={cn(
                   "w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0",
-                  activo ? "bg-[#1a4a8a] text-white" : hecho ? "bg-[#1a4a8a]/20 text-[#1a4a8a]" : "bg-muted text-muted-foreground"
+                  activo ? "bg-[#171717] text-white" : hecho ? "bg-[#171717]/20 text-[#171717]" : "bg-muted text-muted-foreground"
                 )}>
                   {n}
                 </span>
@@ -433,15 +433,15 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
       <div className="rounded-xl border border-border bg-card overflow-hidden">
         {/* Header del bloque */}
         <div className="flex items-center gap-3 px-5 py-3.5 border-b border-border bg-muted/30">
-          <div className="w-6 h-6 rounded-full bg-[#1a4a8a]/10 border border-[#1a4a8a]/20 flex items-center justify-center shrink-0">
-            <FileSignature className="w-3.5 h-3.5 text-[#1a4a8a]" />
+          <div className="w-6 h-6 rounded-full bg-[#171717]/10 border border-[#171717]/20 flex items-center justify-center shrink-0">
+            <FileSignature className="w-3.5 h-3.5 text-[#171717]" />
           </div>
           <h3 className="text-sm font-semibold text-foreground">Documentos previos</h3>
         </div>
 
         <div className="px-5 py-4 space-y-4">
           {/* Generar Poder de Sustitución */}
-          <div className="rounded-lg border border-[#1a4a8a]/30 bg-[#1a4a8a]/5 px-4 py-3">
+          <div className="rounded-lg border border-[#171717]/30 bg-[#171717]/5 px-4 py-3">
             {poderGenerado ? (
               <div className="flex items-center gap-2 text-sm text-green-700">
                 <CheckCircle2 className="w-4 h-4 shrink-0" />
@@ -464,7 +464,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
                   type="button"
                   disabled={generandoPoder}
                   onClick={handleGenerarPoder}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-[#1a4a8a] text-white hover:bg-[#163d73] transition-colors shrink-0 disabled:opacity-60"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-[#171717] text-white hover:bg-[#2d2d2d] transition-colors shrink-0 disabled:opacity-60"
                 >
                   {generandoPoder
                     ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Generando...</>
@@ -577,7 +577,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={() => setEnvioUsado("portal")}
-                              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-[#1a4a8a] text-[#1a4a8a] bg-white dark:bg-card hover:bg-[#1a4a8a] hover:text-white transition-colors text-xs font-semibold flex-1"
+                              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-[#171717] text-[#171717] bg-white dark:bg-card hover:bg-[#171717] hover:text-white transition-colors text-xs font-semibold flex-1"
                             >
                               <ExternalLink className="w-3.5 h-3.5 shrink-0" />
                               Portal Rama Judicial
@@ -616,7 +616,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados }: 
                       </div>
                       <a
                         href="/pendientes"
-                        className="text-xs font-semibold text-[#1a4a8a] hover:underline"
+                        className="text-xs font-semibold text-[#171717] hover:underline"
                       >
                         Ver pendientes →
                       </a>

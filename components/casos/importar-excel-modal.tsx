@@ -227,7 +227,7 @@ export function ImportarExcelModal({ onClose }: ImportarExcelModalProps) {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <p className="text-sm text-foreground">
-                  <span className="font-bold text-[#1a4a8a]">{casos.length} casos</span> listos para importar.
+                  <span className="font-bold text-[#171717]">{casos.length} casos</span> listos para importar.
                   {casos.length > 10 && ` Mostrando los primeros ${preview.length}.`}
                 </p>
                 <button
@@ -286,7 +286,7 @@ export function ImportarExcelModal({ onClose }: ImportarExcelModalProps) {
           {/* Paso 3: Importando */}
           {paso === "importando" && (
             <div className="flex flex-col items-center justify-center py-16 gap-4">
-              <Loader2 className="w-12 h-12 text-[#1a4a8a] animate-spin" />
+              <Loader2 className="w-12 h-12 text-[#171717] animate-spin" />
               <p className="text-sm font-medium text-foreground">Importando {casos.length} casos...</p>
               <p className="text-xs text-muted-foreground">Esto puede tardar unos segundos.</p>
             </div>
@@ -320,7 +320,7 @@ export function ImportarExcelModal({ onClose }: ImportarExcelModalProps) {
           {paso === "preview" && (
             <button
               onClick={confirmarImportacion}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#1a4a8a] text-white text-sm font-semibold hover:bg-[#163d73] transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#171717] text-white text-sm font-semibold hover:bg-[#2d2d2d] transition-colors"
             >
               Importar {casos.length} casos <ChevronRight className="w-4 h-4" />
             </button>
@@ -329,7 +329,7 @@ export function ImportarExcelModal({ onClose }: ImportarExcelModalProps) {
           {paso === "resultado" && (
             <button
               onClick={() => { onClose(); router.refresh(); }}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#1a4a8a] text-white text-sm font-semibold hover:bg-[#163d73] transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#171717] text-white text-sm font-semibold hover:bg-[#2d2d2d] transition-colors"
             >
               Ver cola de casos <ChevronRight className="w-4 h-4" />
             </button>

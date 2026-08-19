@@ -44,7 +44,7 @@ function FilaFuente({
           {detalle ?? "Disponible"}
         </span>
       ) : linkFaltante ? (
-        <Link href={linkFaltante.href} className="text-[10px] font-semibold text-[#1a4a8a] hover:underline">
+        <Link href={linkFaltante.href} className="text-[10px] font-semibold text-[#171717] hover:underline">
           {linkFaltante.texto} →
         </Link>
       ) : (

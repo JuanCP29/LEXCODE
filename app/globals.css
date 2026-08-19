@@ -6,20 +6,20 @@
 
   /* ── MODO DÍA ─────────────────────────────────────────────────────────── */
   :root {
-    --background:          #f0f2f5;
+    --background:          #ffffff;
     --surface:             #ffffff;
     --surface-raised:      #f8f9fb;
 
-    --foreground:          #111827;
+    --foreground:          #171717;
     --foreground-muted:    #6b7280;
     --foreground-subtle:   #9ca3af;
 
-    /* Azul Collegia */
-    --primary:             #1a4a8a;
-    --primary-hover:       #15397a;
+    /* Primario (tema minimalista, casi negro) */
+    --primary:             #171717;
+    --primary-hover:       #2d2d2d;
     --primary-foreground:  #ffffff;
-    --primary-subtle:      #e8f0fb;
-    --primary-light:       #3b82c4;
+    --primary-subtle:      #f4f4f5;
+    --primary-light:       #3f3f46;
 
     /* Acento IA */
     --ia:                  #6366f1;
@@ -34,23 +34,23 @@
     --secondary-foreground:#374151;
     --muted:               #f3f4f6;
     --muted-foreground:    #6b7280;
-    --accent:              #e8f0fb;
-    --accent-foreground:   #1a4a8a;
+    --accent:              #f4f4f5;
+    --accent-foreground:   #171717;
 
     --destructive:         #dc2626;
     --destructive-foreground: #ffffff;
 
     --border:              #e5e7eb;
     --input:               #e5e7eb;
-    --ring:                #1a4a8a;
+    --ring:                #171717;
     --radius:              0.625rem;
 
     /* Sidebar — blanco con borde */
     --sidebar:             #ffffff;
     --sidebar-foreground:  #374151;
     --sidebar-border:      #e5e7eb;
-    --sidebar-accent:      #e8f0fb;
-    --sidebar-accent-foreground: #1a4a8a;
+    --sidebar-accent:      #f4f4f5;
+    --sidebar-accent-foreground: #171717;
     --sidebar-muted:       #9ca3af;
 
     /* Topbar */

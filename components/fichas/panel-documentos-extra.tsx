@@ -154,8 +154,8 @@ export function PanelDocumentosExtra({ onCamposExtraidos }: PanelDocumentosExtra
             className={cn(
               "relative m-3 rounded-lg border-2 border-dashed transition-colors cursor-pointer",
               dragging
-                ? "border-[#1a4a8a] bg-[#1a4a8a]/5"
-                : "border-border hover:border-[#1a4a8a]/50 hover:bg-muted/30"
+                ? "border-[#171717] bg-[#171717]/5"
+                : "border-border hover:border-[#171717]/50 hover:bg-muted/30"
             )}
             onClick={() => inputRef.current?.click()}
             onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
@@ -193,7 +193,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos }: PanelDocumentosExtra
                   key={f.name}
                   className="flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-muted/40 text-xs"
                 >
-                  <FileText className="w-3.5 h-3.5 text-[#1a4a8a] shrink-0" />
+                  <FileText className="w-3.5 h-3.5 text-[#171717] shrink-0" />
                   <span className="flex-1 truncate text-foreground/80">{f.name}</span>
                   <button
                     onClick={() => quitarArchivo(f.name)}
@@ -209,7 +209,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos }: PanelDocumentosExtra
                 <button
                   onClick={analizar}
                   disabled={estado === "analizando"}
-                  className="w-full mt-1 py-2 rounded-md bg-[#1a4a8a] text-white text-xs font-semibold hover:bg-[#163d73] transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+                  className="w-full mt-1 py-2 rounded-md bg-[#171717] text-white text-xs font-semibold hover:bg-[#2d2d2d] transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
                 >
                   {estado === "analizando" ? (
                     <>
@@ -245,7 +245,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos }: PanelDocumentosExtra
               </div>
               <button
                 onClick={analizar}
-                className="text-[11px] text-[#1a4a8a] hover:underline mt-1"
+                className="text-[11px] text-[#171717] hover:underline mt-1"
               >
                 Re-analizar
               </button>
@@ -261,7 +261,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos }: PanelDocumentosExtra
           {/* Sugerencias redactadas — copiar y pegar en las secciones */}
           {estado === "listo" && sugerencias && Object.values(sugerencias).some((v) => v && String(v).trim()) && (
             <div className="px-3 pb-3 space-y-2 border-t border-border pt-3">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-[#1a4a8a] dark:text-[#93c5fd]">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-[#171717] dark:text-[#93c5fd]">
                 <Sparkles className="w-3.5 h-3.5" />
                 Sugerencias redactadas
               </div>
@@ -275,7 +275,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos }: PanelDocumentosExtra
                       </span>
                       <button
                         onClick={() => copiarSugerencia(key, String(texto))}
-                        className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#1a4a8a] hover:underline shrink-0"
+                        className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#171717] hover:underline shrink-0"
                       >
                         {copiado === key
                           ? <><Check className="w-2.5 h-2.5 text-green-600" /> Copiado</>

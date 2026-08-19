@@ -199,7 +199,7 @@ function FilaPendiente({ pendiente, onResuelto }: { pendiente: Pendiente; onResu
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <a
               href={`/generador/${caso.id}/params`}
-              className="text-xs text-[#1a4a8a] font-semibold hover:underline"
+              className="text-xs text-[#171717] font-semibold hover:underline"
             >
               Ir al caso →
             </a>

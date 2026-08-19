@@ -149,7 +149,7 @@ export function DirectricesAdmin({ directrices: inicial }: DirectricesAdminProps
       {/* ── Formulario de carga ───────────────────────────────── */}
       <div className="bg-card border border-border rounded-xl card-shadow overflow-hidden">
         <div className="flex items-center gap-3 px-5 py-3.5 border-b border-border bg-muted/30">
-          <Plus className="w-4 h-4 text-[#1a4a8a]" />
+          <Plus className="w-4 h-4 text-[#171717]" />
           <h2 className="text-sm font-semibold">Agregar nueva directriz</h2>
         </div>
         <div className="px-5 py-5 space-y-4">
@@ -159,10 +159,10 @@ export function DirectricesAdmin({ directrices: inicial }: DirectricesAdminProps
             className={cn(
               "border-2 border-dashed rounded-lg cursor-pointer transition-colors text-center py-8",
               dragging
-                ? "border-[#1a4a8a] bg-[#1a4a8a]/5"
+                ? "border-[#171717] bg-[#171717]/5"
                 : archivo
                 ? "border-green-400 bg-green-50 dark:bg-green-900/10"
-                : "border-border hover:border-[#1a4a8a]/50 hover:bg-muted/30"
+                : "border-border hover:border-[#171717]/50 hover:bg-muted/30"
             )}
             onClick={() => fileRef.current?.click()}
             onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
@@ -274,7 +274,7 @@ export function DirectricesAdmin({ directrices: inicial }: DirectricesAdminProps
           {/* Tipologías asociadas */}
           <div className="space-y-2">
             <label className="text-sm font-medium flex items-center gap-1.5">
-              <Tags className="w-3.5 h-3.5 text-[#1a4a8a]" />
+              <Tags className="w-3.5 h-3.5 text-[#171717]" />
               Tipologías asociadas{" "}
               <span className="text-muted-foreground font-normal">
                 — determinan cuándo aplica la directriz ({tipologiaIds.length} seleccionada{tipologiaIds.length !== 1 ? "s" : ""})
@@ -329,7 +329,7 @@ export function DirectricesAdmin({ directrices: inicial }: DirectricesAdminProps
           <button
             onClick={handleSubir}
             disabled={!archivo || !nombre.trim() || subiendo}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#1a4a8a] text-white text-sm font-semibold hover:bg-[#163d73] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#171717] text-white text-sm font-semibold hover:bg-[#2d2d2d] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {subiendo ? (
               <><Loader2 className="w-4 h-4 animate-spin" /> Procesando PDF...</>
@@ -363,14 +363,14 @@ export function DirectricesAdmin({ directrices: inicial }: DirectricesAdminProps
           <div className="divide-y divide-border">
             {lista.map((d) => (
               <div key={d.id} className="flex items-center gap-4 px-5 py-4">
-                <div className="w-9 h-9 rounded-lg bg-[#1a4a8a]/10 flex items-center justify-center shrink-0">
-                  <FileText className="w-4 h-4 text-[#1a4a8a]" />
+                <div className="w-9 h-9 rounded-lg bg-[#171717]/10 flex items-center justify-center shrink-0">
+                  <FileText className="w-4 h-4 text-[#171717]" />
                 </div>
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     {d.codigo && (
-                      <span className="text-[11px] px-1.5 py-0.5 rounded font-mono font-semibold bg-[#1a4a8a]/10 text-[#1a4a8a] dark:text-[#93c5fd]">
+                      <span className="text-[11px] px-1.5 py-0.5 rounded font-mono font-semibold bg-[#171717]/10 text-[#171717] dark:text-[#93c5fd]">
                         {d.codigo}
                       </span>
                     )}

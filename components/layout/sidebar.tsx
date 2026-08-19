@@ -40,7 +40,7 @@ function SidebarContent({ onClose }: SidebarContentProps) {
       <div className="flex items-center justify-between px-5 h-14 border-b border-sidebar-border shrink-0">
         <Link href="/dashboard" onClick={onClose} className="flex items-center gap-2.5">
           {/* Ícono angular */}
-          <span className="flex items-center justify-center w-7 h-7 rounded-md bg-[#1a4a8a]">
+          <span className="flex items-center justify-center w-7 h-7 rounded-md bg-[#171717]">
             <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
               <polygon points="10,2 18,8 2,8" fill="white" />
               <rect x="3"  y="8" width="2.5" height="10" fill="white" />
@@ -50,7 +50,7 @@ function SidebarContent({ onClose }: SidebarContentProps) {
             </svg>
           </span>
           <span className="font-bold text-lg tracking-tight text-sidebar-foreground">
-            <span className="text-[#1a4a8a]">LEG</span><span>IUX</span>
+            <span className="text-[#171717]">LEG</span><span>IUX</span>
           </span>
         </Link>
         {onClose && (
@@ -84,7 +84,7 @@ function SidebarContent({ onClose }: SidebarContentProps) {
                   : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
               )}
             >
-              <Icon className={cn(sub ? "w-3.5 h-3.5" : "w-4 h-4", "shrink-0", active ? "text-[#1a4a8a] dark:text-[#93c5fd]" : "text-[var(--sidebar-muted)]")} />
+              <Icon className={cn(sub ? "w-3.5 h-3.5" : "w-4 h-4", "shrink-0", active ? "text-[#171717] dark:text-[#93c5fd]" : "text-[var(--sidebar-muted)]")} />
               <span className={sub ? "text-xs" : ""}>{label}</span>
             </Link>
           );
@@ -103,7 +103,7 @@ function SidebarContent({ onClose }: SidebarContentProps) {
           className={cn(
             "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
             pathname === "/casos/nuevo"
-              ? "bg-[#1a4a8a] text-white"
+              ? "bg-[#171717] text-white"
               : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
           )}
         >

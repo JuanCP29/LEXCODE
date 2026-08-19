@@ -280,7 +280,7 @@ export function EditorFicha({ caso, fichaInicial }: EditorFichaProps) {
                 </Button>
                 <Button
                   size="sm"
-                  className="bg-[#1a4a8a] hover:bg-[#163d73] text-white"
+                  className="bg-[#171717] hover:bg-[#2d2d2d] text-white"
                   onClick={() => descargar(`/api/exportar-ficha-pdf/${fichaId}`, `${nombreArchivo || "FICHA_CONCILIACION"}.pdf`)}
                 >
                   <FileDown className="w-3.5 h-3.5 mr-1" /> Exportar PDF
