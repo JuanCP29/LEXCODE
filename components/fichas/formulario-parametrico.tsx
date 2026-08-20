@@ -149,6 +149,8 @@ interface FormularioParametricoProps {
   consideracionesSugerida?: string | null;
   pretensionSugerida?: string | null;   // pretensión BUPC detectada (VEJEZ, SOBREVIVIENTES, ...)
   claseSugerida?: string | null;        // clase BUPC detectada
+  causanteNombreSugerido?: string | null; // nombre del causante/afiliado detectado (si difiere del demandante)
+  causanteCedulaSugerida?: string | null; // cédula del causante/afiliado detectado
 }
 
 // Mapea una pretensión BUPC (MAYÚSCULAS) al enum del formulario/ficha; null si no hay equivalencia.
@@ -204,7 +206,7 @@ function limpiarNum(v: string | null | undefined): string {
   return s;
 }
 
-export function FormularioParametrico({ casoId, casoData, valoresPrellenados, sintesisHechosSugerida, pretensionesSugerida, cuantiaSugerida, normasSugerida, problemaSugerido, consideracionesSugerida, pretensionSugerida, claseSugerida }: FormularioParametricoProps) {
+export function FormularioParametrico({ casoId, casoData, valoresPrellenados, sintesisHechosSugerida, pretensionesSugerida, cuantiaSugerida, normasSugerida, problemaSugerido, consideracionesSugerida, pretensionSugerida, claseSugerida, causanteNombreSugerido, causanteCedulaSugerida }: FormularioParametricoProps) {
   const [error, setError] = useState<string | null>(null);
   const [generandoPoder, setGenerandoPoder] = useState(false);
   const [poderGenerado, setPoderGenerado] = useState(false);
@@ -273,6 +275,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
     handleSubmit,
     watch,
     setValue,
+    getValues,
     formState: { errors },
   } = useForm<ParametrosFormData>({
     resolver: zodResolver(parametrosSchema),
@@ -303,6 +306,10 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
   });
 
   const conciliable      = watch("conciliable");
+  // Causante/afiliado: cuando el campo tiene contenido significa que difiere del demandante
+  // (el campo es «solo si difiere»); se resalta en naranja como alerta visual.
+  const causanteAfiliado = watch("causante_afiliado");
+  const causanteDifiere  = !!(causanteAfiliado && causanteAfiliado.trim());
 
   async function handleGenerarPoder() {
     setGenerandoPoder(true);
@@ -407,6 +414,27 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
       setClaseSel((prev) => prev || cl);
     }
   }, [pretensionSugerida, claseSugerida]);
+
+  // Causante/afiliado: si el análisis detecta un causante (típico en sobrevivientes) cuya identidad
+  // DIFIERE del demandante que trae el CSV, se autocompleta el campo (lo que dispara el resalte naranja).
+  // No pisa lo que el abogado ya haya escrito.
+  useEffect(() => {
+    const nombre = (causanteNombreSugerido ?? "").trim();
+    const cedula = (causanteCedulaSugerida ?? "").replace(/\D/g, "");
+    if (!nombre && !cedula) return;
+    if ((getValues("causante_afiliado") ?? "").trim()) return; // no sobreescribir
+
+    const demCedula = (encabezado.cedula_demandante ?? "").replace(/\D/g, "");
+    const demNombre = (encabezado.nombre_demandante ?? "").trim().toLowerCase();
+    // Coincide con el demandante (mismo sujeto) => no es un causante distinto.
+    const mismaCedula = !!cedula && !!demCedula && cedula === demCedula;
+    const mismoNombre = !!nombre && !!demNombre && nombre.toLowerCase() === demNombre;
+    if (mismaCedula || mismoNombre) return;
+
+    const cedFmt = cedula ? Number(cedula).toLocaleString("es-CO") : "";
+    const texto = `${nombre}${cedFmt ? `, C.C. ${cedFmt}` : ""}`.trim();
+    if (texto) setValue("causante_afiliado", texto, { shouldDirty: true });
+  }, [causanteNombreSugerido, causanteCedulaSugerida, encabezado.cedula_demandante, encabezado.nombre_demandante, getValues, setValue]);
 
   // Sección 12 (Evaluación de riesgo): traer la calificación histórica (moda por criterio) según
   // la pretensión + clase SELECCIONADAS en el paso 1, y prellenar los selectores vacíos con la sugerencia.
@@ -671,8 +699,18 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
                     value={field.value ?? ""}
                     onChange={(e) => field.onChange(e.target.value || null)}
                     placeholder="Solo si difiere del demandante (ej. sobrevivientes)"
+                    className={cn(
+                      causanteDifiere &&
+                        "border-orange-400 bg-orange-50 text-orange-900 placeholder:text-orange-400 focus-visible:ring-orange-400 dark:border-orange-600 dark:bg-orange-950/30 dark:text-orange-200"
+                    )}
                   />
                 )} />
+              {causanteDifiere && (
+                <p className="text-[11px] text-orange-600 dark:text-orange-400 flex items-start gap-1">
+                  <AlertCircle className="w-3 h-3 shrink-0 mt-0.5" />
+                  El causante/afiliado difiere del demandante. Verifica el nombre y la cédula.
+                </p>
+              )}
             </Campo>
             <CampoLectura label="Nombre e identificación demandado" valor={DEMANDADO_FIJO} />
             <Campo label="Autoridad que efectúa la citación">

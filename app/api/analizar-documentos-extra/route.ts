@@ -24,6 +24,13 @@ ${CATALOGO_DIRECTIVA}
 - En "clase_pretension" devuelve EXACTAMENTE una de las clases listadas bajo esa pretension (la que mejor describa el asunto). Si no hay una clara, pon null.
 - Reglas de desempate: si se discute la ineficacia/nulidad de un TRASLADO de RAIS a prima media -> VEJEZ / TRASLADO DE REGIMEN. Si se reclama pension de sobrevivientes o sustitucion por fallecimiento -> SOBREVIVIENTES. Si es pension de invalidez o perdida de capacidad laboral -> INVALIDEZ. Si el objeto principal son costas/agencias contra la administradora -> ADMINISTRADORA / PAGO COSTAS. En reliquidaciones o reconocimientos de vejez -> VEJEZ con la clase mas afin (LEY 100 DE 1993, RETROACTIVO, INCREMENTOS PENSIONALES 14%, etc.).`;
 
+// Instrucción para identificar al CAUSANTE/AFILIADO (persona que genera el derecho pensional),
+// que en sobrevivientes es distinto del demandante.
+const REGLA_CAUSANTE = `Identifica al CAUSANTE o AFILIADO: la persona cuya vida laboral/afiliacion genera el derecho pensional en disputa.
+- En pensiones de VEJEZ o INVALIDEZ el causante/afiliado suele ser el MISMO demandante -> devuelve ambos campos en null.
+- En pensiones de SOBREVIVIENTES (o sustitucion pensional) el causante es la persona FALLECIDA, DISTINTA del demandante (que es el beneficiario/conyuge/hijo que reclama). En ese caso devuelve el NOMBRE COMPLETO del causante fallecido en "causante_nombre" y su numero de cedula en "causante_cedula" (SOLO DIGITOS, sin puntos).
+- Si no logras identificar un causante DISTINTO del demandante con seguridad, pon "causante_nombre" y "causante_cedula" en null. NUNCA repitas los datos del propio demandante como causante.`;
+
 // Recorta un PDF a sus primeras N páginas y lo devuelve en base64 (para leer escaneados con visión).
 async function recortarPaginasBase64(buffer: Buffer, maxPaginas = 30): Promise<{ base64: string; paginas: number } | null> {
   try {
@@ -110,6 +117,8 @@ type SeccionesTraslado = {
   consideraciones: string | null;
   pretension: string | null;
   clase_pretension: string | null;
+  causante_nombre: string | null;
+  causante_cedula: string | null;
 };
 
 async function analizarTrasladoVision(
@@ -117,7 +126,7 @@ async function analizarTrasladoVision(
   pdfs: { nombre: string; buffer: Buffer }[],
   despacho?: string | null
 ): Promise<SeccionesTraslado> {
-  const vacio: SeccionesTraslado = { sintesis_hechos: null, pretensiones: null, cuantia: null, normas: null, problema_juridico: null, consideraciones: null, pretension: null, clase_pretension: null };
+  const vacio: SeccionesTraslado = { sintesis_hechos: null, pretensiones: null, cuantia: null, normas: null, problema_juridico: null, consideraciones: null, pretension: null, clase_pretension: null, causante_nombre: null, causante_cedula: null };
   if (pdfs.length === 0) return vacio;
   // Combina el traslado (demanda) con las demas actuaciones/resoluciones cargadas.
   const recorte = await combinarPDFsBase64(pdfs);
@@ -218,12 +227,15 @@ F) CONSIDERACIONES -> campo "consideraciones". Es la seccion MAS IMPORTANTE. Ana
 G) CLASIFICACION -> campos "pretension" y "clase_pretension".
 ${REGLA_CLASIFICACION}
 
+H) CAUSANTE / AFILIADO -> campos "causante_nombre" y "causante_cedula".
+${REGLA_CAUSANTE}
+
 REGLA DE FORMATO JSON (CRITICA): dentro de los valores de texto NUNCA uses comillas dobles rectas ("). Para citar o
 TRANSCRIBIR articulos, sentencias o textos, usa SIEMPRE comillas angulares « » (o comillas simples '). Esto es obligatorio para
 no invalidar el JSON. Usa \\n para los saltos de linea.
 
 Devuelve UNICAMENTE un JSON con esta forma exacta:
-{ "sintesis_hechos": "1) ...\\n\\n2) ...", "pretensiones": "1) ...\\n\\n2) ...", "cuantia": "La cuantia fue estimada...", "normas": "• Ley ...\\n• Decreto ...", "problema_juridico": "Determinar si ...", "consideraciones": "...", "pretension": "VEJEZ", "clase_pretension": "LEY 100 DE 1993" }`;
+{ "sintesis_hechos": "1) ...\\n\\n2) ...", "pretensiones": "1) ...\\n\\n2) ...", "cuantia": "La cuantia fue estimada...", "normas": "• Ley ...\\n• Decreto ...", "problema_juridico": "Determinar si ...", "consideraciones": "...", "pretension": "VEJEZ", "clase_pretension": "LEY 100 DE 1993", "causante_nombre": null, "causante_cedula": null }`;
 
   try {
     const message = await anthropic.messages.create({
@@ -253,6 +265,8 @@ Devuelve UNICAMENTE un JSON con esta forma exacta:
       consideraciones: limpiar(parsed?.consideraciones),
       pretension: clasif.pretension,
       clase_pretension: clasif.clase_pretension,
+      causante_nombre: limpiar(parsed?.causante_nombre),
+      causante_cedula: limpiar(parsed?.causante_cedula),
     };
   } catch (e) {
     console.error("analizarTrasladoVision:", e);
@@ -379,6 +393,8 @@ export async function POST(request: NextRequest) {
           consideraciones: vision.consideraciones,
           pretension: vision.pretension,
           clase_pretension: vision.clase_pretension,
+          causante_nombre: vision.causante_nombre,
+          causante_cedula: vision.causante_cedula,
         },
         fieldsFound: 0,
         suggestionsFound: encontrados.length,
@@ -429,7 +445,9 @@ Devuelve UNICAMENTE un objeto JSON valido con esta forma exacta (sin texto adici
     "evaluacion_riesgo": "evaluacion del riesgo procesal segun lo que consta, o null",
     "recomendacion": "recomendacion de conciliacion fundamentada en las fuentes, o null",
     "pretension": "CLASIFICACION del tipo de prestacion. ${REGLA_CLASIFICACION.replace(/\n/g, " ")} Devuelve la pretension (VEJEZ, SOBREVIVIENTES, INVALIDEZ o ADMINISTRADORA) o null.",
-    "clase_pretension": "la CLASE exacta del catalogo bajo la pretension elegida (segun la regla de CLASIFICACION anterior), o null"
+    "clase_pretension": "la CLASE exacta del catalogo bajo la pretension elegida (segun la regla de CLASIFICACION anterior), o null",
+    "causante_nombre": "nombre completo del CAUSANTE/AFILIADO cuando sea DISTINTO del demandante (tipico en sobrevivientes: la persona fallecida). ${REGLA_CAUSANTE.replace(/\n/g, " ")} Devuelve el nombre o null.",
+    "causante_cedula": "numero de cedula del causante/afiliado (SOLO DIGITOS) cuando sea distinto del demandante, o null"
   }
 }`;
 
@@ -471,6 +489,8 @@ Devuelve UNICAMENTE un objeto JSON valido con esta forma exacta (sin texto adici
           consideraciones: vision.consideraciones,
           pretension: vision.pretension,
           clase_pretension: vision.clase_pretension,
+          causante_nombre: vision.causante_nombre,
+          causante_cedula: vision.causante_cedula,
         },
         fieldsFound: 0,
         suggestionsFound: encontrados.length,
