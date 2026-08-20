@@ -307,17 +307,23 @@ export async function POST(request: NextRequest) {
     // Caracteres de texto REALMENTE útiles: se descartan los encabezados "=== nombre ===",
     // los marcadores de página que emite pdf-parse en escaneados ("-- 1 of 156 --") y los
     // avisos de fallo, y se colapsan espacios. Así un PDF escaneado da ~0 y dispara la visión.
-    const caracteresExtraidos = textoCompleto
-      .replace(/=== .*? ===/g, "")
-      .replace(/--\s*\d+\s*of\s*\d+\s*--/gi, "")
-      .replace(/\[No se pudo extraer el texto\]/gi, "")
-      .replace(/\s+/g, " ")
-      .trim().length;
+    const soloUtil = (s: string) =>
+      s.replace(/=== .*? ===/g, "")
+        .replace(/--\s*\d+\s*of\s*\d+\s*--/gi, "")
+        .replace(/\[No se pudo extraer el texto\]/gi, "")
+        .replace(/\s+/g, " ")
+        .trim().length;
+    const caracteresExtraidos = soloUtil(textoCompleto);
+    // Texto útil del TRASLADO específicamente (documento principal para las secciones 1-4 + problema).
+    const trasladoIdx = pdfs.findIndex((p) => /traslad/i.test(p.nombre));
+    const idxPrincipal = trasladoIdx >= 0 ? trasladoIdx : 0;
+    const trasladoChars = textos[idxPrincipal] ? soloUtil(textos[idxPrincipal]) : caracteresExtraidos;
 
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
-    // ── Documento ESCANEADO (sin capa de texto): leer HECHOS y PRETENSIONES con visión ──
-    if (caracteresExtraidos < 200) {
+    // ── Usar VISIÓN si el paquete no tiene texto útil, o si el TRASLADO está escaneado (aunque otras
+    //    actuaciones traigan texto): la visión lee todos los PDFs como imágenes y genera las 6 secciones. ──
+    if (caracteresExtraidos < 200 || trasladoChars < 200) {
       const vision = await analizarTrasladoVision(anthropic, pdfs, despachoHint);
       const encontrados = [vision.sintesis_hechos, vision.pretensiones, vision.cuantia, vision.normas, vision.problema_juridico, vision.consideraciones].filter(Boolean);
       return NextResponse.json({
@@ -398,10 +404,36 @@ Devuelve UNICAMENTE un objeto JSON valido con esta forma exacta (sin texto adici
       );
     }
 
-    const parsed = JSON.parse(jsonMatch[0]);
+    // El JSON puede venir mal formado (p. ej. comillas dobles sin escapar dentro de una
+    // transcripcion). En ese caso NO se cae la peticion: se reintenta el analisis por VISIÓN,
+    // que lee todos los PDFs como imagenes y tiene su propio manejo de errores.
+    let parsed: { data?: Record<string, unknown>; suggestions?: Record<string, unknown> } | null = null;
+    try {
+      parsed = JSON.parse(jsonMatch[0]);
+    } catch (errParse) {
+      console.error("JSON del camino de texto invalido, reintentando por visión:", errParse);
+      const vision = await analizarTrasladoVision(anthropic, pdfs, despachoHint);
+      const encontrados = [vision.sintesis_hechos, vision.pretensiones, vision.cuantia, vision.normas, vision.problema_juridico, vision.consideraciones].filter(Boolean);
+      return NextResponse.json({
+        campos: {},
+        suggestions: {
+          sintesis_hechos: vision.sintesis_hechos,
+          pretensiones: vision.pretensiones,
+          cuantia: vision.cuantia,
+          normas: vision.normas,
+          problema_juridico: vision.problema_juridico,
+          consideraciones: vision.consideraciones,
+        },
+        fieldsFound: 0,
+        suggestionsFound: encontrados.length,
+        caracteres_extraidos: encontrados.length > 0 ? 999 : caracteresExtraidos,
+        escaneado: true,
+        archivos_procesados: textos.length,
+      });
+    }
     // Compatibilidad: si la IA devolvió el formato plano antiguo, tratarlo como data.
-    const campos = parsed.data ?? parsed;
-    const suggestions = parsed.suggestions ?? {};
+    const campos = (parsed?.data ?? parsed ?? {}) as Record<string, unknown>;
+    const suggestions = (parsed?.suggestions ?? {}) as Record<string, unknown>;
 
     const fieldsFound = Object.values(campos).filter((v) => v !== null && v !== undefined).length;
     const suggestionsFound = Object.values(suggestions).filter((v) => v !== null && v !== undefined && String(v).trim() !== "").length;
