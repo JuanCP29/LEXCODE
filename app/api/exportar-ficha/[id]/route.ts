@@ -3,6 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { limpiarDespacho } from "@/lib/utils";
 import { generarFichaDocx } from "@/lib/docx/generar-ficha-docx";
+import { FIRMA_ELABORO } from "@/lib/ficha/firma-elaboro";
 
 function createSupabaseServer() {
   const cookieStore = cookies();
@@ -121,9 +122,9 @@ export async function GET(
       fecha_elaboracion: ficha.created_at,
     };
 
-    // 4. Generar .docx con el formato v3 (docx.js). El sec_19 usa el perfil si falta.
+    // 4. Generar .docx con el formato v3 (docx.js). El sec_19 usa el bloque de firma fijo si falta.
     if (!datos.sec_19_elaboro) {
-      datos.sec_19_elaboro = perfil?.nombre_completo ?? null;
+      datos.sec_19_elaboro = FIRMA_ELABORO;
     }
     const buffer: Buffer = await generarFichaDocx(datos);
 

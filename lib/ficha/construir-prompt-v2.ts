@@ -10,6 +10,7 @@
  */
 import { MATRIZ_SECCIONES, type FichaSectionMapping } from "@/lib/ficha/matriz-secciones";
 import type { ContextoFicha } from "@/lib/ficha/construir-contexto";
+import { FIRMA_ELABORO } from "@/lib/ficha/firma-elaboro";
 
 export const PROMPT_VERSION = "v2.0";
 
@@ -57,13 +58,12 @@ export function planificarSecciones(
   return MATRIZ_SECCIONES.map((mapping) => {
     const val = contexto.validacion.find((v) => v.sectionNumber === mapping.sectionNumber)!;
 
-    // Sección 19: directa desde el perfil, sin IA
+    // Sección 19 (Elaboró): bloque de firma fijo de la apoderada externa, sin IA.
     if (mapping.sectionNumber === 19) {
       return {
         mapping,
         accion: "directa" as const,
-        contenidoDirecto: contexto.nombreAbogado ?? "",
-        advertencia: contexto.nombreAbogado ? undefined : "Perfil sin nombre completo — diligenciar manualmente.",
+        contenidoDirecto: FIRMA_ELABORO,
       };
     }
 

@@ -9,6 +9,15 @@ function logoBuffer(): Buffer | null {
   catch { return null; }
 }
 
+// Firma manuscrita de la apoderada externa (sección 14 «Elaboró»). Colócala en
+// public/plantillas/firma-elaboro.png (fondo transparente recomendado). Si falta, se
+// imprime solo el bloque de texto de la firma.
+const FIRMA_PATH = path.join(process.cwd(), "public", "plantillas", "firma-elaboro.png");
+function firmaBuffer(): Buffer | null {
+  try { return fs.existsSync(FIRMA_PATH) ? fs.readFileSync(FIRMA_PATH) : null; }
+  catch { return null; }
+}
+
 /**
  * Ficha de Conciliación Judicial en PDF replicando el formato oficial
  * GDJ-GPO-FMT-005 Versión 3 (14 secciones). Estilo fiel al modelo Excel:
@@ -208,6 +217,24 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
         .text(tituloFull, left + 6, ty + 4, { width: W - 12, align: "center" });
       doc.y = ty + hTitS;
       doc.x = left;
+
+      // ── Sección 14 (Elaboró): firma manuscrita encima del bloque de datos ──
+      const firma = s.key === "sec_19_elaboro" ? firmaBuffer() : null;
+      if (firma) {
+        const imgH = 48, gap = 4;
+        doc.font(FONT).fontSize(9).fillColor(NEGRO);
+        const hTxt = doc.heightOfString(contenido, { width: W - 12, lineGap: 2.5 });
+        const boxH = 6 + imgH + gap + hTxt + 8;
+        if (doc.y + boxH > bottom) { doc.addPage(); doc.y = M; }
+        const by = doc.y;
+        doc.rect(left, by, W, boxH).stroke(BORDE);
+        try { doc.image(firma, left + 6, by + 6, { fit: [170, imgH] }); } catch { /* imagen inválida */ }
+        doc.font(FONT).fontSize(9).fillColor(NEGRO)
+          .text(contenido, left + 6, by + 6 + imgH + gap, { width: W - 12, align: "left", lineGap: 2.5 });
+        doc.y = by + boxH;
+        doc.x = left;
+        continue;
+      }
 
       // Caja de respuesta — el contenido largo se divide entre páginas y el borde
       // se dibuja por segmentos en cada página que ocupa.

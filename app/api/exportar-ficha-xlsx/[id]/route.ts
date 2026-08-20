@@ -5,6 +5,7 @@ import { limpiarDespacho } from "@/lib/utils";
 import path from "path";
 import fs from "fs";
 import { generarFichaXlsx } from "@/lib/xlsx/generar-ficha-xlsx";
+import { FIRMA_ELABORO } from "@/lib/ficha/firma-elaboro";
 
 function createSupabaseServer() {
   const cookieStore = cookies();
@@ -75,7 +76,7 @@ export async function GET(
       sec_16: ficha.sec_16_consideraciones ?? "",
       sec_17: ficha.sec_17_riesgo ?? "",
       sec_18: ficha.sec_18_recomendacion ?? "",
-      sec_19: ficha.sec_19_elaboro ?? "",
+      sec_19: ficha.sec_19_elaboro ?? FIRMA_ELABORO,
     });
 
     const fecha   = new Date().toISOString().slice(0, 10).replace(/-/g, "");

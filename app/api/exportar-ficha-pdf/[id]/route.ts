@@ -3,6 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { limpiarDespacho } from "@/lib/utils";
 import { generarFichaPdf, type DatosFichaPdf } from "@/lib/pdf/generar-ficha-pdf";
+import { FIRMA_ELABORO } from "@/lib/ficha/firma-elaboro";
 
 function sb() {
   const c = cookies();
@@ -25,12 +26,6 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
       .eq("id", params.id)
       .single();
     if (error || !ficha) return NextResponse.json({ error: "Ficha no encontrada" }, { status: 404 });
-
-    const { data: perfil } = await supabase
-      .from("perfiles")
-      .select("nombre_completo")
-      .eq("id", ficha.creado_por)
-      .single();
 
     const caso = ficha.casos as Record<string, string | null>;
 
@@ -58,7 +53,7 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
       sec_16_consideraciones: ficha.sec_16_consideraciones ?? null,
       sec_17_riesgo:          ficha.sec_17_riesgo ?? null,
       sec_18_recomendacion:   ficha.sec_18_recomendacion ?? null,
-      sec_19_elaboro:         ficha.sec_19_elaboro ?? perfil?.nombre_completo ?? null,
+      sec_19_elaboro:         ficha.sec_19_elaboro ?? FIRMA_ELABORO,
     };
 
     const buffer = await generarFichaPdf(datos);
