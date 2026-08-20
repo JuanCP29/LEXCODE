@@ -27,11 +27,14 @@ async function recortarPaginasBase64(buffer: Buffer, maxPaginas = 30): Promise<{
 }
 
 // Reglas de redaccion comunes a HECHOS y PRETENSIONES (secciones 1 y 2 de la ficha).
-const REGLAS_REDACCION = `- ENUMERA cada punto con el formato "1)", "2)", "3)"... en el MISMO orden de la demanda, separando cada uno del siguiente con una LINEA EN BLANCO (doble salto de linea).
-- Debe haber EXACTAMENTE el MISMO numero de puntos que enumera la demanda en esa seccion (si la demanda lista 14, deben ser 14, de 1) a 14)). NO unas dos en uno, NO omitas ninguno, NO agregues puntos que no existan. Resume cada uno en 1 o 2 frases.
+const REGLAS_REDACCION = `- La demanda puede enumerar sus puntos con NUMEROS ("1.", "1)", "1-") o con ORDINALES EN PALABRA ("Primero.", "Segundo.", "Tercero." ... "Septimo.", "Octavo.", "Noveno.", "Decimo.", "Decimo primero.", "Undecimo.", "Duodecimo.", "Decimo tercero.", etc.). DETECTA AMBOS formatos. Recorre la seccion desde el PRIMER punto hasta el ULTIMO, que es el que aparece justo antes de que empiece la siguiente seccion (p. ej. los HECHOS terminan donde comienza "PRETENSIONES").
+- INCLUYE ABSOLUTAMENTE TODOS los puntos, SIN EXCEPCION, aunque alguno sea un argumento juridico, doctrinal, jurisprudencial o de contexto (no solo hechos facticos). Presta especial atencion al ULTIMO punto de la seccion: es el que mas se suele omitir. Cada item enumerado debe aparecer en tu resultado.
+- Los puntos pueden estar SEPARADOS por imagenes, tablas, capturas de pantalla o pruebas intercaladas; eso NO interrumpe la numeracion: continua con el siguiente ordinal aunque haya contenido no textual en medio.
+- Reenumera tu resultado con "1)", "2)", "3)"... en el MISMO orden, separando cada uno del siguiente con una LINEA EN BLANCO (doble salto de linea).
+- El TOTAL de puntos de tu resultado debe ser EXACTAMENTE igual al total que enumera la demanda (si van de Primero a Noveno, deben ser 9, de 1) a 9)). NO unas dos en uno, NO omitas ninguno, NO agregues puntos que no existan. Resume cada uno en 1 a 3 frases.
 - Escribe en TERCERA PERSONA. Refierete al demandante como "el senor <NOMBRE>" o "la senora <NOMBRE>" (o "el/la demandante"). NUNCA uses "mi apoderado", "mi poderdante", "mi representado", "mi mandante" ni primera persona: es un resumen elaborado por la parte demandada (Colpensiones), no por el abogado que presento la demanda.
 - Usa TIEMPO PASADO.
-- Recoge UNICAMENTE lo que consta en el documento (fechas, resoluciones, semanas, montos, negativas). No inventes ni interpretes.`;
+- Recoge UNICAMENTE lo que consta en el documento (fechas, resoluciones, semanas, montos, negativas, argumentos). No inventes ni interpretes.`;
 
 // Lee un traslado ESCANEADO con visión de Claude: localiza las secciones HECHOS y PRETENSIONES y las resume.
 type SeccionesTraslado = {
