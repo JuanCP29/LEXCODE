@@ -28,6 +28,8 @@ export function GeneradorParamsView({ casoId, casoData }: GeneradorParamsViewPro
   const [normas, setNormas] = useState<string | null>(null);
   const [problema, setProblema] = useState<string | null>(null);
   const [consideraciones, setConsideraciones] = useState<string | null>(null);
+  const [pretensionDet, setPretensionDet] = useState<string | null>(null);
+  const [claseDet, setClaseDet] = useState<string | null>(null);
 
   function handleCampos(campos: CamposExtraidos) {
     setValoresPrellenados(campos);
@@ -41,6 +43,8 @@ export function GeneradorParamsView({ casoId, casoData }: GeneradorParamsViewPro
     setNormas(s?.normas ?? null);
     setProblema(s?.problema_juridico ?? null);
     setConsideraciones(s?.consideraciones ?? null);
+    setPretensionDet(s?.pretension ?? null);
+    setClaseDet(s?.clase_pretension ?? null);
   }
 
   return (
@@ -56,6 +60,8 @@ export function GeneradorParamsView({ casoId, casoData }: GeneradorParamsViewPro
         normasSugerida={normas}
         problemaSugerido={problema}
         consideracionesSugerida={consideraciones}
+        pretensionSugerida={pretensionDet}
+        claseSugerida={claseDet}
       />
 
       {/* Panel lateral: prerrellenar desde PDFs */}

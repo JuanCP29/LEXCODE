@@ -15,6 +15,7 @@ import { cn, limpiarDespacho } from "@/lib/utils";
 import { Loader2, ArrowRight, ArrowLeft, ChevronDown, FileSignature, CheckCircle2, AlertCircle, ExternalLink, Mail, Clock, Handshake, Check, ClipboardList, FileText, Eye, FileDown } from "lucide-react";
 import { ConsultaRadicado } from "@/components/fichas/consulta-radicado";
 import { VistaPreviaDocumento } from "@/components/fichas/vista-previa-documento";
+import { CATALOGO_PRETENSIONES } from "@/lib/data/catalogo-pretensiones";
 
 // ─── Componentes base ──────────────────────────────────────────────────────────
 
@@ -146,7 +147,19 @@ interface FormularioParametricoProps {
   normasSugerida?: string | null;
   problemaSugerido?: string | null;
   consideracionesSugerida?: string | null;
+  pretensionSugerida?: string | null;   // pretensión BUPC detectada (VEJEZ, SOBREVIVIENTES, ...)
+  claseSugerida?: string | null;        // clase BUPC detectada
 }
+
+// Mapea una pretensión BUPC (MAYÚSCULAS) al enum del formulario/ficha; null si no hay equivalencia.
+const BUPC_A_ENUM: Record<string, ParametrosFormData["pretension"]> = {
+  VEJEZ: "vejez",
+  INVALIDEZ: "invalidez",
+  SOBREVIVIENTES: "sobrevivientes",
+};
+// Normaliza (MAYÚSCULAS, sin acentos) para comparar contra el catálogo BUPC.
+const normBupc = (s: string | null | undefined) =>
+  (s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().replace(/\s+/g, " ").trim();
 
 const DEMANDADO_FIJO = "Administradora Colombiana de Pensiones — COLPENSIONES. NIT 900.336.004-7";
 
@@ -191,7 +204,7 @@ function limpiarNum(v: string | null | undefined): string {
   return s;
 }
 
-export function FormularioParametrico({ casoId, casoData, valoresPrellenados, sintesisHechosSugerida, pretensionesSugerida, cuantiaSugerida, normasSugerida, problemaSugerido, consideracionesSugerida }: FormularioParametricoProps) {
+export function FormularioParametrico({ casoId, casoData, valoresPrellenados, sintesisHechosSugerida, pretensionesSugerida, cuantiaSugerida, normasSugerida, problemaSugerido, consideracionesSugerida, pretensionSugerida, claseSugerida }: FormularioParametricoProps) {
   const [error, setError] = useState<string | null>(null);
   const [generandoPoder, setGenerandoPoder] = useState(false);
   const [poderGenerado, setPoderGenerado] = useState(false);
@@ -211,6 +224,20 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
   const [politicasTexto, setPoliticasTexto] = useState("");
   const [riesgoNiveles, setRiesgoNiveles] = useState<Record<string, string>>({ defensa: "", probatoria: "", procesales: "", jurisprudencia: "" });
   const [riesgoHist, setRiesgoHist] = useState<RiesgoHist | null>(null);
+
+  // Pretensión + clase (catálogo BUPC) — dropdowns de «Información del proceso». Se autocompletan
+  // con el análisis de documentos y alimentan la sugerencia de riesgo (sección 12).
+  const [pretensionSel, setPretensionSel] = useState<string>(() => {
+    const v = normBupc(casoData.pretension);
+    return CATALOGO_PRETENSIONES.some((c) => c.pretension === v) ? v : "";
+  });
+  const [claseSel, setClaseSel] = useState<string>(() => {
+    const p = normBupc(casoData.pretension);
+    const cl = normBupc(casoData.clase_pretension);
+    const entrada = CATALOGO_PRETENSIONES.find((c) => c.pretension === p);
+    return entrada?.clases.some((c) => c.clase === cl) ? cl : "";
+  });
+  const clasesDePretension = CATALOGO_PRETENSIONES.find((c) => c.pretension === pretensionSel)?.clases ?? [];
   const prevPrellenados = useRef<Partial<ParametrosFormData> | undefined>(undefined);
 
   // Paso "Revisar y descargar"
@@ -361,17 +388,37 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
     }
   }, [consideracionesSugerida, consideracionesTexto]);
 
-  // Sección 12 (Evaluación de riesgo): traer la calificación histórica (moda por criterio) según
-  // la pretensión + clase del caso, y prellenar los selectores vacíos con la sugerencia.
+  // Autocompletar los dropdowns de pretensión + clase con la clasificación detectada por el análisis
+  // de documentos (solo si el campo sigue vacío; no pisa la selección manual del abogado).
   useEffect(() => {
-    // Muchos casos llegan con pretension null (CSV "Por establecer"); el formulario asume
-    // "vejez" por defecto, así que la sugerencia de riesgo usa esa misma pretensión efectiva.
-    const p = casoData.pretension ?? "vejez";
-    const q = new URLSearchParams({ pretension: p, clase: casoData.clase_pretension ?? "" });
+    const p = normBupc(pretensionSugerida);
+    if (p && CATALOGO_PRETENSIONES.some((c) => c.pretension === p)) {
+      setPretensionSel((prev) => prev || p);
+      const enumVal = BUPC_A_ENUM[p];
+      if (enumVal) setValue("pretension", enumVal, { shouldDirty: true });
+    }
+  }, [pretensionSugerida, setValue]);
+
+  useEffect(() => {
+    const p = normBupc(pretensionSugerida);
+    const cl = normBupc(claseSugerida);
+    const entrada = CATALOGO_PRETENSIONES.find((c) => c.pretension === p);
+    if (cl && entrada?.clases.some((c) => c.clase === cl)) {
+      setClaseSel((prev) => prev || cl);
+    }
+  }, [pretensionSugerida, claseSugerida]);
+
+  // Sección 12 (Evaluación de riesgo): traer la calificación histórica (moda por criterio) según
+  // la pretensión + clase SELECCIONADAS en el paso 1, y prellenar los selectores vacíos con la sugerencia.
+  useEffect(() => {
+    // Si aún no se ha determinado la pretensión, se usa "VEJEZ" (la más frecuente) para mostrar una
+    // sugerencia base; en cuanto el análisis o el abogado fija la pretensión, se recalcula.
+    const p = pretensionSel || "VEJEZ";
+    const q = new URLSearchParams({ pretension: p, clase: claseSel });
     fetch(`/api/riesgo-historico?${q.toString()}`)
       .then((r) => r.json())
       .then((d: RiesgoHist & { criterios: Record<string, CriterioHist> | null }) => {
-        if (!d?.criterios) return;
+        if (!d?.criterios) { setRiesgoHist(null); return; }
         setRiesgoHist(d as RiesgoHist);
         setRiesgoNiveles((prev) => {
           const next = { ...prev };
@@ -382,7 +429,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
         });
       })
       .catch(() => {});
-  }, [casoData.pretension, casoData.clase_pretension]);
+  }, [pretensionSel, claseSel]);
 
   // Si el usuario vuelve atrás a editar, se invalida la ficha ya generada y su vista previa,
   // para que al volver a "Revisar y descargar" se regenere con los cambios.
@@ -649,7 +696,34 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
                     options={[{ value: "SI", label: "SÍ" }, { value: "NO", label: "NO" }]} />
                 )} />
             </Campo>
+            <Campo label="Pretensión">
+              <Select
+                value={pretensionSel}
+                onChange={(v) => {
+                  setPretensionSel(v);
+                  setClaseSel("");   // la clase depende de la pretensión
+                  const enumVal = BUPC_A_ENUM[v];
+                  if (enumVal) setValue("pretension", enumVal, { shouldDirty: true });
+                }}
+                placeholder="Selecciona la pretensión…"
+                options={CATALOGO_PRETENSIONES.map((c) => ({ value: c.pretension, label: c.pretension }))}
+              />
+            </Campo>
+            <Campo label="Clase de pretensión">
+              <Select
+                value={claseSel}
+                onChange={(v) => { setClaseSel(v); setValue("clase_pretension", v, { shouldDirty: true }); }}
+                placeholder={pretensionSel ? "Selecciona la clase…" : "Selecciona primero la pretensión"}
+                options={clasesDePretension.map((c) => ({ value: c.clase, label: c.clase }))}
+              />
+            </Campo>
           </div>
+          <p className="text-[11px] text-muted-foreground flex items-start gap-1">
+            <AlertCircle className="w-3 h-3 shrink-0 mt-0.5" />
+            {pretensionSugerida
+              ? "Pretensión y clase determinadas automáticamente del análisis de documentos. Ajústalas si es necesario; alimentan la sugerencia de riesgo (paso 4)."
+              : "Se determinan automáticamente al analizar los documentos en el panel de la derecha; también puedes seleccionarlas a mano. Alimentan la sugerencia de riesgo (paso 4)."}
+          </p>
         </div>
       </div>
 

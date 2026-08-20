@@ -14,7 +14,12 @@ type Sugerencias = {
   consideraciones?: string | null;
   evaluacion_riesgo?: string | null;
   recomendacion?: string | null;
+  pretension?: string | null;
+  clase_pretension?: string | null;
 };
+
+// Claves que NO son prosa: no se muestran como tarjetas de "Sugerencias redactadas".
+const SUGERENCIAS_NO_PROSA = new Set(["pretension", "clase_pretension"]);
 
 const LABEL_SUGERENCIA: Record<string, string> = {
   sintesis_hechos:   "Síntesis de hechos (sec. 1)",
@@ -156,7 +161,9 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
   const camposConValor = camposExtraidos
     ? Object.entries(camposExtraidos).filter(([, v]) => v !== null && v !== undefined)
     : [];
-  const haySugerencias = !!sugerencias && Object.values(sugerencias).some((v) => v && String(v).trim());
+  const haySugerencias = !!sugerencias && Object.entries(sugerencias).some(([k, v]) => !SUGERENCIAS_NO_PROSA.has(k) && v && String(v).trim());
+  // Detección de la clasificación (pretensión + clase) para el aviso del panel.
+  const pretensionDetectada = sugerencias?.pretension && String(sugerencias.pretension).trim() ? String(sugerencias.pretension).trim() : null;
 
   return (
     <div className="hidden lg:block">
@@ -294,15 +301,29 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
             </div>
           )}
 
+          {/* Clasificación detectada (pretensión + clase) — alimenta la sugerencia de riesgo (sec. 12) */}
+          {estado === "listo" && pretensionDetectada && (
+            <div className="px-3 pb-3">
+              <div className="flex items-start gap-2 text-xs text-primary/80">
+                <Sparkles className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                <span>
+                  Pretensión detectada: <strong>{pretensionDetectada}</strong>
+                  {sugerencias?.clase_pretension ? <> — {String(sugerencias.clase_pretension)}</> : null}.
+                  Se cargó en «Información del proceso» (paso 1) y alimenta la sugerencia de riesgo.
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Sugerencias redactadas — copiar y pegar en las secciones */}
-          {estado === "listo" && sugerencias && Object.values(sugerencias).some((v) => v && String(v).trim()) && (
+          {estado === "listo" && haySugerencias && (
             <div className="px-3 pb-3 space-y-2 border-t border-border pt-3">
               <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
                 <Sparkles className="w-3.5 h-3.5" />
                 Sugerencias redactadas
               </div>
               {Object.entries(sugerencias)
-                .filter(([, v]) => v && String(v).trim())
+                .filter(([k, v]) => !SUGERENCIAS_NO_PROSA.has(k) && v && String(v).trim())
                 .map(([key, texto]) => (
                   <div key={key} className="rounded-md border border-border bg-muted/30 px-2.5 py-2">
                     <div className="flex items-center justify-between gap-2 mb-1">

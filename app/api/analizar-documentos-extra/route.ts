@@ -4,9 +4,25 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { extraerTextoPDF } from "@/lib/ia/extraer-pdf";
 import { PDFDocument } from "pdf-lib";
+import { CATALOGO_PRETENSIONES } from "@/lib/data/catalogo-pretensiones";
 
 export const maxDuration = 120;
 export const dynamic = "force-dynamic";
+
+// Catálogo de clasificación (BUPC) que se le entrega al modelo para que elija pretensión + clase
+// EXACTAMENTE de estos valores (deben coincidir con la tabla riesgo_historico).
+const CATALOGO_DIRECTIVA =
+  "CATALOGO DE CLASIFICACION (usa EXACTAMENTE uno de estos valores, en MAYUSCULAS y sin tildes):\n" +
+  CATALOGO_PRETENSIONES.map(
+    (p) => `- ${p.pretension}: ${p.clases.map((c) => c.clase).join(" | ")}`
+  ).join("\n");
+
+// Instrucción de clasificación reutilizada por el camino de texto y el de visión.
+const REGLA_CLASIFICACION = `Determina el TIPO DE PRESTACION en disputa analizando las PRETENSIONES, los HECHOS y los demas documentos.
+${CATALOGO_DIRECTIVA}
+- En "pretension" devuelve EXACTAMENTE una de: VEJEZ, SOBREVIVIENTES, INVALIDEZ, ADMINISTRADORA (la que corresponda al nucleo de la controversia).
+- En "clase_pretension" devuelve EXACTAMENTE una de las clases listadas bajo esa pretension (la que mejor describa el asunto). Si no hay una clara, pon null.
+- Reglas de desempate: si se discute la ineficacia/nulidad de un TRASLADO de RAIS a prima media -> VEJEZ / TRASLADO DE REGIMEN. Si se reclama pension de sobrevivientes o sustitucion por fallecimiento -> SOBREVIVIENTES. Si es pension de invalidez o perdida de capacidad laboral -> INVALIDEZ. Si el objeto principal son costas/agencias contra la administradora -> ADMINISTRADORA / PAGO COSTAS. En reliquidaciones o reconocimientos de vejez -> VEJEZ con la clase mas afin (LEY 100 DE 1993, RETROACTIVO, INCREMENTOS PENSIONALES 14%, etc.).`;
 
 // Recorta un PDF a sus primeras N páginas y lo devuelve en base64 (para leer escaneados con visión).
 async function recortarPaginasBase64(buffer: Buffer, maxPaginas = 30): Promise<{ base64: string; paginas: number } | null> {
@@ -66,6 +82,24 @@ const REGLAS_REDACCION = `- La demanda puede enumerar sus puntos con NUMEROS ("1
 - Escribe en TERCERA PERSONA. Refierete al demandante como "el senor <NOMBRE>" o "la senora <NOMBRE>" (o "el/la demandante"). NUNCA uses "mi apoderado", "mi poderdante", "mi representado", "mi mandante" ni primera persona: es un resumen elaborado por la parte demandada (Colpensiones), no por el abogado que presento la demanda.
 - Recoge UNICAMENTE lo que consta en el documento (fechas, resoluciones, semanas, montos, negativas, argumentos). No inventes ni interpretes.`;
 
+// Normaliza (MAYÚSCULAS, sin acentos) igual que el catálogo/tabla de riesgo.
+function normClave(s: unknown): string {
+  return String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().replace(/\s+/g, " ").trim();
+}
+
+// Ajusta la clasificación devuelta por la IA a valores EXACTOS del catálogo BUPC.
+// Devuelve la pretensión y la clase canónicas (o null si no hay match confiable).
+function ajustarClasificacion(pretRaw: unknown, claseRaw: unknown): { pretension: string | null; clase_pretension: string | null } {
+  const p = normClave(pretRaw);
+  const entrada = CATALOGO_PRETENSIONES.find((c) => c.pretension === p);
+  if (!entrada) return { pretension: null, clase_pretension: null };
+  const cl = normClave(claseRaw);
+  if (!cl || cl === "NULL") return { pretension: entrada.pretension, clase_pretension: null };
+  const claseMatch = entrada.clases.find((c) => c.clase === cl)
+    ?? entrada.clases.find((c) => c.clase.includes(cl) || cl.includes(c.clase));
+  return { pretension: entrada.pretension, clase_pretension: claseMatch?.clase ?? null };
+}
+
 // Lee un traslado ESCANEADO con visión de Claude: localiza las secciones HECHOS y PRETENSIONES y las resume.
 type SeccionesTraslado = {
   sintesis_hechos: string | null;
@@ -74,6 +108,8 @@ type SeccionesTraslado = {
   normas: string | null;
   problema_juridico: string | null;
   consideraciones: string | null;
+  pretension: string | null;
+  clase_pretension: string | null;
 };
 
 async function analizarTrasladoVision(
@@ -81,7 +117,7 @@ async function analizarTrasladoVision(
   pdfs: { nombre: string; buffer: Buffer }[],
   despacho?: string | null
 ): Promise<SeccionesTraslado> {
-  const vacio: SeccionesTraslado = { sintesis_hechos: null, pretensiones: null, cuantia: null, normas: null, problema_juridico: null, consideraciones: null };
+  const vacio: SeccionesTraslado = { sintesis_hechos: null, pretensiones: null, cuantia: null, normas: null, problema_juridico: null, consideraciones: null, pretension: null, clase_pretension: null };
   if (pdfs.length === 0) return vacio;
   // Combina el traslado (demanda) con las demas actuaciones/resoluciones cargadas.
   const recorte = await combinarPDFsBase64(pdfs);
@@ -179,12 +215,15 @@ F) CONSIDERACIONES -> campo "consideraciones". Es la seccion MAS IMPORTANTE. Ana
    Si en el paquete NO hay resoluciones/oficios de Colpensiones, elabora el analisis con las resoluciones mencionadas en la
    demanda; si aun asi no hay informacion suficiente, pon null.
 
+G) CLASIFICACION -> campos "pretension" y "clase_pretension".
+${REGLA_CLASIFICACION}
+
 REGLA DE FORMATO JSON (CRITICA): dentro de los valores de texto NUNCA uses comillas dobles rectas ("). Para citar o
 TRANSCRIBIR articulos, sentencias o textos, usa SIEMPRE comillas angulares « » (o comillas simples '). Esto es obligatorio para
 no invalidar el JSON. Usa \\n para los saltos de linea.
 
 Devuelve UNICAMENTE un JSON con esta forma exacta:
-{ "sintesis_hechos": "1) ...\\n\\n2) ...", "pretensiones": "1) ...\\n\\n2) ...", "cuantia": "La cuantia fue estimada...", "normas": "• Ley ...\\n• Decreto ...", "problema_juridico": "Determinar si ...", "consideraciones": "..." }`;
+{ "sintesis_hechos": "1) ...\\n\\n2) ...", "pretensiones": "1) ...\\n\\n2) ...", "cuantia": "La cuantia fue estimada...", "normas": "• Ley ...\\n• Decreto ...", "problema_juridico": "Determinar si ...", "consideraciones": "...", "pretension": "VEJEZ", "clase_pretension": "LEY 100 DE 1993" }`;
 
   try {
     const message = await anthropic.messages.create({
@@ -204,6 +243,7 @@ Devuelve UNICAMENTE un JSON con esta forma exacta:
     const parsed = JSON.parse(m[0]);
     const limpiar = (s: unknown) =>
       s && String(s).trim() && String(s).trim().toLowerCase() !== "null" ? String(s).trim() : null;
+    const clasif = ajustarClasificacion(parsed?.pretension, parsed?.clase_pretension);
     return {
       sintesis_hechos: limpiar(parsed?.sintesis_hechos),
       pretensiones: limpiar(parsed?.pretensiones),
@@ -211,6 +251,8 @@ Devuelve UNICAMENTE un JSON con esta forma exacta:
       normas: limpiar(parsed?.normas),
       problema_juridico: limpiar(parsed?.problema_juridico),
       consideraciones: limpiar(parsed?.consideraciones),
+      pretension: clasif.pretension,
+      clase_pretension: clasif.clase_pretension,
     };
   } catch (e) {
     console.error("analizarTrasladoVision:", e);
@@ -335,6 +377,8 @@ export async function POST(request: NextRequest) {
           normas: vision.normas,
           problema_juridico: vision.problema_juridico,
           consideraciones: vision.consideraciones,
+          pretension: vision.pretension,
+          clase_pretension: vision.clase_pretension,
         },
         fieldsFound: 0,
         suggestionsFound: encontrados.length,
@@ -383,7 +427,9 @@ Devuelve UNICAMENTE un objeto JSON valido con esta forma exacta (sin texto adici
     "problema_juridico": "PLANTEAMIENTO DEL PROBLEMA JURIDICO en UN SOLO PARRAFO, como planteamiento de la controversia (NO en forma de pregunta, sin signos '¿ ?'). SEGUN LA JURISDICCION: si es CONTENCIOSO ADMINISTRATIVA (Juzgado o Tribunal Administrativo, o medio de control de nulidad y restablecimiento del derecho), INICIA por la procedencia de la nulidad: 'Determinar si se debe declarar la nulidad [total/parcial] de la Resolucion No <numero> del <fecha> mediante la cual COLPENSIONES <reconocio/nego...>, y si, como consecuencia, hay lugar a <accion principal> con retroactivo e intereses o indexacion'; si es ORDINARIA LABORAL, usa 'Determinar si <controversia>, y si, como consecuencia, hay lugar a <accion principal> con retroactivo e intereses o indexacion'. ATERRIZA a UNA SOLA ACCION (reliquidacion si ya goza de pension; reconocimiento si no; nulidad/reincorporacion si traslado). NO menciones costas procesales. Tercera persona, COLPENSIONES demandada. Si no se puede determinar, null.",
     "consideraciones": "SECCION MAS IMPORTANTE. Analiza las RESOLUCIONES/OFICIOS de COLPENSIONES (SUB, DPE, GNR, VPB, DIR, HL, BZ) que consten (su respuesta previa a lo reclamado). Estructura, en tercera persona, formal y extensa (con SUBTITULOS breves cuando ayude): (1) ENCUADRE + RAZONES por las que Colpensiones nego/reconocio parcialmente (motivacion, IBL, tasa de reemplazo, semanas, fechas, numeros de resolucion); (2) MARCO NORMATIVO ADAPTADO AL TIPO DE PRESTACION, TRANSCRIBIENDO ENTRE COMILLAS los articulos clave y APLICANDOLOS a las cifras: VEJEZ/RELIQUIDACION -> Ley 100 arts. 21, 33, 34 (mod. Ley 797) y formula 'r = 65,50 - 0,50 s' + 1,5% por 50 semanas; SOBREVIVIENTES -> arts. 46, 47 (mod. 12, 13 Ley 797), norma vigente al fallecimiento y condicion mas beneficiosa (Acuerdo 049/1990); INDEMNIZACION SUSTITUTIVA -> art. 37 y Decreto 1730/2001, formula 'I = SBC x SC x PPC'; TRANSICION -> art. 36 y art. 48 CN; INEFICACIA DE TRASLADO -> deber de informacion y reincorporacion a RPM; (3) JURISPRUDENCIA con radicado (SU/C/T, SL, Consejo de Estado) e lineamientos de Colpensiones; (4) CONCLUSION Y POSTURA OBLIGATORIA al final con recomendacion clara de conciliar o no ('viable continuar la defensa y NO acceder a formula conciliatoria', o los aspectos a revisar). Solo lo que conste. Si no hay resoluciones, usa las mencionadas en la demanda; si no hay info suficiente, null.",
     "evaluacion_riesgo": "evaluacion del riesgo procesal segun lo que consta, o null",
-    "recomendacion": "recomendacion de conciliacion fundamentada en las fuentes, o null"
+    "recomendacion": "recomendacion de conciliacion fundamentada en las fuentes, o null",
+    "pretension": "CLASIFICACION del tipo de prestacion. ${REGLA_CLASIFICACION.replace(/\n/g, " ")} Devuelve la pretension (VEJEZ, SOBREVIVIENTES, INVALIDEZ o ADMINISTRADORA) o null.",
+    "clase_pretension": "la CLASE exacta del catalogo bajo la pretension elegida (segun la regla de CLASIFICACION anterior), o null"
   }
 }`;
 
@@ -423,6 +469,8 @@ Devuelve UNICAMENTE un objeto JSON valido con esta forma exacta (sin texto adici
           normas: vision.normas,
           problema_juridico: vision.problema_juridico,
           consideraciones: vision.consideraciones,
+          pretension: vision.pretension,
+          clase_pretension: vision.clase_pretension,
         },
         fieldsFound: 0,
         suggestionsFound: encontrados.length,
@@ -434,6 +482,10 @@ Devuelve UNICAMENTE un objeto JSON valido con esta forma exacta (sin texto adici
     // Compatibilidad: si la IA devolvió el formato plano antiguo, tratarlo como data.
     const campos = (parsed?.data ?? parsed ?? {}) as Record<string, unknown>;
     const suggestions = (parsed?.suggestions ?? {}) as Record<string, unknown>;
+    // Ajusta la clasificación (pretensión + clase) a valores exactos del catálogo BUPC.
+    const clasif = ajustarClasificacion(suggestions.pretension, suggestions.clase_pretension);
+    suggestions.pretension = clasif.pretension;
+    suggestions.clase_pretension = clasif.clase_pretension;
 
     const fieldsFound = Object.values(campos).filter((v) => v !== null && v !== undefined).length;
     const suggestionsFound = Object.values(suggestions).filter((v) => v !== null && v !== undefined && String(v).trim() !== "").length;
