@@ -27,9 +27,10 @@ ${CATALOGO_DIRECTIVA}
 // Instrucción para identificar al CAUSANTE/AFILIADO (persona que genera el derecho pensional),
 // que en sobrevivientes es distinto del demandante.
 const REGLA_CAUSANTE = `Identifica al CAUSANTE o AFILIADO: la persona cuya vida laboral/afiliacion genera el derecho pensional en disputa.
-- En pensiones de VEJEZ o INVALIDEZ el causante/afiliado suele ser el MISMO demandante -> devuelve ambos campos en null.
-- En pensiones de SOBREVIVIENTES (o sustitucion pensional) el causante es la persona FALLECIDA, DISTINTA del demandante (que es el beneficiario/conyuge/hijo que reclama). En ese caso devuelve el NOMBRE COMPLETO del causante fallecido en "causante_nombre" y su numero de cedula en "causante_cedula" (SOLO DIGITOS, sin puntos).
-- Si no logras identificar un causante DISTINTO del demandante con seguridad, pon "causante_nombre" y "causante_cedula" en null. NUNCA repitas los datos del propio demandante como causante.`;
+- Devuelve SIEMPRE su NOMBRE COMPLETO en "causante_nombre" y su numero de cedula en "causante_cedula" (SOLO DIGITOS, sin puntos), tanto si coincide con el demandante como si no.
+- En pensiones de VEJEZ o INVALIDEZ el causante/afiliado suele ser el MISMO demandante: en ese caso devuelve los datos del demandante.
+- En pensiones de SOBREVIVIENTES (o sustitucion pensional) el causante es la persona FALLECIDA, DISTINTA del demandante (que es el beneficiario/conyuge/hijo que reclama): devuelve los datos del fallecido.
+- Solo pon "causante_nombre" y "causante_cedula" en null si no logras identificar al afiliado en los documentos.`;
 
 // Recorta un PDF a sus primeras N páginas y lo devuelve en base64 (para leer escaneados con visión).
 async function recortarPaginasBase64(buffer: Buffer, maxPaginas = 30): Promise<{ base64: string; paginas: number } | null> {
@@ -235,7 +236,7 @@ TRANSCRIBIR articulos, sentencias o textos, usa SIEMPRE comillas angulares « »
 no invalidar el JSON. Usa \\n para los saltos de linea.
 
 Devuelve UNICAMENTE un JSON con esta forma exacta:
-{ "sintesis_hechos": "1) ...\\n\\n2) ...", "pretensiones": "1) ...\\n\\n2) ...", "cuantia": "La cuantia fue estimada...", "normas": "• Ley ...\\n• Decreto ...", "problema_juridico": "Determinar si ...", "consideraciones": "...", "pretension": "VEJEZ", "clase_pretension": "LEY 100 DE 1993", "causante_nombre": null, "causante_cedula": null }`;
+{ "sintesis_hechos": "1) ...\\n\\n2) ...", "pretensiones": "1) ...\\n\\n2) ...", "cuantia": "La cuantia fue estimada...", "normas": "• Ley ...\\n• Decreto ...", "problema_juridico": "Determinar si ...", "consideraciones": "...", "pretension": "VEJEZ", "clase_pretension": "LEY 100 DE 1993", "causante_nombre": "NOMBRE COMPLETO DEL AFILIADO", "causante_cedula": "12345678" }`;
 
   try {
     const message = await anthropic.messages.create({
@@ -446,8 +447,8 @@ Devuelve UNICAMENTE un objeto JSON valido con esta forma exacta (sin texto adici
     "recomendacion": "recomendacion de conciliacion fundamentada en las fuentes, o null",
     "pretension": "CLASIFICACION del tipo de prestacion. ${REGLA_CLASIFICACION.replace(/\n/g, " ")} Devuelve la pretension (VEJEZ, SOBREVIVIENTES, INVALIDEZ o ADMINISTRADORA) o null.",
     "clase_pretension": "la CLASE exacta del catalogo bajo la pretension elegida (segun la regla de CLASIFICACION anterior), o null",
-    "causante_nombre": "nombre completo del CAUSANTE/AFILIADO cuando sea DISTINTO del demandante (tipico en sobrevivientes: la persona fallecida). ${REGLA_CAUSANTE.replace(/\n/g, " ")} Devuelve el nombre o null.",
-    "causante_cedula": "numero de cedula del causante/afiliado (SOLO DIGITOS) cuando sea distinto del demandante, o null"
+    "causante_nombre": "nombre completo del CAUSANTE/AFILIADO. ${REGLA_CAUSANTE.replace(/\n/g, " ")} Devuelve el nombre o null.",
+    "causante_cedula": "numero de cedula del causante/afiliado (SOLO DIGITOS), o null"
   }
 }`;
 

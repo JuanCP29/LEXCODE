@@ -306,10 +306,22 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
   });
 
   const conciliable      = watch("conciliable");
-  // Causante/afiliado: cuando el campo tiene contenido significa que difiere del demandante
-  // (el campo es «solo si difiere»); se resalta en naranja como alerta visual.
+  // Causante/afiliado: el campo se llena SIEMPRE con el afiliado (coincida o no con el
+  // demandante). Se resalta en naranja SOLO cuando difiere del demandante del CSV.
   const causanteAfiliado = watch("causante_afiliado");
-  const causanteDifiere  = !!(causanteAfiliado && causanteAfiliado.trim());
+  const causanteDifiere  = (() => {
+    const val = (causanteAfiliado ?? "").trim();
+    if (!val) return false;
+    const demCedula = (encabezado.cedula_demandante ?? "").replace(/\D/g, "");
+    const demNombre = (encabezado.nombre_demandante ?? "").trim().toLowerCase();
+    // Separa la cédula (tras «C.C.») y el nombre del contenido del campo.
+    const m = val.match(/c\.?\s*c\.?\s*[:\-]?\s*([\d.\s]+)/i);
+    const valCedula = m ? m[1].replace(/\D/g, "") : "";
+    const valNombre = val.replace(/,?\s*c\.?\s*c\.?.*/i, "").trim().toLowerCase();
+    if (valCedula && demCedula) return valCedula !== demCedula;   // compara por cédula si es posible
+    if (valNombre && demNombre) return valNombre !== demNombre;   // respaldo por nombre
+    return false;
+  })();
 
   async function handleGenerarPoder() {
     setGenerandoPoder(true);
@@ -415,8 +427,8 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
     }
   }, [pretensionSugerida, claseSugerida]);
 
-  // Causante/afiliado: si el análisis detecta un causante (típico en sobrevivientes) cuya identidad
-  // DIFIERE del demandante que trae el CSV, se autocompleta el campo (lo que dispara el resalte naranja).
+  // Causante/afiliado: se autocompleta SIEMPRE con el afiliado detectado por el análisis, coincida
+  // o no con el demandante. El resalte naranja (más abajo) se activa solo cuando difiere.
   // No pisa lo que el abogado ya haya escrito.
   useEffect(() => {
     const nombre = (causanteNombreSugerido ?? "").trim();
@@ -424,17 +436,10 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
     if (!nombre && !cedula) return;
     if ((getValues("causante_afiliado") ?? "").trim()) return; // no sobreescribir
 
-    const demCedula = (encabezado.cedula_demandante ?? "").replace(/\D/g, "");
-    const demNombre = (encabezado.nombre_demandante ?? "").trim().toLowerCase();
-    // Coincide con el demandante (mismo sujeto) => no es un causante distinto.
-    const mismaCedula = !!cedula && !!demCedula && cedula === demCedula;
-    const mismoNombre = !!nombre && !!demNombre && nombre.toLowerCase() === demNombre;
-    if (mismaCedula || mismoNombre) return;
-
     const cedFmt = cedula ? Number(cedula).toLocaleString("es-CO") : "";
     const texto = `${nombre}${cedFmt ? `, C.C. ${cedFmt}` : ""}`.trim();
     if (texto) setValue("causante_afiliado", texto, { shouldDirty: true });
-  }, [causanteNombreSugerido, causanteCedulaSugerida, encabezado.cedula_demandante, encabezado.nombre_demandante, getValues, setValue]);
+  }, [causanteNombreSugerido, causanteCedulaSugerida, getValues, setValue]);
 
   // Sección 12 (Evaluación de riesgo): traer la calificación histórica (moda por criterio) según
   // la pretensión + clase SELECCIONADAS en el paso 1, y prellenar los selectores vacíos con la sugerencia.
@@ -698,7 +703,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
                   <Input
                     value={field.value ?? ""}
                     onChange={(e) => field.onChange(e.target.value || null)}
-                    placeholder="Solo si difiere del demandante (ej. sobrevivientes)"
+                    placeholder="Nombre y cédula del afiliado (se completa al analizar los documentos)"
                     className={cn(
                       causanteDifiere &&
                         "border-orange-400 bg-orange-50 text-orange-900 placeholder:text-orange-400 focus-visible:ring-orange-400 dark:border-orange-600 dark:bg-orange-950/30 dark:text-orange-200"
