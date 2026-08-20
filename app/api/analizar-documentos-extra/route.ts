@@ -69,10 +69,10 @@ C) CUANTIA -> campo "cuantia". Busca la seccion titulada "CUANTIA", "COMPETENCIA
 D) NORMAS -> campo "normas". Busca la seccion titulada "FUNDAMENTOS Y RAZONES DE DERECHO", "NORMAS VIOLADAS" o
    "CONCEPTO DE VIOLACION". Relaciona la normatividad citada CONSOLIDANDO por norma: cada ley, decreto, codigo o la
    Constitucion debe aparecer UNA SOLA VEZ, listando TODOS sus articulos juntos, separados por coma y en orden ascendente.
-   UNA norma por linea. Ejemplos de formato:
-   "Ley 100 de 1993, articulos 9, 10, 14, 22, 34, 141"
-   "Constitucion Politica, articulos 48, 53"
-   "Decreto 692 de 1994"
+   UNA norma por linea, y cada linea DEBE EMPEZAR con una vineta "• " (bullet + espacio). Ejemplos de formato:
+   "• Ley 100 de 1993, articulos 9, 10, 14, 22, 34, 141"
+   "• Constitucion Politica, articulos 48, 53"
+   "• Decreto 692 de 1994"
    NO repitas la misma norma en varias lineas. No inventes normas que no consten. Si no encuentras la seccion, pon null.
 
 Devuelve UNICAMENTE un JSON con esta forma exacta:
@@ -256,7 +256,7 @@ Devuelve UNICAMENTE un objeto JSON valido con esta forma exacta (sin texto adici
     "sintesis_hechos": "sintesis de los HECHOS de la demanda (busca la seccion 'HECHOS' del traslado). ENUMERA cada hecho con formato '1)', '2)', '3)'... separando cada hecho con una LINEA EN BLANCO (doble salto de linea, \\n\\n), con EXACTAMENTE el mismo numero de hechos que la demanda. Tercera persona ('el senor <NOMBRE>' / 'la senora <NOMBRE>'), tiempo pasado, sin usar 'mi apoderado', 'mi poderdante' ni primera persona (lo redacta la parte demandada). Solo lo que conste. Devuelve el texto o null.",
     "pretensiones": "sintesis de las PRETENSIONES de la demanda (busca la seccion 'PRETENSIONES' o 'PETICIONES' del traslado). Mismas reglas que sintesis_hechos: ENUMERA '1)', '2)', '3)'... separando cada una con LINEA EN BLANCO (\\n\\n), con EXACTAMENTE el mismo numero de pretensiones que la demanda, tercera persona, tiempo pasado, sin 'mi apoderado'/'mi poderdante' ni primera persona. Solo lo que conste. Devuelve el texto o null.",
     "cuantia": "busca la seccion 'CUANTIA', 'COMPETENCIA Y CUANTIA' o 'ESTIMACION DE LA CUANTIA'. Devuelve EXACTAMENTE la frase 'La cuantia fue estimada por la parte actora, en <VALOR>.' donde <VALOR> es el monto en FORMATO MONEDA con simbolo '$', miles con punto y decimales con coma (ej '$275.353.309,53'), SIN escribir 'COP' ni 'pesos'; si esta en salarios minimos dejalo como '20 SMLMV'. Si no hay valor, null.",
-    "normas": "busca la seccion 'FUNDAMENTOS Y RAZONES DE DERECHO', 'NORMAS VIOLADAS' o 'CONCEPTO DE VIOLACION'. Relaciona la normatividad CONSOLIDANDO por norma: cada ley/decreto/codigo/Constitucion aparece UNA SOLA VEZ listando TODOS sus articulos juntos, separados por coma y ordenados (ej 'Ley 100 de 1993, articulos 9, 10, 34, 141'). UNA norma por linea, sin repetir. No inventes. Devuelve el texto o null.",
+    "normas": "busca la seccion 'FUNDAMENTOS Y RAZONES DE DERECHO', 'NORMAS VIOLADAS' o 'CONCEPTO DE VIOLACION'. Relaciona la normatividad CONSOLIDANDO por norma: cada ley/decreto/codigo/Constitucion aparece UNA SOLA VEZ listando TODOS sus articulos juntos, separados por coma y ordenados. UNA norma por linea, y cada linea DEBE EMPEZAR con una vineta '• ' (ej '• Ley 100 de 1993, articulos 9, 10, 34, 141'). Sin repetir. No inventes. Devuelve el texto o null.",
     "consideraciones": "consideraciones juridicas basadas en las fuentes, o null",
     "evaluacion_riesgo": "evaluacion del riesgo procesal segun lo que consta, o null",
     "recomendacion": "recomendacion de conciliacion fundamentada en las fuentes, o null"
