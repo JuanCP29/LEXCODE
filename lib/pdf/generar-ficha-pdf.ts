@@ -193,12 +193,26 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
       const contenido = est ? est.texto : ((datos[s.key] ?? "").toString().trim() || "N/A");
       const tituloFull = `${s.n}. ${s.titulo}`;
 
+      // Medir título y contenido ANTES de dibujar, para decidir el salto de página
+      // manteniendo el título junto a su contenido (evita títulos huérfanos con espacio en blanco).
       doc.font(FONT_BOLD).fontSize(9);
       const hTitS = doc.heightOfString(tituloFull, { width: W - 12 }) + 8;
-      if (doc.y + hTitS + MIN_CAJA > bottom) { doc.addPage(); doc.y = M; }
 
-      // Título (centrado, negro, bordeado, blanco)
-      let ty = doc.y;
+      doc.font(FONT).fontSize(9);
+      const opts = { width: W - 12, align: (centrarEst ? "center" : "justify") as "center" | "justify", lineGap: 2.5 };
+      const hCont = doc.heightOfString(contenido, opts);
+      const cajaH = Math.max(hCont + 12, MIN_CAJA);
+
+      // Salto de página ANTES del título si la sección completa (título + caja) no cabe en el
+      // espacio restante pero sí cabe entera en una página nueva; o si ni el título + un mínimo caben.
+      const alturaSeccion = hTitS + cajaH;
+      const cabeEntera = alturaSeccion <= bottom - M;
+      const noCabeAqui = doc.y + alturaSeccion > bottom;
+      const tituloHuerfano = doc.y + hTitS + MIN_CAJA > bottom;
+      if ((noCabeAqui && cabeEntera) || tituloHuerfano) { doc.addPage(); doc.y = M; }
+
+      // Título (centrado, negro, bordeado)
+      const ty = doc.y;
       doc.rect(left, ty, W, hTitS).stroke(BORDE);
       doc.fillColor(NEGRO).font(FONT_BOLD).fontSize(9)
         .text(tituloFull, left + 6, ty + 4, { width: W - 12, align: "center" });
@@ -207,11 +221,7 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
 
       // Caja de respuesta (justificada; centrada para las estandarizadas)
       doc.font(FONT).fontSize(9);
-      const opts = { width: W - 12, align: (centrarEst ? "center" : "justify") as "center" | "justify", lineGap: 2.5 };
-      const hCont = doc.heightOfString(contenido, opts);
-      const cajaH = Math.max(hCont + 12, MIN_CAJA);
-      let cy = doc.y;
-      if (cy + cajaH > bottom && cajaH <= bottom - M) { doc.addPage(); doc.y = M; cy = doc.y; }
+      const cy = doc.y;
       const cajaHFinal = Math.min(cajaH, bottom - cy);
       doc.rect(left, cy, W, cajaHFinal).stroke(BORDE);
       doc.fillColor(NEGRO).text(contenido, left + 6, cy + 6, opts);
