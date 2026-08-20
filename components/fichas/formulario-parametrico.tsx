@@ -144,6 +144,7 @@ interface FormularioParametricoProps {
   pretensionesSugerida?: string | null;
   cuantiaSugerida?: string | null;
   normasSugerida?: string | null;
+  problemaSugerido?: string | null;
 }
 
 const DEMANDADO_FIJO = "Administradora Colombiana de Pensiones — COLPENSIONES. NIT 900.336.004-7";
@@ -159,7 +160,7 @@ function limpiarNum(v: string | null | undefined): string {
   return s;
 }
 
-export function FormularioParametrico({ casoId, casoData, valoresPrellenados, sintesisHechosSugerida, pretensionesSugerida, cuantiaSugerida, normasSugerida }: FormularioParametricoProps) {
+export function FormularioParametrico({ casoId, casoData, valoresPrellenados, sintesisHechosSugerida, pretensionesSugerida, cuantiaSugerida, normasSugerida, problemaSugerido }: FormularioParametricoProps) {
   const [error, setError] = useState<string | null>(null);
   const [generandoPoder, setGenerandoPoder] = useState(false);
   const [poderGenerado, setPoderGenerado] = useState(false);
@@ -311,6 +312,13 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
       setNormasTexto(normasSugerida);
     }
   }, [normasSugerida, normasTexto]);
+
+  // Traer el planteamiento del problema jurídico generado al cuadro de texto (Sección 7).
+  useEffect(() => {
+    if (problemaSugerido && !problemaTexto.trim()) {
+      setProblemaTexto(problemaSugerido);
+    }
+  }, [problemaSugerido, problemaTexto]);
 
   // Si el usuario vuelve atrás a editar, se invalida la ficha ya generada y su vista previa,
   // para que al volver a "Revisar y descargar" se regenere con los cambios.

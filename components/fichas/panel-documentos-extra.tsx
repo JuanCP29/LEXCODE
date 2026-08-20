@@ -10,6 +10,7 @@ type Sugerencias = {
   pretensiones?: string | null;
   cuantia?: string | null;
   normas?: string | null;
+  problema_juridico?: string | null;
   consideraciones?: string | null;
   evaluacion_riesgo?: string | null;
   recomendacion?: string | null;
@@ -20,6 +21,7 @@ const LABEL_SUGERENCIA: Record<string, string> = {
   pretensiones:      "Pretensiones (sec. 2)",
   cuantia:           "Cuantía (sec. 3)",
   normas:            "Normas violadas (sec. 4)",
+  problema_juridico: "Problema jurídico (sec. 7)",
   consideraciones:   "Consideraciones (sec. 16)",
   evaluacion_riesgo: "Evaluación del riesgo (sec. 17)",
   recomendacion:     "Recomendación (sec. 18)",
