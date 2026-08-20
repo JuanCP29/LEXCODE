@@ -148,23 +148,40 @@ E) PROBLEMA JURIDICO -> campo "problema_juridico". Redacta el PLANTEAMIENTO DEL 
    NULIDAD/reincorporacion si se discute traslado de regimen). NO menciones costas procesales ni agencias en derecho.
    Tercera persona, formal, COLPENSIONES como demandada. Si no puedes determinar la controversia, pon null.
 
-F) CONSIDERACIONES -> campo "consideraciones". Esta es la seccion MAS IMPORTANTE. Analiza LAS RESOLUCIONES u OFICIOS de
-   COLPENSIONES presentes en el paquete (SUB, DPE, GNR, VPB, DIR, HL, BZ), que contienen la respuesta previa de la entidad
-   (negativa o parcialmente positiva) frente a lo que hoy se reclama en la demanda.
-   1. Identifica con precision LAS RAZONES por las que Colpensiones nego o reconocio parcialmente la prestacion (motivacion,
-      normas y calculos que uso: IBL, tasa de reemplazo, semanas cotizadas, fechas de causacion y de efectividad, numeros de
-      resolucion). Cita los numeros de resolucion y fechas que consten.
-   2. Elabora un ANALISIS que combine: (a) NORMATIVO — cita y, cuando sea util, transcribe entre comillas los articulos
-      pertinentes (p. ej. Ley 100 de 1993 arts. 21, 33, 34; Ley 797 de 2003; formula r = 65,50 - 0,50 s; etc.) y APLICALOS al
-      caso concreto con las cifras del expediente; (b) JURISPRUDENCIAL — precedentes aplicables de la Corte Constitucional,
-      Corte Suprema o Consejo de Estado que respalden la postura; (c) INSTITUCIONAL — lineamientos, directrices o circulares de
-      Colpensiones aplicables.
-   3. Con base en lo anterior, FIJA UNA POSTURA de Colpensiones frente a la controversia objeto de la demanda (si la actuacion
-      de la entidad se ajusto a derecho o si existe algun aspecto susceptible de revisar/conciliar).
-   Redacta en TERCERA PERSONA, formal y tecnico, en varios parrafos (es una consideracion juridica extensa). Usa UNICAMENTE lo
-   que conste en los documentos; no inventes cifras ni normas. Si en el paquete NO hay resoluciones/oficios de Colpensiones,
-   elabora el analisis con base en las resoluciones que se mencionen dentro de la demanda; si aun asi no hay informacion
-   suficiente, pon null.
+F) CONSIDERACIONES -> campo "consideraciones". Es la seccion MAS IMPORTANTE. Analiza LAS RESOLUCIONES u OFICIOS de COLPENSIONES
+   presentes en el paquete (SUB, DPE, GNR, VPB, DIR, HL, BZ) —la respuesta previa de la entidad, negativa o parcialmente
+   positiva— frente a lo que hoy se reclama. Redactala siguiendo esta ESTRUCTURA, en TERCERA PERSONA, formal y tecnico, extensa
+   (varios parrafos). Cuando el analisis lo amerite, USA SUBTITULOS breves (p. ej. "MARCO NORMATIVO", "CALCULO DE SEMANAS Y TASA
+   DE REEMPLAZO", "ANALISIS DEL CASO", "CONCLUSION Y POSTURA"). Usa UNICAMENTE lo que conste; no inventes cifras ni normas.
+
+   (1) ENCUADRE + RAZONES: enmarca brevemente la controversia e identifica con precision LAS RAZONES por las que Colpensiones
+       nego o reconocio parcialmente (motivacion, normas y calculos usados: IBL, tasa de reemplazo, semanas, fechas de
+       causacion y efectividad), citando los numeros de resolucion y fechas que consten.
+
+   (2) MARCO NORMATIVO ADAPTADO AL TIPO DE PRESTACION: identifica el tipo de prestacion en disputa y trae SUS normas propias,
+       TRANSCRIBIENDO ENTRE COMILLAS los articulos clave y APLICANDOLOS a las cifras del expediente:
+       - VEJEZ / RELIQUIDACION: Ley 100 de 1993 arts. 21 (IBL), 33 (semanas) y 34 (monto), con la modificacion de la Ley 797 de
+         2003; incluye y aplica la formula "r = 65,50 - 0,50 s" y el incremento de 1,5% por cada 50 semanas adicionales.
+       - SOBREVIVIENTES: Ley 100 arts. 46 y 47 (mod. arts. 12 y 13 de la Ley 797); principio de la norma vigente al momento del
+         fallecimiento y la condicion mas beneficiosa (Acuerdo 049 de 1990 cuando aplique).
+       - INDEMNIZACION SUSTITUTIVA: Ley 100 art. 37 y Decreto 1730 de 2001; incluye y aplica la formula "I = SBC x SC x PPC".
+       - REGIMEN DE TRANSICION: Ley 100 art. 36 y art. 48 de la Constitucion.
+       - INEFICACIA DE TRASLADO: deber de informacion, ineficacia del traslado y reincorporacion al Regimen de Prima Media.
+
+   (3) MARCO JURISPRUDENCIAL E INSTITUCIONAL: cita precedentes aplicables con su radicado (Corte Constitucional SU/C/T, Corte
+       Suprema Sala Laboral SL, Consejo de Estado) y, si constan, lineamientos, directrices o circulares de Colpensiones.
+
+   (4) CONCLUSION Y POSTURA (OBLIGATORIA AL FINAL): fija expresamente la postura de Colpensiones y una RECOMENDACION clara:
+       si la actuacion de la entidad se ajusto a derecho, concluye que es "juridicamente viable continuar ejerciendo la defensa
+       judicial y NO acceder a formula conciliatoria"; si hay aspectos favorables al demandante o incertidumbre, senala los
+       puntos susceptibles de revisar o conciliar. Cierra siempre con esta postura/recomendacion.
+
+   Si en el paquete NO hay resoluciones/oficios de Colpensiones, elabora el analisis con las resoluciones mencionadas en la
+   demanda; si aun asi no hay informacion suficiente, pon null.
+
+REGLA DE FORMATO JSON (CRITICA): dentro de los valores de texto NUNCA uses comillas dobles rectas ("). Para citar o
+TRANSCRIBIR articulos, sentencias o textos, usa SIEMPRE comillas angulares « » (o comillas simples '). Esto es obligatorio para
+no invalidar el JSON. Usa \\n para los saltos de linea.
 
 Devuelve UNICAMENTE un JSON con esta forma exacta:
 { "sintesis_hechos": "1) ...\\n\\n2) ...", "pretensiones": "1) ...\\n\\n2) ...", "cuantia": "La cuantia fue estimada...", "normas": "• Ley ...\\n• Decreto ...", "problema_juridico": "Determinar si ...", "consideraciones": "..." }`;
@@ -332,6 +349,8 @@ REGLAS ESTRICTAS:
 - En "data" solo van datos TEXTUALES y verificables que aparezcan en los documentos. Si un dato no aparece, devuelve null.
 - En "suggestions" redacta prosa juridica formal basada UNICAMENTE en lo que dicen los documentos. No inventes hechos,
   cifras, normas ni jurisprudencia que no consten en las fuentes.
+- FORMATO JSON (CRITICO): dentro de los valores de texto NUNCA uses comillas dobles rectas ("). Para citar o TRANSCRIBIR
+  articulos, sentencias o textos usa SIEMPRE comillas angulares « » (o comillas simples '), para no invalidar el JSON.
 
 DOCUMENTOS:
 ${textoCompleto.slice(0, 30000)}
@@ -356,7 +375,7 @@ Devuelve UNICAMENTE un objeto JSON valido con esta forma exacta (sin texto adici
     "cuantia": "busca la seccion 'CUANTIA', 'COMPETENCIA Y CUANTIA' o 'ESTIMACION DE LA CUANTIA'. Devuelve EXACTAMENTE la frase 'La cuantia fue estimada por la parte actora, en <VALOR>.' donde <VALOR> es el monto en FORMATO MONEDA con simbolo '$', miles con punto y decimales con coma (ej '$275.353.309,53'), SIN escribir 'COP' ni 'pesos'; si esta en salarios minimos dejalo como '20 SMLMV'. Si no hay valor, null.",
     "normas": "busca la seccion 'FUNDAMENTOS Y RAZONES DE DERECHO', 'NORMAS VIOLADAS' o 'CONCEPTO DE VIOLACION'. Relaciona la normatividad CONSOLIDANDO por norma: cada ley/decreto/codigo/Constitucion aparece UNA SOLA VEZ listando TODOS sus articulos juntos, separados por coma y ordenados. UNA norma por linea, y cada linea DEBE EMPEZAR con una vineta '• ' (ej '• Ley 100 de 1993, articulos 9, 10, 34, 141'). Sin repetir. No inventes. Devuelve el texto o null.",
     "problema_juridico": "PLANTEAMIENTO DEL PROBLEMA JURIDICO en UN SOLO PARRAFO, como planteamiento de la controversia (NO en forma de pregunta, sin signos '¿ ?'). SEGUN LA JURISDICCION: si es CONTENCIOSO ADMINISTRATIVA (Juzgado o Tribunal Administrativo, o medio de control de nulidad y restablecimiento del derecho), INICIA por la procedencia de la nulidad: 'Determinar si se debe declarar la nulidad [total/parcial] de la Resolucion No <numero> del <fecha> mediante la cual COLPENSIONES <reconocio/nego...>, y si, como consecuencia, hay lugar a <accion principal> con retroactivo e intereses o indexacion'; si es ORDINARIA LABORAL, usa 'Determinar si <controversia>, y si, como consecuencia, hay lugar a <accion principal> con retroactivo e intereses o indexacion'. ATERRIZA a UNA SOLA ACCION (reliquidacion si ya goza de pension; reconocimiento si no; nulidad/reincorporacion si traslado). NO menciones costas procesales. Tercera persona, COLPENSIONES demandada. Si no se puede determinar, null.",
-    "consideraciones": "SECCION MAS IMPORTANTE. Analiza las RESOLUCIONES/OFICIOS de COLPENSIONES (SUB, DPE, GNR, VPB, DIR, HL, BZ) que consten, que son su respuesta previa (negativa o parcialmente positiva) a lo reclamado. 1) Identifica LAS RAZONES por las que Colpensiones nego o reconocio parcialmente (motivacion, normas y calculos: IBL, tasa de reemplazo, semanas, fechas, numeros de resolucion). 2) Elabora un analisis NORMATIVO (cita y aplica los articulos pertinentes al caso con sus cifras), JURISPRUDENCIAL (precedentes) e INSTITUCIONAL (lineamientos/circulares de Colpensiones). 3) FIJA UNA POSTURA de Colpensiones frente a la controversia. Tercera persona, formal, varios parrafos. Solo lo que conste. Si no hay resoluciones, usa las mencionadas en la demanda; si no hay info suficiente, null.",
+    "consideraciones": "SECCION MAS IMPORTANTE. Analiza las RESOLUCIONES/OFICIOS de COLPENSIONES (SUB, DPE, GNR, VPB, DIR, HL, BZ) que consten (su respuesta previa a lo reclamado). Estructura, en tercera persona, formal y extensa (con SUBTITULOS breves cuando ayude): (1) ENCUADRE + RAZONES por las que Colpensiones nego/reconocio parcialmente (motivacion, IBL, tasa de reemplazo, semanas, fechas, numeros de resolucion); (2) MARCO NORMATIVO ADAPTADO AL TIPO DE PRESTACION, TRANSCRIBIENDO ENTRE COMILLAS los articulos clave y APLICANDOLOS a las cifras: VEJEZ/RELIQUIDACION -> Ley 100 arts. 21, 33, 34 (mod. Ley 797) y formula 'r = 65,50 - 0,50 s' + 1,5% por 50 semanas; SOBREVIVIENTES -> arts. 46, 47 (mod. 12, 13 Ley 797), norma vigente al fallecimiento y condicion mas beneficiosa (Acuerdo 049/1990); INDEMNIZACION SUSTITUTIVA -> art. 37 y Decreto 1730/2001, formula 'I = SBC x SC x PPC'; TRANSICION -> art. 36 y art. 48 CN; INEFICACIA DE TRASLADO -> deber de informacion y reincorporacion a RPM; (3) JURISPRUDENCIA con radicado (SU/C/T, SL, Consejo de Estado) e lineamientos de Colpensiones; (4) CONCLUSION Y POSTURA OBLIGATORIA al final con recomendacion clara de conciliar o no ('viable continuar la defensa y NO acceder a formula conciliatoria', o los aspectos a revisar). Solo lo que conste. Si no hay resoluciones, usa las mencionadas en la demanda; si no hay info suficiente, null.",
     "evaluacion_riesgo": "evaluacion del riesgo procesal segun lo que consta, o null",
     "recomendacion": "recomendacion de conciliacion fundamentada en las fuentes, o null"
   }
