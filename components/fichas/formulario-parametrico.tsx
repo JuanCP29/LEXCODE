@@ -149,6 +149,20 @@ interface FormularioParametricoProps {
 
 const DEMANDADO_FIJO = "Administradora Colombiana de Pensiones — COLPENSIONES. NIT 900.336.004-7";
 
+// Cuantía por defecto (Sección 3) cuando no se logra extraer del traslado: depende del despacho.
+const CUANTIA_DEF_SUP = "Superior a 20 salarios mensuales legales vigentes";
+const CUANTIA_DEF_INF = "Inferior a 20 salarios mensuales legales vigentes";
+function cuantiaPorDefecto(despacho: string): string {
+  const d = (despacho ?? "").toLowerCase();
+  if (d.includes("municipal")) return CUANTIA_DEF_INF;   // Municipal o Municipal de pequeñas causas
+  if (d.includes("circuito")) return CUANTIA_DEF_SUP;    // Laboral del circuito
+  return "";
+}
+const esCuantiaPorDefecto = (v: string) => {
+  const t = (v ?? "").trim();
+  return t === CUANTIA_DEF_SUP || t === CUANTIA_DEF_INF;
+};
+
 // Corrige radicados que llegaron en notación científica (ej. 7.6e+22)
 function limpiarNum(v: string | null | undefined): string {
   if (!v) return "";
@@ -299,12 +313,14 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
     }
   }, [pretensionesSugerida, pretensionesTexto]);
 
-  // Traer la cuantía extraída del traslado al cuadro de texto (Sección 3).
+  // Sección 3 (Cuantía): usar el valor extraído del traslado; si no se logró extraer,
+  // insertar el valor por defecto según el despacho (Circuito → superior; Municipal → inferior).
+  // Solo se aplica si el campo está vacío o si aún tiene un valor por defecto (no editado a mano).
   useEffect(() => {
-    if (cuantiaSugerida && !cuantiaTexto.trim()) {
-      setCuantiaTexto(cuantiaSugerida);
-    }
-  }, [cuantiaSugerida, cuantiaTexto]);
+    const efectiva = cuantiaSugerida?.trim() ? cuantiaSugerida : cuantiaPorDefecto(encabezado.despacho);
+    if (!efectiva) return;
+    setCuantiaTexto((prev) => (!prev.trim() || esCuantiaPorDefecto(prev)) ? efectiva : prev);
+  }, [cuantiaSugerida, encabezado.despacho]);
 
   // Traer las normas extraídas del traslado al cuadro de texto (Sección 4).
   useEffect(() => {
