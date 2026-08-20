@@ -164,6 +164,22 @@ const esCuantiaPorDefecto = (v: string) => {
   return t === CUANTIA_DEF_SUP || t === CUANTIA_DEF_INF;
 };
 
+// Sección 12 (Evaluación de riesgo): 4 criterios calificados en 4 niveles.
+const CRITERIOS_RIESGO = [
+  { key: "defensa",        label: "Riesgo de pérdida por relevancia jurídica de las razones de hecho y derecho del demandante" },
+  { key: "probatoria",     label: "Riesgo de pérdida asociado a la contundencia, congruencia y pertinencia de los medios probatorios" },
+  { key: "procesales",     label: "Presencia de riesgos procesales y extraprocesales" },
+  { key: "jurisprudencia", label: "Riesgo de pérdida asociado al nivel de jurisprudencia" },
+] as const;
+const NIVELES_RIESGO = [
+  { value: "ALTO", label: "ALTO" },
+  { value: "MEDIO ALTO", label: "MEDIO ALTO" },
+  { value: "MEDIO BAJO", label: "MEDIO BAJO" },
+  { value: "BAJO", label: "BAJO" },
+];
+type CriterioHist = { moda: string; dist: Record<string, number>; n: number };
+type RiesgoHist = { fuente: "combo" | "pretension"; n: number; clase: string | null; criterios: Record<string, CriterioHist> };
+
 // Corrige radicados que llegaron en notación científica (ej. 7.6e+22)
 function limpiarNum(v: string | null | undefined): string {
   if (!v) return "";
@@ -193,7 +209,8 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
   const [jurisprudenciaTexto, setJurisprudenciaTexto] = useState("");
   const [consideracionesTexto, setConsideracionesTexto] = useState("");
   const [politicasTexto, setPoliticasTexto] = useState("");
-  const [riesgoTexto, setRiesgoTexto] = useState("");
+  const [riesgoNiveles, setRiesgoNiveles] = useState<Record<string, string>>({ defensa: "", probatoria: "", procesales: "", jurisprudencia: "" });
+  const [riesgoHist, setRiesgoHist] = useState<RiesgoHist | null>(null);
   const prevPrellenados = useRef<Partial<ParametrosFormData> | undefined>(undefined);
 
   // Paso "Revisar y descargar"
@@ -344,6 +361,28 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
     }
   }, [consideracionesSugerida, consideracionesTexto]);
 
+  // Sección 12 (Evaluación de riesgo): traer la calificación histórica (moda por criterio) según
+  // la pretensión + clase del caso, y prellenar los selectores vacíos con la sugerencia.
+  useEffect(() => {
+    const p = casoData.pretension ?? "";
+    if (!p) return;
+    const q = new URLSearchParams({ pretension: p, clase: casoData.clase_pretension ?? "" });
+    fetch(`/api/riesgo-historico?${q.toString()}`)
+      .then((r) => r.json())
+      .then((d: RiesgoHist & { criterios: Record<string, CriterioHist> | null }) => {
+        if (!d?.criterios) return;
+        setRiesgoHist(d as RiesgoHist);
+        setRiesgoNiveles((prev) => {
+          const next = { ...prev };
+          for (const c of CRITERIOS_RIESGO) {
+            if (!next[c.key] && d.criterios?.[c.key]?.moda) next[c.key] = d.criterios[c.key].moda;
+          }
+          return next;
+        });
+      })
+      .catch(() => {});
+  }, [casoData.pretension, casoData.clase_pretension]);
+
   // Si el usuario vuelve atrás a editar, se invalida la ficha ya generada y su vista previa,
   // para que al volver a "Revisar y descargar" se regenere con los cambios.
   useEffect(() => {
@@ -433,7 +472,12 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
           sec_11_jurisprudencia: jurisprudenciaTexto.trim() || null,
           sec_16_consideraciones: consideracionesTexto.trim() || null,
           sec_15_politicas: politicasTexto.trim() || null,
-          sec_17_riesgo: riesgoTexto.trim() || null,
+          sec_17_riesgo: (() => {
+            const lineas = CRITERIOS_RIESGO
+              .filter((c) => riesgoNiveles[c.key])
+              .map((c) => `• ${c.label}: ${riesgoNiveles[c.key]}`);
+            return lineas.length ? lineas.join("\n") : null;
+          })(),
           // Sección 13 (Recomendación): si el asunto NO es conciliable, recomendación fija.
           sec_18_recomendacion: data.conciliable === false
             ? "Una vez estudiado el caso, recomiendo NO CONCILIAR; de acuerdo con las consideraciones expuestas."
@@ -1015,15 +1059,35 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
       </Bloque>
 
       <Bloque icono={<FileText className="w-4 h-4" />} titulo="Evaluación de riesgo">
-        <Campo label="Evaluación de riesgo (Sección 12 del documento)">
-          <textarea
-            value={riesgoTexto}
-            onChange={(e) => setRiesgoTexto(e.target.value)}
-            rows={6}
-            placeholder="Nivel de riesgo procesal (alto/medio/bajo) y su justificación. Si lo dejas vacío, se usará el texto por defecto según el caso."
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-ring resize-y min-h-[120px]"
-          />
-        </Campo>
+        <p className="text-[11px] text-muted-foreground -mt-1">
+          Califica la probabilidad de pérdida del proceso en cada criterio. Los selectores traen una <strong>sugerencia histórica</strong> (moda de la base de casos) que puedes cambiar según tu criterio.
+        </p>
+        {riesgoHist && (
+          <p className="text-[11px] text-primary/70">
+            Sugerencia basada en <strong>{riesgoHist.n.toLocaleString("es-CO")}</strong> casos {riesgoHist.fuente === "combo" && riesgoHist.clase ? `de ${riesgoHist.clase}` : `(por pretensión)`}.
+          </p>
+        )}
+        <div className="space-y-4">
+          {CRITERIOS_RIESGO.map((c) => {
+            const h = riesgoHist?.criterios?.[c.key];
+            return (
+              <Campo key={c.key} label={c.label}>
+                <Select
+                  value={riesgoNiveles[c.key] ?? ""}
+                  onChange={(v) => setRiesgoNiveles((prev) => ({ ...prev, [c.key]: v }))}
+                  placeholder="Selecciona el nivel…"
+                  options={NIVELES_RIESGO}
+                />
+                {h && (
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Histórico: {Object.entries(h.dist).map(([niv, pct]) => `${niv} ${pct}%`).join(" · ")}
+                    {h.moda ? <> — sugerido: <strong>{h.moda}</strong></> : null}
+                  </p>
+                )}
+              </Campo>
+            );
+          })}
+        </div>
       </Bloque>
       </>)}
 
