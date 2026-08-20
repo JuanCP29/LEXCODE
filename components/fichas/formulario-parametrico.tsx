@@ -434,6 +434,10 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
           sec_16_consideraciones: consideracionesTexto.trim() || null,
           sec_15_politicas: politicasTexto.trim() || null,
           sec_17_riesgo: riesgoTexto.trim() || null,
+          // Sección 13 (Recomendación): si el asunto NO es conciliable, recomendación fija.
+          sec_18_recomendacion: data.conciliable === false
+            ? "Una vez estudiado el caso, recomiendo NO CONCILIAR; de acuerdo con las consideraciones expuestas."
+            : null,
         },
       }),
     });
