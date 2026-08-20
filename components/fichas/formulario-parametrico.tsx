@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
 import {
   parametrosSchema,
   type ParametrosFormData,
@@ -13,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn, limpiarDespacho } from "@/lib/utils";
-import { Loader2, ArrowRight, ArrowLeft, ChevronDown, FileSignature, CheckCircle2, AlertCircle, ExternalLink, Mail, Clock, Handshake, Check, ClipboardList, FileText } from "lucide-react";
+import { Loader2, ArrowRight, ArrowLeft, ChevronDown, FileSignature, CheckCircle2, AlertCircle, ExternalLink, Mail, Clock, Handshake, Check, ClipboardList, FileText, Eye, FileDown } from "lucide-react";
 import { ConsultaRadicado } from "@/components/fichas/consulta-radicado";
 import { VistaPreviaDocumento } from "@/components/fichas/vista-previa-documento";
 
@@ -161,8 +160,6 @@ function limpiarNum(v: string | null | undefined): string {
 }
 
 export function FormularioParametrico({ casoId, casoData, valoresPrellenados, sintesisHechosSugerida, pretensionesSugerida, cuantiaSugerida, normasSugerida }: FormularioParametricoProps) {
-  const router = useRouter();
-  const [generando, setGenerando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [generandoPoder, setGenerandoPoder] = useState(false);
   const [poderGenerado, setPoderGenerado] = useState(false);
@@ -183,6 +180,18 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
   const [riesgoTexto, setRiesgoTexto] = useState("");
   const prevPrellenados = useRef<Partial<ParametrosFormData> | undefined>(undefined);
 
+  // Paso "Revisar y descargar"
+  const [fichaId, setFichaId] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [generandoPreview, setGenerandoPreview] = useState(false);
+  const [descargandoPdf, setDescargandoPdf] = useState(false);
+  const [nombreArchivo, setNombreArchivo] = useState(() => {
+    const hoy = new Date();
+    const f = `${hoy.getFullYear()}${String(hoy.getMonth() + 1).padStart(2, "0")}${String(hoy.getDate()).padStart(2, "0")}`;
+    const ced = (casoData.cedula_demandante ?? "").replace(/\D/g, "");
+    return `${f}_FichaConciliacion${ced ? `_CC_${ced}` : ""}`;
+  });
+
   // Encabezado del proceso (editable) — arranca con los datos del CSV/caso
   const [encabezado, setEncabezado] = useState({
     radicado_bizagi:   casoData.radicado_bizagi ?? "",
@@ -195,7 +204,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
     setEncabezado((prev) => ({ ...prev, [k]: v }));
 
   // Asistente por pasos
-  const PASOS = ["Información del proceso", "Contenido de la demanda", "Análisis jurídico", "Conceptos y cierre"];
+  const PASOS = ["Información del proceso", "Contenido de la demanda", "Análisis jurídico", "Conceptos y cierre", "Revisar y descargar"];
   const [paso, setPaso] = useState(1);
   const totalPasos = PASOS.length;
 
@@ -303,6 +312,15 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
     }
   }, [normasSugerida, normasTexto]);
 
+  // Si el usuario vuelve atrás a editar, se invalida la ficha ya generada y su vista previa,
+  // para que al volver a "Revisar y descargar" se regenere con los cambios.
+  useEffect(() => {
+    if (paso < totalPasos) {
+      setFichaId(null);
+      setPreviewUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return null; });
+    }
+  }, [paso, totalPasos]);
+
   async function handleGenerarMemorial() {
     setGenerandoMemorial(true);
     try {
@@ -358,53 +376,90 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
     }
   }
 
-  async function onSubmit(data: ParametrosFormData) {
-    setGenerando(true);
-    setError(null);
-
-    try {
-      const res = await fetch("/api/generar-ficha", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          caso_id: casoId,
-          params: data,
-          caso_override: {
-            radicado_bizagi:   encabezado.radicado_bizagi.trim() || null,
-            radicado:          encabezado.radicado.trim() || null,
-            nombre_demandante: encabezado.nombre_demandante.trim() || null,
-            cedula_demandante: encabezado.cedula_demandante.trim() || null,
-            despacho:          encabezado.despacho.trim() || null,
-          },
-          secciones_manual: {
-            sec_1_hechos: sintesisHechos.trim() || null,
-            sec_2_pretensiones: pretensionesTexto.trim() || null,
-            sec_3_cuantia: cuantiaTexto.trim() || null,
-            sec_4_normas: normasTexto.trim() || null,
-            sec_8_problema: problemaTexto.trim() || null,
-            sec_11_jurisprudencia: jurisprudenciaTexto.trim() || null,
-            sec_16_consideraciones: consideracionesTexto.trim() || null,
-            sec_15_politicas: politicasTexto.trim() || null,
-            sec_17_riesgo: riesgoTexto.trim() || null,
-          },
-        }),
-      });
-
-      if (!res.ok) {
-        const body = await res.json();
-        throw new Error(body.error ?? "Error al generar la ficha");
-      }
-
-      const { ficha_id } = await res.json();
-      router.push(`/generador/${casoId}/ficha?ficha_id=${ficha_id}`);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Error desconocido");
-      setGenerando(false);
+  // Genera la ficha (si aún no existe en esta sesión) y devuelve su id.
+  async function asegurarFicha(data: ParametrosFormData): Promise<string> {
+    if (fichaId) return fichaId;
+    const res = await fetch("/api/generar-ficha", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        caso_id: casoId,
+        params: data,
+        caso_override: {
+          radicado_bizagi:   encabezado.radicado_bizagi.trim() || null,
+          radicado:          encabezado.radicado.trim() || null,
+          nombre_demandante: encabezado.nombre_demandante.trim() || null,
+          cedula_demandante: encabezado.cedula_demandante.trim() || null,
+          despacho:          encabezado.despacho.trim() || null,
+        },
+        secciones_manual: {
+          sec_1_hechos: sintesisHechos.trim() || null,
+          sec_2_pretensiones: pretensionesTexto.trim() || null,
+          sec_3_cuantia: cuantiaTexto.trim() || null,
+          sec_4_normas: normasTexto.trim() || null,
+          sec_8_problema: problemaTexto.trim() || null,
+          sec_11_jurisprudencia: jurisprudenciaTexto.trim() || null,
+          sec_16_consideraciones: consideracionesTexto.trim() || null,
+          sec_15_politicas: politicasTexto.trim() || null,
+          sec_17_riesgo: riesgoTexto.trim() || null,
+        },
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error ?? "Error al generar la ficha");
     }
+    const { ficha_id } = await res.json();
+    setFichaId(ficha_id);
+    return ficha_id;
   }
 
+  // Si la validación falla (campos obligatorios de pasos anteriores), avisa y vuelve al paso 1.
+  function onValidacionFallida() {
+    setError("Faltan campos obligatorios en pasos anteriores (por ejemplo, la directriz de conciliación en el paso 1). Complétalos y vuelve a intentar.");
+    setPaso(1);
+  }
+
+  const handleVistaPrevia = handleSubmit(async (data) => {
+    setGenerandoPreview(true);
+    setError(null);
+    try {
+      const id = await asegurarFicha(data);
+      const res = await fetch(`/api/exportar-ficha-pdf/${id}`);
+      if (!res.ok) throw new Error("No se pudo generar la vista previa del PDF.");
+      const blob = await res.blob();
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(URL.createObjectURL(blob));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al generar la vista previa");
+    } finally {
+      setGenerandoPreview(false);
+    }
+  }, onValidacionFallida);
+
+  const handleDescargarPdf = handleSubmit(async (data) => {
+    setDescargandoPdf(true);
+    setError(null);
+    try {
+      const id = await asegurarFicha(data);
+      const res = await fetch(`/api/exportar-ficha-pdf/${id}`);
+      if (!res.ok) throw new Error("No se pudo descargar el PDF.");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${nombreArchivo.trim() || "FICHA_CONCILIACION"}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al descargar el PDF");
+    } finally {
+      setDescargandoPdf(false);
+    }
+  }, onValidacionFallida);
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+    <form onSubmit={(e) => e.preventDefault()} className="space-y-5">
 
       {/* ── Asistente por pasos ── */}
       <div className="flex items-center border-b border-border pb-5">
@@ -936,6 +991,66 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
       </Bloque>
       </>)}
 
+      {/* ── Paso 5: Revisar y descargar ── */}
+      {paso === 5 && (
+      <div className="rounded-xl border border-border bg-card overflow-hidden card-shadow">
+        <div className="px-5 py-4 border-b border-border">
+          <h3 className="text-[15px] font-bold text-foreground">Revisar y descargar</h3>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Plantilla: Ficha de Conciliación Judicial (GDJ-GPO-FMT-005 v3).
+          </p>
+        </div>
+
+        <div className="px-5 py-5 space-y-4">
+          {/* Nombre del archivo */}
+          <div className="rounded-lg border border-input px-4 py-3">
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-primary/70">Archivo</label>
+            <input
+              value={nombreArchivo}
+              onChange={(e) => setNombreArchivo(e.target.value)}
+              className="w-full mt-1 bg-transparent text-sm font-mono text-foreground focus:outline-none"
+              placeholder="Nombre del archivo"
+            />
+          </div>
+
+          {/* Acciones */}
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={handleVistaPrevia}
+              disabled={generandoPreview || descargandoPdf}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-border bg-card text-sm font-semibold text-foreground hover:bg-muted transition-colors disabled:opacity-60"
+            >
+              {generandoPreview
+                ? <><Loader2 className="w-4 h-4 animate-spin" /> Generando…</>
+                : <><Eye className="w-4 h-4" /> Generar vista previa</>}
+            </button>
+            <button
+              type="button"
+              onClick={handleDescargarPdf}
+              disabled={descargandoPdf || generandoPreview}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-60"
+            >
+              {descargandoPdf
+                ? <><Loader2 className="w-4 h-4 animate-spin" /> Descargando…</>
+                : <><FileDown className="w-4 h-4" /> Descargar PDF</>}
+            </button>
+          </div>
+
+          {/* Vista previa */}
+          {previewUrl ? (
+            <div className="rounded-lg border border-border overflow-hidden bg-muted/20" style={{ height: "70vh" }}>
+              <iframe src={previewUrl} title="Vista previa de la ficha" className="w-full h-full border-0" />
+            </div>
+          ) : (
+            <div className="rounded-lg border border-dashed border-border py-14 text-center text-sm text-muted-foreground">
+              Genera la vista previa para revisar el documento antes de descargar.
+            </div>
+          )}
+        </div>
+      </div>
+      )}
+
       {error && (
         <div className="rounded-md bg-destructive/10 border border-destructive/30 px-4 py-3 text-sm text-destructive">
           {error}
@@ -953,20 +1068,12 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
           <ArrowLeft className="w-4 h-4 mr-2" /> Atrás
         </Button>
 
-        {paso < totalPasos ? (
+        {paso < totalPasos && (
           <Button
             type="button"
             onClick={() => setPaso((p) => Math.min(totalPasos, p + 1))}
           >
-            Siguiente <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
-        ) : (
-          <Button type="submit" className="h-11" disabled={generando}>
-            {generando ? (
-              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generando ficha con IA...</>
-            ) : (
-              <>Generar ficha <ArrowRight className="w-4 h-4 ml-2" /></>
-            )}
+            {paso === totalPasos - 1 ? "Revisar y descargar" : "Siguiente"} <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         )}
       </div>
