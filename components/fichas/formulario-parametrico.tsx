@@ -436,8 +436,8 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
     if (!nombre && !cedula) return;
     if ((getValues("causante_afiliado") ?? "").trim()) return; // no sobreescribir
 
-    const cedFmt = cedula ? Number(cedula).toLocaleString("es-CO") : "";
-    const texto = `${nombre}${cedFmt ? `, C.C. ${cedFmt}` : ""}`.trim();
+    // Cédula sin separadores de miles (dígitos puros); los puntos solo en la sigla «C.C.».
+    const texto = `${nombre}${cedula ? `, C.C. ${cedula}` : ""}`.trim();
     if (texto) setValue("causante_afiliado", texto, { shouldDirty: true });
   }, [causanteNombreSugerido, causanteCedulaSugerida, getValues, setValue]);
 
