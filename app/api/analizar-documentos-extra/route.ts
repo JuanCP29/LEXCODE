@@ -26,6 +26,37 @@ async function recortarPaginasBase64(buffer: Buffer, maxPaginas = 30): Promise<{
   }
 }
 
+// Combina VARIOS PDFs en uno solo (traslado primero, luego las resoluciones/actuaciones),
+// con presupuesto de paginas para no exceder los limites de la API.
+async function combinarPDFsBase64(
+  pdfs: { nombre: string; buffer: Buffer }[],
+  opts: { trasladoMax?: number; otrosMax?: number; totalMax?: number } = {}
+): Promise<{ base64: string; paginas: number } | null> {
+  const { trasladoMax = 25, otrosMax = 12, totalMax = 50 } = opts;
+  try {
+    const traslado = pdfs.find((p) => /traslad/i.test(p.nombre)) ?? pdfs[0];
+    const otros = pdfs.filter((p) => p !== traslado);
+    const ordenados = [traslado, ...otros];
+    const out = await PDFDocument.create();
+    let total = 0;
+    for (let i = 0; i < ordenados.length; i++) {
+      if (total >= totalMax) break;
+      const src = await PDFDocument.load(ordenados[i].buffer, { ignoreEncryption: true });
+      const max = i === 0 ? trasladoMax : otrosMax;
+      const n = Math.min(max, src.getPageCount(), totalMax - total);
+      if (n <= 0) continue;
+      const pages = await out.copyPages(src, Array.from({ length: n }, (_, k) => k));
+      pages.forEach((p) => out.addPage(p));
+      total += n;
+    }
+    if (total === 0) return null;
+    return { base64: Buffer.from(await out.save()).toString("base64"), paginas: total };
+  } catch (e) {
+    console.error("combinarPDFsBase64:", e);
+    return null;
+  }
+}
+
 // Reglas de redaccion comunes a HECHOS y PRETENSIONES (secciones 1 y 2 de la ficha).
 const REGLAS_REDACCION = `- La demanda puede enumerar sus puntos con NUMEROS ("1.", "1)", "1-") o con ORDINALES EN PALABRA ("Primero.", "Segundo.", "Tercero." ... "Septimo.", "Octavo.", "Noveno.", "Decimo.", "Decimo primero.", "Undecimo.", "Duodecimo.", "Decimo tercero.", etc.). DETECTA AMBOS formatos. Recorre la seccion desde el PRIMER punto hasta el ULTIMO, que es el que aparece justo antes de que empiece la siguiente seccion (p. ej. los HECHOS terminan donde comienza "PRETENSIONES").
 - INCLUYE ABSOLUTAMENTE TODOS los puntos, SIN EXCEPCION, aunque alguno sea un argumento juridico, doctrinal, jurisprudencial o de contexto (no solo hechos facticos). Presta especial atencion al ULTIMO punto de la seccion: es el que mas se suele omitir. Cada item enumerado debe aparecer en tu resultado.
@@ -42,6 +73,7 @@ type SeccionesTraslado = {
   cuantia: string | null;
   normas: string | null;
   problema_juridico: string | null;
+  consideraciones: string | null;
 };
 
 async function analizarTrasladoVision(
@@ -49,11 +81,10 @@ async function analizarTrasladoVision(
   pdfs: { nombre: string; buffer: Buffer }[],
   despacho?: string | null
 ): Promise<SeccionesTraslado> {
-  const vacio: SeccionesTraslado = { sintesis_hechos: null, pretensiones: null, cuantia: null, normas: null, problema_juridico: null };
+  const vacio: SeccionesTraslado = { sintesis_hechos: null, pretensiones: null, cuantia: null, normas: null, problema_juridico: null, consideraciones: null };
   if (pdfs.length === 0) return vacio;
-  // Prioriza el documento cuyo nombre sugiere "traslado"; si no, el primero.
-  const doc = pdfs.find((p) => /traslad/i.test(p.nombre)) ?? pdfs[0];
-  const recorte = await recortarPaginasBase64(doc.buffer, 30);
+  // Combina el traslado (demanda) con las demas actuaciones/resoluciones cargadas.
+  const recorte = await combinarPDFsBase64(pdfs);
   if (!recorte) return vacio;
 
   // La jurisdicción se determina por el despacho (autoritativo cuando se conoce).
@@ -64,9 +95,11 @@ async function analizarTrasladoVision(
         : `JURISDICCION DEL CASO: ORDINARIA LABORAL (el despacho es "${despacho}"). En "problema_juridico" usa la estructura del caso ORDINARIA LABORAL del punto E.`)
     : `JURISDICCION DEL CASO: determinala segun el documento (ver punto E).`;
 
-  const prompt = `Este documento es el TRASLADO de una demanda laboral/pensional (puede estar escaneado, en imagenes).
+  const prompt = `Este PAQUETE contiene el TRASLADO de una demanda laboral/pensional y, ademas, puede incluir una o varias
+RESOLUCIONES u OFICIOS de COLPENSIONES (las "ultimas actuaciones relacionadas": numeros que empiezan por SUB, DPE, GNR, VPB,
+DIR, HL o BZ), que son la respuesta previa de la entidad a la reclamacion del ciudadano. Puede estar escaneado (imagenes).
 ${jurisdiccionDirectiva}
-Debes localizar y resumir CUATRO secciones de la demanda:
+De la DEMANDA (traslado) extrae las secciones A) a E). De las RESOLUCIONES/OFICIOS de Colpensiones elabora la seccion F).
 
 A) HECHOS -> campo "sintesis_hechos". Seccion titulada "HECHOS" (o "HECHOS DE LA DEMANDA", "III. HECHOS").
 B) PRETENSIONES -> campo "pretensiones". Seccion titulada "PRETENSIONES" (o "PETICIONES").
@@ -115,13 +148,31 @@ E) PROBLEMA JURIDICO -> campo "problema_juridico". Redacta el PLANTEAMIENTO DEL 
    NULIDAD/reincorporacion si se discute traslado de regimen). NO menciones costas procesales ni agencias en derecho.
    Tercera persona, formal, COLPENSIONES como demandada. Si no puedes determinar la controversia, pon null.
 
+F) CONSIDERACIONES -> campo "consideraciones". Esta es la seccion MAS IMPORTANTE. Analiza LAS RESOLUCIONES u OFICIOS de
+   COLPENSIONES presentes en el paquete (SUB, DPE, GNR, VPB, DIR, HL, BZ), que contienen la respuesta previa de la entidad
+   (negativa o parcialmente positiva) frente a lo que hoy se reclama en la demanda.
+   1. Identifica con precision LAS RAZONES por las que Colpensiones nego o reconocio parcialmente la prestacion (motivacion,
+      normas y calculos que uso: IBL, tasa de reemplazo, semanas cotizadas, fechas de causacion y de efectividad, numeros de
+      resolucion). Cita los numeros de resolucion y fechas que consten.
+   2. Elabora un ANALISIS que combine: (a) NORMATIVO — cita y, cuando sea util, transcribe entre comillas los articulos
+      pertinentes (p. ej. Ley 100 de 1993 arts. 21, 33, 34; Ley 797 de 2003; formula r = 65,50 - 0,50 s; etc.) y APLICALOS al
+      caso concreto con las cifras del expediente; (b) JURISPRUDENCIAL — precedentes aplicables de la Corte Constitucional,
+      Corte Suprema o Consejo de Estado que respalden la postura; (c) INSTITUCIONAL — lineamientos, directrices o circulares de
+      Colpensiones aplicables.
+   3. Con base en lo anterior, FIJA UNA POSTURA de Colpensiones frente a la controversia objeto de la demanda (si la actuacion
+      de la entidad se ajusto a derecho o si existe algun aspecto susceptible de revisar/conciliar).
+   Redacta en TERCERA PERSONA, formal y tecnico, en varios parrafos (es una consideracion juridica extensa). Usa UNICAMENTE lo
+   que conste en los documentos; no inventes cifras ni normas. Si en el paquete NO hay resoluciones/oficios de Colpensiones,
+   elabora el analisis con base en las resoluciones que se mencionen dentro de la demanda; si aun asi no hay informacion
+   suficiente, pon null.
+
 Devuelve UNICAMENTE un JSON con esta forma exacta:
-{ "sintesis_hechos": "1) ...\\n\\n2) ...", "pretensiones": "1) ...\\n\\n2) ...", "cuantia": "La cuantia fue estimada...", "normas": "• Ley ...\\n• Decreto ...", "problema_juridico": "Determinar si ..." }`;
+{ "sintesis_hechos": "1) ...\\n\\n2) ...", "pretensiones": "1) ...\\n\\n2) ...", "cuantia": "La cuantia fue estimada...", "normas": "• Ley ...\\n• Decreto ...", "problema_juridico": "Determinar si ...", "consideraciones": "..." }`;
 
   try {
     const message = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 5000,
+      max_tokens: 8000,
       messages: [{
         role: "user",
         content: [
@@ -142,6 +193,7 @@ Devuelve UNICAMENTE un JSON con esta forma exacta:
       cuantia: limpiar(parsed?.cuantia),
       normas: limpiar(parsed?.normas),
       problema_juridico: limpiar(parsed?.problema_juridico),
+      consideraciones: limpiar(parsed?.consideraciones),
     };
   } catch (e) {
     console.error("analizarTrasladoVision:", e);
@@ -250,7 +302,7 @@ export async function POST(request: NextRequest) {
     // ── Documento ESCANEADO (sin capa de texto): leer HECHOS y PRETENSIONES con visión ──
     if (caracteresExtraidos < 200) {
       const vision = await analizarTrasladoVision(anthropic, pdfs, despachoHint);
-      const encontrados = [vision.sintesis_hechos, vision.pretensiones, vision.cuantia, vision.normas, vision.problema_juridico].filter(Boolean);
+      const encontrados = [vision.sintesis_hechos, vision.pretensiones, vision.cuantia, vision.normas, vision.problema_juridico, vision.consideraciones].filter(Boolean);
       return NextResponse.json({
         campos: {},
         suggestions: {
@@ -259,6 +311,7 @@ export async function POST(request: NextRequest) {
           cuantia: vision.cuantia,
           normas: vision.normas,
           problema_juridico: vision.problema_juridico,
+          consideraciones: vision.consideraciones,
         },
         fieldsFound: 0,
         suggestionsFound: encontrados.length,
@@ -303,7 +356,7 @@ Devuelve UNICAMENTE un objeto JSON valido con esta forma exacta (sin texto adici
     "cuantia": "busca la seccion 'CUANTIA', 'COMPETENCIA Y CUANTIA' o 'ESTIMACION DE LA CUANTIA'. Devuelve EXACTAMENTE la frase 'La cuantia fue estimada por la parte actora, en <VALOR>.' donde <VALOR> es el monto en FORMATO MONEDA con simbolo '$', miles con punto y decimales con coma (ej '$275.353.309,53'), SIN escribir 'COP' ni 'pesos'; si esta en salarios minimos dejalo como '20 SMLMV'. Si no hay valor, null.",
     "normas": "busca la seccion 'FUNDAMENTOS Y RAZONES DE DERECHO', 'NORMAS VIOLADAS' o 'CONCEPTO DE VIOLACION'. Relaciona la normatividad CONSOLIDANDO por norma: cada ley/decreto/codigo/Constitucion aparece UNA SOLA VEZ listando TODOS sus articulos juntos, separados por coma y ordenados. UNA norma por linea, y cada linea DEBE EMPEZAR con una vineta '• ' (ej '• Ley 100 de 1993, articulos 9, 10, 34, 141'). Sin repetir. No inventes. Devuelve el texto o null.",
     "problema_juridico": "PLANTEAMIENTO DEL PROBLEMA JURIDICO en UN SOLO PARRAFO, como planteamiento de la controversia (NO en forma de pregunta, sin signos '¿ ?'). SEGUN LA JURISDICCION: si es CONTENCIOSO ADMINISTRATIVA (Juzgado o Tribunal Administrativo, o medio de control de nulidad y restablecimiento del derecho), INICIA por la procedencia de la nulidad: 'Determinar si se debe declarar la nulidad [total/parcial] de la Resolucion No <numero> del <fecha> mediante la cual COLPENSIONES <reconocio/nego...>, y si, como consecuencia, hay lugar a <accion principal> con retroactivo e intereses o indexacion'; si es ORDINARIA LABORAL, usa 'Determinar si <controversia>, y si, como consecuencia, hay lugar a <accion principal> con retroactivo e intereses o indexacion'. ATERRIZA a UNA SOLA ACCION (reliquidacion si ya goza de pension; reconocimiento si no; nulidad/reincorporacion si traslado). NO menciones costas procesales. Tercera persona, COLPENSIONES demandada. Si no se puede determinar, null.",
-    "consideraciones": "consideraciones juridicas basadas en las fuentes, o null",
+    "consideraciones": "SECCION MAS IMPORTANTE. Analiza las RESOLUCIONES/OFICIOS de COLPENSIONES (SUB, DPE, GNR, VPB, DIR, HL, BZ) que consten, que son su respuesta previa (negativa o parcialmente positiva) a lo reclamado. 1) Identifica LAS RAZONES por las que Colpensiones nego o reconocio parcialmente (motivacion, normas y calculos: IBL, tasa de reemplazo, semanas, fechas, numeros de resolucion). 2) Elabora un analisis NORMATIVO (cita y aplica los articulos pertinentes al caso con sus cifras), JURISPRUDENCIAL (precedentes) e INSTITUCIONAL (lineamientos/circulares de Colpensiones). 3) FIJA UNA POSTURA de Colpensiones frente a la controversia. Tercera persona, formal, varios parrafos. Solo lo que conste. Si no hay resoluciones, usa las mencionadas en la demanda; si no hay info suficiente, null.",
     "evaluacion_riesgo": "evaluacion del riesgo procesal segun lo que consta, o null",
     "recomendacion": "recomendacion de conciliacion fundamentada en las fuentes, o null"
   }

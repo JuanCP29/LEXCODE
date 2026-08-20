@@ -145,6 +145,7 @@ interface FormularioParametricoProps {
   cuantiaSugerida?: string | null;
   normasSugerida?: string | null;
   problemaSugerido?: string | null;
+  consideracionesSugerida?: string | null;
 }
 
 const DEMANDADO_FIJO = "Administradora Colombiana de Pensiones — COLPENSIONES. NIT 900.336.004-7";
@@ -174,7 +175,7 @@ function limpiarNum(v: string | null | undefined): string {
   return s;
 }
 
-export function FormularioParametrico({ casoId, casoData, valoresPrellenados, sintesisHechosSugerida, pretensionesSugerida, cuantiaSugerida, normasSugerida, problemaSugerido }: FormularioParametricoProps) {
+export function FormularioParametrico({ casoId, casoData, valoresPrellenados, sintesisHechosSugerida, pretensionesSugerida, cuantiaSugerida, normasSugerida, problemaSugerido, consideracionesSugerida }: FormularioParametricoProps) {
   const [error, setError] = useState<string | null>(null);
   const [generandoPoder, setGenerandoPoder] = useState(false);
   const [poderGenerado, setPoderGenerado] = useState(false);
@@ -335,6 +336,13 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
       setProblemaTexto(problemaSugerido);
     }
   }, [problemaSugerido, problemaTexto]);
+
+  // Traer las consideraciones generadas (análisis de las resoluciones) al cuadro de texto (Sección Consideraciones).
+  useEffect(() => {
+    if (consideracionesSugerida && !consideracionesTexto.trim()) {
+      setConsideracionesTexto(consideracionesSugerida);
+    }
+  }, [consideracionesSugerida, consideracionesTexto]);
 
   // Si el usuario vuelve atrás a editar, se invalida la ficha ya generada y su vista previa,
   // para que al volver a "Revisar y descargar" se regenere con los cambios.
