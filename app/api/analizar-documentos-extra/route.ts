@@ -78,15 +78,16 @@ D) NORMAS -> campo "normas". Busca la seccion titulada "FUNDAMENTOS Y RAZONES DE
 
 E) PROBLEMA JURIDICO -> campo "problema_juridico". Redacta el PLANTEAMIENTO DEL PROBLEMA JURIDICO en UN SOLO PARRAFO,
    como PLANTEAMIENTO DE LA CONTROVERSIA (NO en forma de pregunta: no uses signos "¿ ?" ni termines con "?").
-   Basate en las PRETENSIONES y los HECHOS de la demanda para identificar la controversia central que debe resolver el juez.
-   Usa la estructura: "Determinar si <nucleo de la controversia>, y si, como consecuencia de ello, hay lugar a
-   <las pretensiones principales: reincorporacion/nulidad, reconocimiento o reliquidacion de la pension, retroactivo,
-   intereses moratorios, indexacion, etc.>". Tercera persona, formal, mencionando a COLPENSIONES como demandada.
-   Ejemplo de estilo (solo referencia, adapta al caso real): "Determinar si el traslado efectuado por la senora <NOMBRE>
-   del Regimen de Prima Media al Regimen de Ahorro Individual fue ineficaz por presunto incumplimiento del deber de
-   informacion, y si, como consecuencia, hay lugar a ordenar su reincorporacion al Regimen de Prima Media administrado por
-   COLPENSIONES, reconocer la pension de vejez con el correspondiente retroactivo, intereses moratorios o indexacion."
-   Si no puedes determinar la controversia, pon null.
+   ATERRIZA el planteamiento a UNA SOLA ACCION PRINCIPAL, la que realmente persigue la demanda. Identificala de los hechos y
+   pretensiones:
+     - Si el demandante YA goza de la pension y lo que busca es corregir su valor -> la accion es la RELIQUIDACION de la pension.
+     - Si el demandante NO tiene la pension y la reclama -> la accion es el RECONOCIMIENTO de la pension.
+     - Si se discute un traslado de regimen -> la accion es la NULIDAD/INEFICACIA del traslado y la reincorporacion.
+   Centra el planteamiento en ESA sola accion y sus consecuencias economicas (retroactivo desde/hasta las fechas que consten,
+   e intereses moratorios o indexacion). NO menciones costas procesales ni agencias en derecho.
+   Usa la estructura: "Determinar si <nucleo de la controversia respecto de la accion principal>, y si, como consecuencia de
+   ello, hay lugar a <la accion principal> con el correspondiente retroactivo e intereses moratorios o indexacion."
+   Tercera persona, formal, mencionando a COLPENSIONES como demandada. Si no puedes determinar la controversia, pon null.
 
 Devuelve UNICAMENTE un JSON con esta forma exacta:
 { "sintesis_hechos": "1) ...\\n\\n2) ...", "pretensiones": "1) ...\\n\\n2) ...", "cuantia": "La cuantia fue estimada...", "normas": "• Ley ...\\n• Decreto ...", "problema_juridico": "Determinar si ..." }`;
@@ -272,7 +273,7 @@ Devuelve UNICAMENTE un objeto JSON valido con esta forma exacta (sin texto adici
     "pretensiones": "sintesis de las PRETENSIONES de la demanda (busca la seccion 'PRETENSIONES' o 'PETICIONES' del traslado). Mismas reglas que sintesis_hechos: ENUMERA '1)', '2)', '3)'... separando cada una con LINEA EN BLANCO (\\n\\n), con EXACTAMENTE el mismo numero de pretensiones que la demanda, tercera persona, tiempo pasado, sin 'mi apoderado'/'mi poderdante' ni primera persona. Solo lo que conste. Devuelve el texto o null.",
     "cuantia": "busca la seccion 'CUANTIA', 'COMPETENCIA Y CUANTIA' o 'ESTIMACION DE LA CUANTIA'. Devuelve EXACTAMENTE la frase 'La cuantia fue estimada por la parte actora, en <VALOR>.' donde <VALOR> es el monto en FORMATO MONEDA con simbolo '$', miles con punto y decimales con coma (ej '$275.353.309,53'), SIN escribir 'COP' ni 'pesos'; si esta en salarios minimos dejalo como '20 SMLMV'. Si no hay valor, null.",
     "normas": "busca la seccion 'FUNDAMENTOS Y RAZONES DE DERECHO', 'NORMAS VIOLADAS' o 'CONCEPTO DE VIOLACION'. Relaciona la normatividad CONSOLIDANDO por norma: cada ley/decreto/codigo/Constitucion aparece UNA SOLA VEZ listando TODOS sus articulos juntos, separados por coma y ordenados. UNA norma por linea, y cada linea DEBE EMPEZAR con una vineta '• ' (ej '• Ley 100 de 1993, articulos 9, 10, 34, 141'). Sin repetir. No inventes. Devuelve el texto o null.",
-    "problema_juridico": "PLANTEAMIENTO DEL PROBLEMA JURIDICO en UN SOLO PARRAFO, como planteamiento de la controversia (NO en forma de pregunta, sin signos '¿ ?'). Basate en las PRETENSIONES y HECHOS. Estructura: 'Determinar si <nucleo de la controversia>, y si, como consecuencia de ello, hay lugar a <pretensiones principales: nulidad/reincorporacion, reconocimiento o reliquidacion de pension, retroactivo, intereses moratorios, indexacion>'. Tercera persona, formal, COLPENSIONES como demandada. Si no se puede determinar, null.",
+    "problema_juridico": "PLANTEAMIENTO DEL PROBLEMA JURIDICO en UN SOLO PARRAFO, como planteamiento de la controversia (NO en forma de pregunta, sin signos '¿ ?'). ATERRIZALO a UNA SOLA ACCION PRINCIPAL: si el demandante YA goza de la pension y solo busca corregir su valor -> RELIQUIDACION; si no la tiene -> RECONOCIMIENTO; si se discute traslado de regimen -> NULIDAD/reincorporacion. Centra en esa accion y sus consecuencias economicas (retroactivo con fechas, intereses moratorios o indexacion). NO menciones costas procesales ni agencias en derecho. Estructura 'Determinar si <controversia de la accion principal>, y si, como consecuencia, hay lugar a <la accion principal> con el retroactivo e intereses moratorios o indexacion'. Tercera persona, COLPENSIONES demandada. Si no se puede determinar, null.",
     "consideraciones": "consideraciones juridicas basadas en las fuentes, o null",
     "evaluacion_riesgo": "evaluacion del riesgo procesal segun lo que consta, o null",
     "recomendacion": "recomendacion de conciliacion fundamentada en las fuentes, o null"
