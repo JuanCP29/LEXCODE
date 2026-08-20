@@ -87,13 +87,16 @@ const NEGRO = "#000000";
 export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
   return new Promise<Buffer>((resolve, reject) => {
     const M = 40;
-    const doc = new PDFDocument({ margin: M, size: "A4" });
+    const doc = new PDFDocument({ margin: M, size: "A4", bufferPages: true });
     const chunks: Buffer[] = [];
     doc.on("data", (c: Buffer) => chunks.push(c));
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
+    // Índice de la página actual (0-based). Se incrementa con cada página nueva
+    // (manual o automática por desbordamiento de texto).
+    let paginaActual = 0;
     // pdfkit reinicia el grosor de línea en cada página nueva → fijarlo siempre
-    doc.on("pageAdded", () => doc.lineWidth(0.4));
+    doc.on("pageAdded", () => { doc.lineWidth(0.4); paginaActual++; });
 
     // Fuente Roboto (más limpia) si está disponible; si no, Helvetica.
     let FONT = "Helvetica", FONT_BOLD = "Helvetica-Bold";
@@ -193,25 +196,12 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
       const contenido = est ? est.texto : ((datos[s.key] ?? "").toString().trim() || "N/A");
       const tituloFull = `${s.n}. ${s.titulo}`;
 
-      // Medir título y contenido ANTES de dibujar, para decidir el salto de página
-      // manteniendo el título junto a su contenido (evita títulos huérfanos con espacio en blanco).
+      // Título de la sección
       doc.font(FONT_BOLD).fontSize(9);
       const hTitS = doc.heightOfString(tituloFull, { width: W - 12 }) + 8;
+      // Evitar título huérfano: si no caben el título + un mínimo de contenido, saltar de página.
+      if (doc.y + hTitS + MIN_CAJA > bottom) { doc.addPage(); doc.y = M; }
 
-      doc.font(FONT).fontSize(9);
-      const opts = { width: W - 12, align: (centrarEst ? "center" : "justify") as "center" | "justify", lineGap: 2.5 };
-      const hCont = doc.heightOfString(contenido, opts);
-      const cajaH = Math.max(hCont + 12, MIN_CAJA);
-
-      // Salto de página ANTES del título si la sección completa (título + caja) no cabe en el
-      // espacio restante pero sí cabe entera en una página nueva; o si ni el título + un mínimo caben.
-      const alturaSeccion = hTitS + cajaH;
-      const cabeEntera = alturaSeccion <= bottom - M;
-      const noCabeAqui = doc.y + alturaSeccion > bottom;
-      const tituloHuerfano = doc.y + hTitS + MIN_CAJA > bottom;
-      if ((noCabeAqui && cabeEntera) || tituloHuerfano) { doc.addPage(); doc.y = M; }
-
-      // Título (centrado, negro, bordeado)
       const ty = doc.y;
       doc.rect(left, ty, W, hTitS).stroke(BORDE);
       doc.fillColor(NEGRO).font(FONT_BOLD).fontSize(9)
@@ -219,14 +209,26 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
       doc.y = ty + hTitS;
       doc.x = left;
 
-      // Caja de respuesta (justificada; centrada para las estandarizadas)
-      doc.font(FONT).fontSize(9);
-      const cy = doc.y;
-      const cajaHFinal = Math.min(cajaH, bottom - cy);
-      doc.rect(left, cy, W, cajaHFinal).stroke(BORDE);
-      doc.fillColor(NEGRO).text(contenido, left + 6, cy + 6, opts);
+      // Caja de respuesta — el contenido largo se divide entre páginas y el borde
+      // se dibuja por segmentos en cada página que ocupa.
+      const opts = { width: W - 12, align: (centrarEst ? "center" : "justify") as "center" | "justify", lineGap: 2.5 };
+      doc.font(FONT).fontSize(9).fillColor(NEGRO);
+      const pIni = paginaActual;
+      const yIni = doc.y;
+      doc.text(contenido, left + 6, yIni + 6, opts);
+      const pFin = paginaActual;
+      const yFin = doc.y + 6; // padding inferior
+
+      for (let p = pIni; p <= pFin; p++) {
+        doc.switchToPage(p);
+        const top = p === pIni ? yIni : M - 6;
+        const bot = p === pFin ? Math.max(yFin, top + MIN_CAJA) : bottom;
+        doc.rect(left, top, W, bot - top).stroke(BORDE);
+      }
+      // Volver a la última página y dejar el cursor contiguo para la siguiente sección.
+      doc.switchToPage(pFin);
       doc.x = left;
-      doc.y = Math.max(doc.y, cy + cajaHFinal);
+      doc.y = pFin === pIni ? Math.max(yFin, yIni + MIN_CAJA) : Math.max(yFin, (M - 6) + MIN_CAJA);
       // sin moveDown: las secciones quedan contiguas
     }
 
