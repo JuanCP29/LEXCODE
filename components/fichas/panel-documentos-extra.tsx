@@ -41,6 +41,7 @@ type CamposExtraidos = {
 };
 
 interface PanelDocumentosExtraProps {
+  despacho?: string | null;
   onCamposExtraidos: (campos: CamposExtraidos) => void;
   onSugerencias?: (s: Sugerencias | null) => void;
 }
@@ -67,7 +68,7 @@ function valorLegible(val: unknown): string {
   return String(val);
 }
 
-export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias }: PanelDocumentosExtraProps) {
+export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despacho }: PanelDocumentosExtraProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [archivos, setArchivos] = useState<File[]>([]);
   const [estado, setEstado] = useState<Estado>("idle");
@@ -127,7 +128,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias }: Panel
       const res = await fetch("/api/analizar-documentos-extra", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ paths }),
+        body: JSON.stringify({ paths, despacho: despacho ?? null }),
       });
 
       const json = await res.json().catch(() => ({ error: `Error del servidor (HTTP ${res.status})` }));

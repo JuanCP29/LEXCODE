@@ -46,7 +46,8 @@ type SeccionesTraslado = {
 
 async function analizarTrasladoVision(
   anthropic: Anthropic,
-  pdfs: { nombre: string; buffer: Buffer }[]
+  pdfs: { nombre: string; buffer: Buffer }[],
+  despacho?: string | null
 ): Promise<SeccionesTraslado> {
   const vacio: SeccionesTraslado = { sintesis_hechos: null, pretensiones: null, cuantia: null, normas: null, problema_juridico: null };
   if (pdfs.length === 0) return vacio;
@@ -55,7 +56,16 @@ async function analizarTrasladoVision(
   const recorte = await recortarPaginasBase64(doc.buffer, 30);
   if (!recorte) return vacio;
 
+  // La jurisdicción se determina por el despacho (autoritativo cuando se conoce).
+  const esAdministrativo = /administrativ/i.test(despacho ?? "");
+  const jurisdiccionDirectiva = despacho
+    ? (esAdministrativo
+        ? `JURISDICCION DEL CASO: CONTENCIOSO ADMINISTRATIVA (el despacho es "${despacho}", un Juzgado/Tribunal Administrativo). Por tanto, en el campo "problema_juridico" DEBES OBLIGATORIAMENTE iniciar por la procedencia de la declaratoria de NULIDAD del acto administrativo o resolucion demandada, siguiendo la estructura del caso CONTENCIOSO ADMINISTRATIVA del punto E, tomando el/los numero(s) de resolucion y fecha(s) que aparezcan en la demanda.`
+        : `JURISDICCION DEL CASO: ORDINARIA LABORAL (el despacho es "${despacho}"). En "problema_juridico" usa la estructura del caso ORDINARIA LABORAL del punto E.`)
+    : `JURISDICCION DEL CASO: determinala segun el documento (ver punto E).`;
+
   const prompt = `Este documento es el TRASLADO de una demanda laboral/pensional (puede estar escaneado, en imagenes).
+${jurisdiccionDirectiva}
 Debes localizar y resumir CUATRO secciones de la demanda:
 
 A) HECHOS -> campo "sintesis_hechos". Seccion titulada "HECHOS" (o "HECHOS DE LA DEMANDA", "III. HECHOS").
@@ -85,16 +95,25 @@ D) NORMAS -> campo "normas". Busca la seccion titulada "FUNDAMENTOS Y RAZONES DE
 
 E) PROBLEMA JURIDICO -> campo "problema_juridico". Redacta el PLANTEAMIENTO DEL PROBLEMA JURIDICO en UN SOLO PARRAFO,
    como PLANTEAMIENTO DE LA CONTROVERSIA (NO en forma de pregunta: no uses signos "¿ ?" ni termines con "?").
-   ATERRIZA el planteamiento a UNA SOLA ACCION PRINCIPAL, la que realmente persigue la demanda. Identificala de los hechos y
-   pretensiones:
-     - Si el demandante YA goza de la pension y lo que busca es corregir su valor -> la accion es la RELIQUIDACION de la pension.
-     - Si el demandante NO tiene la pension y la reclama -> la accion es el RECONOCIMIENTO de la pension.
-     - Si se discute un traslado de regimen -> la accion es la NULIDAD/INEFICACIA del traslado y la reincorporacion.
-   Centra el planteamiento en ESA sola accion y sus consecuencias economicas (retroactivo desde/hasta las fechas que consten,
-   e intereses moratorios o indexacion). NO menciones costas procesales ni agencias en derecho.
-   Usa la estructura: "Determinar si <nucleo de la controversia respecto de la accion principal>, y si, como consecuencia de
-   ello, hay lugar a <la accion principal> con el correspondiente retroactivo e intereses moratorios o indexacion."
-   Tercera persona, formal, mencionando a COLPENSIONES como demandada. Si no puedes determinar la controversia, pon null.
+
+   Usa la JURISDICCION indicada arriba (o, si no se indico, deducela: CONTENCIOSO ADMINISTRATIVA cuando el despacho es un
+   Juzgado/Tribunal Administrativo o la demanda invoca el medio de control de "nulidad y restablecimiento del derecho";
+   ORDINARIA LABORAL cuando es un Juzgado Laboral del Circuito o Municipal).
+
+   REDACCION SEGUN LA JURISDICCION:
+   * CONTENCIOSO ADMINISTRATIVA: el planteamiento DEBE INICIAR por determinar la PROCEDENCIA DE LA DECLARATORIA DE NULIDAD del
+     acto administrativo o resolucion demandada. Usa la estructura: "Determinar si se debe declarar la nulidad [total o parcial]
+     de la Resolucion No <numero> del <fecha> mediante la cual COLPENSIONES <reconocio/nego/liquido ...>, [y del acto
+     administrativo ficto o presunto por la no contestacion del recurso, cuando aplique,] y si, como consecuencia de ello,
+     hay lugar a <la accion principal> con el correspondiente retroactivo e intereses moratorios o indexacion." Usa el o los
+     numeros de resolucion y las fechas que consten en la demanda.
+   * ORDINARIA LABORAL: usa la estructura "Determinar si <nucleo de la controversia respecto de la accion principal>, y si,
+     como consecuencia de ello, hay lugar a <la accion principal> con el correspondiente retroactivo e intereses moratorios o
+     indexacion."
+
+   En AMBOS casos ATERRIZA a UNA SOLA ACCION PRINCIPAL (RELIQUIDACION si ya goza de pension; RECONOCIMIENTO si no la tiene;
+   NULIDAD/reincorporacion si se discute traslado de regimen). NO menciones costas procesales ni agencias en derecho.
+   Tercera persona, formal, COLPENSIONES como demandada. Si no puedes determinar la controversia, pon null.
 
 Devuelve UNICAMENTE un JSON con esta forma exacta:
 { "sintesis_hechos": "1) ...\\n\\n2) ...", "pretensiones": "1) ...\\n\\n2) ...", "cuantia": "La cuantia fue estimada...", "normas": "• Ley ...\\n• Decreto ...", "problema_juridico": "Determinar si ..." }`;
@@ -163,9 +182,12 @@ export async function POST(request: NextRequest) {
     const textos: string[] = [];
     const pdfs: { nombre: string; buffer: Buffer }[] = [];
     let rutasTmp: string[] = [];
+    let despachoHint: string | null = null;
 
     if (contentType.includes("application/json")) {
-      const { paths } = await request.json() as { paths: { path: string; nombre: string }[] };
+      const body = await request.json() as { paths: { path: string; nombre: string }[]; despacho?: string | null };
+      const { paths } = body;
+      despachoHint = body.despacho?.trim() || null;
       if (!paths || paths.length === 0) {
         return NextResponse.json({ error: "No se recibieron archivos" }, { status: 400 });
       }
@@ -227,7 +249,7 @@ export async function POST(request: NextRequest) {
 
     // ── Documento ESCANEADO (sin capa de texto): leer HECHOS y PRETENSIONES con visión ──
     if (caracteresExtraidos < 200) {
-      const vision = await analizarTrasladoVision(anthropic, pdfs);
+      const vision = await analizarTrasladoVision(anthropic, pdfs, despachoHint);
       const encontrados = [vision.sintesis_hechos, vision.pretensiones, vision.cuantia, vision.normas, vision.problema_juridico].filter(Boolean);
       return NextResponse.json({
         campos: {},
@@ -280,7 +302,7 @@ Devuelve UNICAMENTE un objeto JSON valido con esta forma exacta (sin texto adici
     "pretensiones": "sintesis de las PRETENSIONES de la demanda (busca la seccion 'PRETENSIONES' o 'PETICIONES' del traslado). Detecta ordinales en numero o en palabra e INCLUYE TODAS. ENUMERA '1)', '2)', '3)'... separando cada una con LINEA EN BLANCO (\\n\\n), con EXACTAMENTE el mismo numero de pretensiones que la demanda, tercera persona, sin 'mi apoderado'/'mi poderdante' ni primera persona. TIEMPO PRESENTE (subjuntivo de peticion): 'Que se declare', 'Que se condene', 'Que se ordene', 'Que se reconozca', 'Que se pague'; NO uses 'Que se declarara/condenara/ordenara'. Solo lo que conste. Devuelve el texto o null.",
     "cuantia": "busca la seccion 'CUANTIA', 'COMPETENCIA Y CUANTIA' o 'ESTIMACION DE LA CUANTIA'. Devuelve EXACTAMENTE la frase 'La cuantia fue estimada por la parte actora, en <VALOR>.' donde <VALOR> es el monto en FORMATO MONEDA con simbolo '$', miles con punto y decimales con coma (ej '$275.353.309,53'), SIN escribir 'COP' ni 'pesos'; si esta en salarios minimos dejalo como '20 SMLMV'. Si no hay valor, null.",
     "normas": "busca la seccion 'FUNDAMENTOS Y RAZONES DE DERECHO', 'NORMAS VIOLADAS' o 'CONCEPTO DE VIOLACION'. Relaciona la normatividad CONSOLIDANDO por norma: cada ley/decreto/codigo/Constitucion aparece UNA SOLA VEZ listando TODOS sus articulos juntos, separados por coma y ordenados. UNA norma por linea, y cada linea DEBE EMPEZAR con una vineta '• ' (ej '• Ley 100 de 1993, articulos 9, 10, 34, 141'). Sin repetir. No inventes. Devuelve el texto o null.",
-    "problema_juridico": "PLANTEAMIENTO DEL PROBLEMA JURIDICO en UN SOLO PARRAFO, como planteamiento de la controversia (NO en forma de pregunta, sin signos '¿ ?'). ATERRIZALO a UNA SOLA ACCION PRINCIPAL: si el demandante YA goza de la pension y solo busca corregir su valor -> RELIQUIDACION; si no la tiene -> RECONOCIMIENTO; si se discute traslado de regimen -> NULIDAD/reincorporacion. Centra en esa accion y sus consecuencias economicas (retroactivo con fechas, intereses moratorios o indexacion). NO menciones costas procesales ni agencias en derecho. Estructura 'Determinar si <controversia de la accion principal>, y si, como consecuencia, hay lugar a <la accion principal> con el retroactivo e intereses moratorios o indexacion'. Tercera persona, COLPENSIONES demandada. Si no se puede determinar, null.",
+    "problema_juridico": "PLANTEAMIENTO DEL PROBLEMA JURIDICO en UN SOLO PARRAFO, como planteamiento de la controversia (NO en forma de pregunta, sin signos '¿ ?'). SEGUN LA JURISDICCION: si es CONTENCIOSO ADMINISTRATIVA (Juzgado o Tribunal Administrativo, o medio de control de nulidad y restablecimiento del derecho), INICIA por la procedencia de la nulidad: 'Determinar si se debe declarar la nulidad [total/parcial] de la Resolucion No <numero> del <fecha> mediante la cual COLPENSIONES <reconocio/nego...>, y si, como consecuencia, hay lugar a <accion principal> con retroactivo e intereses o indexacion'; si es ORDINARIA LABORAL, usa 'Determinar si <controversia>, y si, como consecuencia, hay lugar a <accion principal> con retroactivo e intereses o indexacion'. ATERRIZA a UNA SOLA ACCION (reliquidacion si ya goza de pension; reconocimiento si no; nulidad/reincorporacion si traslado). NO menciones costas procesales. Tercera persona, COLPENSIONES demandada. Si no se puede determinar, null.",
     "consideraciones": "consideraciones juridicas basadas en las fuentes, o null",
     "evaluacion_riesgo": "evaluacion del riesgo procesal segun lo que consta, o null",
     "recomendacion": "recomendacion de conciliacion fundamentada en las fuentes, o null"

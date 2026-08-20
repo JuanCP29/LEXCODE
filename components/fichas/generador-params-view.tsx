@@ -56,7 +56,7 @@ export function GeneradorParamsView({ casoId, casoData }: GeneradorParamsViewPro
       />
 
       {/* Panel lateral: prerrellenar desde PDFs */}
-      <PanelDocumentosExtra onCamposExtraidos={handleCampos} onSugerencias={handleSugerencias} />
+      <PanelDocumentosExtra onCamposExtraidos={handleCampos} onSugerencias={handleSugerencias} despacho={casoData.despacho} />
     </div>
   );
 }
