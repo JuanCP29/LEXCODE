@@ -176,6 +176,11 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
   const [pretensionesTexto, setPretensionesTexto] = useState("");
   const [cuantiaTexto, setCuantiaTexto] = useState("");
   const [normasTexto, setNormasTexto] = useState("");
+  const [problemaTexto, setProblemaTexto] = useState("");
+  const [jurisprudenciaTexto, setJurisprudenciaTexto] = useState("");
+  const [consideracionesTexto, setConsideracionesTexto] = useState("");
+  const [politicasTexto, setPoliticasTexto] = useState("");
+  const [riesgoTexto, setRiesgoTexto] = useState("");
   const prevPrellenados = useRef<Partial<ParametrosFormData> | undefined>(undefined);
 
   // Encabezado del proceso (editable) — arranca con los datos del CSV/caso
@@ -190,7 +195,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
     setEncabezado((prev) => ({ ...prev, [k]: v }));
 
   // Asistente por pasos
-  const PASOS = ["Información del proceso", "Pretensión y cuantía", "Tipo de proceso"];
+  const PASOS = ["Información del proceso", "Contenido de la demanda", "Análisis jurídico", "Conceptos y cierre"];
   const [paso, setPaso] = useState(1);
   const totalPasos = PASOS.length;
 
@@ -229,7 +234,6 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
   });
 
   const conciliable      = watch("conciliable");
-  const hayFallo         = watch("hay_fallo");
 
   async function handleGenerarPoder() {
     setGenerandoPoder(true);
@@ -377,6 +381,11 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
             sec_2_pretensiones: pretensionesTexto.trim() || null,
             sec_3_cuantia: cuantiaTexto.trim() || null,
             sec_4_normas: normasTexto.trim() || null,
+            sec_8_problema: problemaTexto.trim() || null,
+            sec_11_jurisprudencia: jurisprudenciaTexto.trim() || null,
+            sec_16_consideraciones: consideracionesTexto.trim() || null,
+            sec_15_politicas: politicasTexto.trim() || null,
+            sec_17_riesgo: riesgoTexto.trim() || null,
           },
         }),
       });
@@ -859,135 +868,73 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
         </p>
       </Bloque>
 
-      {/* ── Bloque 4: Pretensiones adicionales ── */}
-      <Bloque numero={2} titulo="Pretensiones adicionales">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <Campo label="¿Intereses moratorios?" required>
-            <Controller
-              name="pretende_intereses"
-              control={control}
-              render={({ field }) => (
-                <Toggle value={field.value} onChange={field.onChange} />
-              )}
-            />
-            <p className="text-xs text-muted-foreground">Afecta secciones 2 y 4</p>
-          </Campo>
+      </>)}
 
-          <Campo label="¿Indexación?" required>
-            <Controller
-              name="pretende_indexacion"
-              control={control}
-              render={({ field }) => (
-                <Toggle value={field.value} onChange={field.onChange} />
-              )}
-            />
-            <p className="text-xs text-muted-foreground">Afecta secciones 2 y 4</p>
-          </Campo>
-        </div>
+      {/* ── Paso 3: Análisis jurídico ── */}
+      {paso === 3 && (<>
+      <Bloque icono={<FileText className="w-4 h-4" />} titulo="Problema jurídico">
+        <Campo label="Problema jurídico (Sección 7 del documento)">
+          <textarea
+            value={problemaTexto}
+            onChange={(e) => setProblemaTexto(e.target.value)}
+            rows={5}
+            placeholder="Plantea el problema jurídico central del caso. Si lo dejas vacío, se generará automáticamente al crear la ficha."
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-ring resize-y min-h-[100px]"
+          />
+        </Campo>
+      </Bloque>
+
+      <Bloque icono={<FileText className="w-4 h-4" />} titulo="Jurisprudencia">
+        <Campo label="Jurisprudencia (Sección 9 del documento)">
+          <textarea
+            value={jurisprudenciaTexto}
+            onChange={(e) => setJurisprudenciaTexto(e.target.value)}
+            rows={7}
+            placeholder="Cita la jurisprudencia aplicable (corporación, número de sentencia/radicado y ratio decidendi). Si lo dejas vacío, se generará automáticamente."
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-ring resize-y min-h-[130px]"
+          />
+        </Campo>
+      </Bloque>
+
+      <Bloque icono={<FileText className="w-4 h-4" />} titulo="Consideraciones">
+        <Campo label="Consideraciones (Sección 11 del documento)">
+          <textarea
+            value={consideracionesTexto}
+            onChange={(e) => setConsideracionesTexto(e.target.value)}
+            rows={8}
+            placeholder="Consideraciones jurídicas de fondo sobre la procedencia de la conciliación. Si lo dejas vacío, se generará automáticamente."
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-ring resize-y min-h-[140px]"
+          />
+        </Campo>
       </Bloque>
       </>)}
 
-      {/* ── Paso 3: Tipo de proceso ── */}
-      {paso === 3 && (
-      <Bloque numero={3} titulo="Tipo de proceso">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Campo label="Jurisdicción" required error={errors.jurisdiccion?.message}>
-            <Controller
-              name="jurisdiccion"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  value={field.value}
-                  onChange={field.onChange}
-                  options={[
-                    { value: "ordinaria",    label: "Ordinaria Laboral" },
-                    { value: "contencioso",  label: "Contencioso Administrativa" },
-                  ]}
-                />
-              )}
-            />
-          </Campo>
-
-          <Campo label="Tipo de conciliación" required>
-            <Controller
-              name="tipo_conciliacion"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  value={field.value}
-                  onChange={field.onChange}
-                  options={[
-                    { value: "parametrica",  label: "Paramétrica" },
-                    { value: "condicional",  label: "Condicional" },
-                  ]}
-                />
-              )}
-            />
-          </Campo>
-        </div>
-
-        <Campo label="¿Hay fallo de primera instancia?">
-          <Controller
-            name="hay_fallo"
-            control={control}
-            render={({ field }) => (
-              <Toggle value={field.value} onChange={field.onChange} />
-            )}
+      {/* ── Paso 4: Conceptos y cierre ── */}
+      {paso === 4 && (<>
+      <Bloque icono={<FileText className="w-4 h-4" />} titulo="Políticas / llamamientos">
+        <Campo label="Políticas / llamamientos (Sección 10 del documento)">
+          <textarea
+            value={politicasTexto}
+            onChange={(e) => setPoliticasTexto(e.target.value)}
+            rows={6}
+            placeholder="Políticas institucionales y llamamientos aplicables. Si lo dejas vacío, se usará el texto por defecto."
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-ring resize-y min-h-[120px]"
           />
         </Campo>
-
-        {hayFallo && (
-          <Campo label="Síntesis del fallo" required error={errors.sintesis_fallo?.message}>
-            <Controller
-              name="sintesis_fallo"
-              control={control}
-              render={({ field }) => (
-                <textarea
-                  {...field}
-                  value={field.value ?? ""}
-                  rows={4}
-                  placeholder="Resumen del fallo de primera instancia..."
-                  className={cn(
-                    "w-full rounded-md border px-3 py-2 text-sm resize-y focus:outline-none focus:ring-1 focus:ring-ring",
-                    errors.sintesis_fallo ? "border-destructive" : "border-input"
-                  )}
-                />
-              )}
-            />
-            {errors.sintesis_fallo && (
-              <p className="text-xs text-destructive">{errors.sintesis_fallo.message}</p>
-            )}
-          </Campo>
-        )}
-
-        {!hayFallo && (
-          <p className="text-xs text-muted-foreground bg-muted/40 px-3 py-2 rounded-md">
-            Sin fallo: las secciones 5 y 6 usarán texto por defecto "proceso sin fallo".
-          </p>
-        )}
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Campo label="Expediente pensional en Bizagi">
-            <Controller
-              name="expediente_pensional_aplica"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  value={field.value ?? ""}
-                  onChange={field.onChange}
-                  placeholder="Selecciona..."
-                  options={[
-                    { value: "SI",        label: "SÍ — Aparece en Bizagi" },
-                    { value: "NO",        label: "NO — No aparece en Bizagi" },
-                    { value: "NO APLICA", label: "NO APLICA" },
-                  ]}
-                />
-              )}
-            />
-          </Campo>
-        </div>
       </Bloque>
-      )}
+
+      <Bloque icono={<FileText className="w-4 h-4" />} titulo="Evaluación de riesgo">
+        <Campo label="Evaluación de riesgo (Sección 12 del documento)">
+          <textarea
+            value={riesgoTexto}
+            onChange={(e) => setRiesgoTexto(e.target.value)}
+            rows={6}
+            placeholder="Nivel de riesgo procesal (alto/medio/bajo) y su justificación. Si lo dejas vacío, se usará el texto por defecto según el caso."
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-ring resize-y min-h-[120px]"
+          />
+        </Campo>
+      </Bloque>
+      </>)}
 
       {error && (
         <div className="rounded-md bg-destructive/10 border border-destructive/30 px-4 py-3 text-sm text-destructive">
