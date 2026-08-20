@@ -364,8 +364,9 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
   // Sección 12 (Evaluación de riesgo): traer la calificación histórica (moda por criterio) según
   // la pretensión + clase del caso, y prellenar los selectores vacíos con la sugerencia.
   useEffect(() => {
-    const p = casoData.pretension ?? "";
-    if (!p) return;
+    // Muchos casos llegan con pretension null (CSV "Por establecer"); el formulario asume
+    // "vejez" por defecto, así que la sugerencia de riesgo usa esa misma pretensión efectiva.
+    const p = casoData.pretension ?? "vejez";
     const q = new URLSearchParams({ pretension: p, clase: casoData.clase_pretension ?? "" });
     fetch(`/api/riesgo-historico?${q.toString()}`)
       .then((r) => r.json())
