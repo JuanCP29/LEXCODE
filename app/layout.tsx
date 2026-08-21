@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Source_Sans_3 } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 
-const inter = Inter({ subsets: ["latin"] });
+// Humanista cercana a Amazon Ember: muy legible en jornadas largas.
+const sans = Source_Sans_3({ subsets: ["latin"], weight: ["300", "400", "500", "600", "700"] });
 
 export const metadata: Metadata = {
   title: "LEGIUX — Collegia Abogados",
@@ -17,7 +18,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" suppressHydrationWarning>
-      <body className={`${inter.className} antialiased`}>
+      <body className={`${sans.className} antialiased`}>
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
