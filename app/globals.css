@@ -45,13 +45,13 @@
     --ring:                #0f6fc5;
     --radius:              0.5rem;
 
-    /* Sidebar — chrome blanco, hover azul tenue */
-    --sidebar:             #ffffff;
-    --sidebar-foreground:  #33424f;
-    --sidebar-border:      #e1e7ee;
-    --sidebar-accent:      #eaf1fa;
-    --sidebar-accent-foreground: #0b4e8f;
-    --sidebar-muted:       #8a9aa8;
+    /* Sidebar — shell navy (amazon.jobs), texto claro, activo azul */
+    --sidebar:             #1f2a3b;
+    --sidebar-foreground:  #c6d1dd;
+    --sidebar-border:      #2b384b;
+    --sidebar-accent:      #2a3a4f;
+    --sidebar-accent-foreground: #ffffff;
+    --sidebar-muted:       #8494a6;
 
     /* Topbar */
     --topbar:              #ffffff;

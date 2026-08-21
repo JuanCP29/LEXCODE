@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, BookMarked } from "lucide-react";
 import { GeneradorParamsView } from "@/components/fichas/generador-params-view";
 
 export default async function GeneradorParamsPage({
@@ -34,8 +34,11 @@ export default async function GeneradorParamsPage({
       </div>
 
       <div>
-        <h1 className="text-xl font-bold text-foreground">Ficha conciliación</h1>
-        <p className="text-muted-foreground mt-0.5">
+        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+          Ficha de conciliación
+          <BookMarked className="w-4 h-4 text-muted-foreground/60" />
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1 uppercase tracking-wide">
           {caso.nombre_demandante}
           {caso.cedula_demandante && (
             <span className="text-muted-foreground/60"> · C.C. {caso.cedula_demandante}</span>

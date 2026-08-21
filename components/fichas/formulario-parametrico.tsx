@@ -265,8 +265,14 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
   const setEnc = (k: keyof typeof encabezado, v: string) =>
     setEncabezado((prev) => ({ ...prev, [k]: v }));
 
-  // Asistente por pasos
-  const PASOS = ["Información del proceso", "Contenido de la demanda", "Análisis jurídico", "Conceptos y cierre", "Revisar y descargar"];
+  // Asistente por pasos (título + subtítulo)
+  const PASOS = [
+    { t: "Información del proceso",   s: "Datos generales" },
+    { t: "Contenido de la demanda",  s: "Hechos y pretensiones" },
+    { t: "Análisis jurídico",        s: "Tesis y estrategia" },
+    { t: "Conceptos y cierre",       s: "Conclusiones" },
+    { t: "Revisar y descargar",      s: "Vista previa" },
+  ];
   const [paso, setPaso] = useState(1);
   const totalPasos = PASOS.length;
 
@@ -624,7 +630,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
 
       {/* ── Asistente por pasos ── */}
       <div className="flex items-center border-b border-border pb-5">
-        {PASOS.map((nombre, i) => {
+        {PASOS.map((p, i) => {
           const n = i + 1;
           const activo = n === paso;
           const hecho = n < paso;
@@ -633,7 +639,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
               <button
                 type="button"
                 onClick={() => setPaso(n)}
-                className="flex items-center gap-2 group shrink-0"
+                className="flex items-center gap-2.5 group shrink-0 text-left"
               >
                 <span className={cn(
                   "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-all",
@@ -645,11 +651,19 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
                 )}>
                   {hecho ? <Check className="w-3.5 h-3.5" /> : n}
                 </span>
-                <span className={cn(
-                  "hidden sm:inline text-sm transition-colors",
-                  activo ? "text-foreground font-semibold" : hecho ? "text-foreground/70" : "text-muted-foreground group-hover:text-foreground"
-                )}>
-                  {nombre}
+                <span className="hidden md:flex flex-col leading-tight">
+                  <span className={cn(
+                    "text-sm transition-colors",
+                    activo ? "text-foreground font-semibold" : hecho ? "text-foreground/70" : "text-muted-foreground group-hover:text-foreground"
+                  )}>
+                    {p.t}
+                  </span>
+                  <span className={cn(
+                    "text-[11px] transition-colors",
+                    activo ? "text-muted-foreground" : "text-muted-foreground/60"
+                  )}>
+                    {p.s}
+                  </span>
                 </span>
               </button>
               {n < totalPasos && (
@@ -1275,25 +1289,35 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
         </div>
       )}
 
-      {/* ── Navegación del asistente ── */}
-      <div className="flex items-center justify-between gap-3 pt-2">
-        <Button
-          type="button"
-          variant="outline"
-          disabled={paso === 1}
-          onClick={() => setPaso((p) => Math.max(1, p - 1))}
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" /> Atrás
-        </Button>
+      {/* Espaciador para que el contenido no quede tapado por la barra fija */}
+      <div className="h-20" />
 
-        {paso < totalPasos && (
-          <Button
-            type="button"
-            onClick={() => setPaso((p) => Math.min(totalPasos, p + 1))}
-          >
-            {paso === totalPasos - 1 ? "Revisar y descargar" : "Siguiente"} <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
-        )}
+      {/* ── Barra de acción inferior fija ── */}
+      <div className="fixed bottom-0 left-0 right-0 md:left-[220px] z-30 border-t border-border bg-card/95 backdrop-blur-sm">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+          <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[11px] font-bold text-foreground">{paso}</span>
+            <span>Paso {paso} de {totalPasos} · <span className="text-foreground font-medium">{PASOS[paso - 1].t}</span></span>
+          </div>
+          <div className="flex items-center gap-2.5 ml-auto">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={paso === 1}
+              onClick={() => setPaso((p) => Math.max(1, p - 1))}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" /> Anterior
+            </Button>
+            {paso < totalPasos && (
+              <Button
+                type="button"
+                onClick={() => setPaso((p) => Math.min(totalPasos, p + 1))}
+              >
+                {paso === totalPasos - 1 ? "Revisar y descargar" : "Siguiente"} <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            )}
+          </div>
+        </div>
       </div>
     </form>
   );

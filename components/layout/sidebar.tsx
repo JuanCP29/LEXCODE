@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { CollegiaLogo } from "@/components/ui/collegia-logo";
 import {
   LayoutDashboard,
   FolderOpen,
@@ -112,9 +111,17 @@ function SidebarContent({ onClose }: SidebarContentProps) {
         </Link>
       </nav>
 
-      {/* Pie — logo Collegia original */}
-      <div className="px-4 py-3 border-t border-sidebar-border shrink-0 flex items-center justify-center">
-        <CollegiaLogo size="sm" />
+      {/* Pie — bloque de cuenta */}
+      <div className="px-3 py-3 border-t border-sidebar-border shrink-0">
+        <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg">
+          <span className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold shrink-0 select-none">
+            CO
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-sidebar-accent-foreground truncate leading-tight">Collegia Abogados</p>
+            <p className="text-[11px] text-[var(--sidebar-muted)] leading-tight">Administrador</p>
+          </div>
+        </div>
       </div>
     </div>
   );
