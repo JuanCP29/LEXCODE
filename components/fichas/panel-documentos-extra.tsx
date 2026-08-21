@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback } from "react";
-import { Upload, X, FileText, Loader2, CheckCircle2, AlertCircle, Copy, Check, Sparkles } from "lucide-react";
+import { Upload, X, FileText, Loader2, CheckCircle2, AlertCircle, Copy, Check, Sparkles, RefreshCw, Download, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { subirArchivoStorage } from "@/lib/supabase/subir-storage";
 
@@ -47,10 +47,26 @@ type CamposExtraidos = {
   pretende_indexacion?: boolean | null;
 };
 
+type DocumentoPrevio = {
+  id: string;
+  tipo: string | null;
+  nombre: string;
+  created_at: string;
+  url: string | null;
+};
+
 interface PanelDocumentosExtraProps {
   despacho?: string | null;
+  casoId?: string;
+  documentos?: DocumentoPrevio[];
   onCamposExtraidos: (campos: CamposExtraidos) => void;
   onSugerencias?: (s: Sugerencias | null) => void;
+}
+
+function fmtFechaDoc(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString("es-CO", { day: "2-digit", month: "2-digit", year: "numeric" });
+  } catch { return ""; }
 }
 
 type Estado = "idle" | "analizando" | "listo" | "error";
@@ -75,7 +91,7 @@ function valorLegible(val: unknown): string {
   return String(val);
 }
 
-export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despacho }: PanelDocumentosExtraProps) {
+export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despacho, casoId, documentos }: PanelDocumentosExtraProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [archivos, setArchivos] = useState<File[]>([]);
   const [estado, setEstado] = useState<Estado>("idle");
@@ -169,12 +185,27 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
 
   return (
     <div className="hidden lg:block">
-      <div className="sticky top-20 space-y-3">
-        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest px-0.5">
-          Prerrellenar desde PDFs
-        </p>
+      <div className="sticky top-20 space-y-4">
 
         <div className="bg-card border border-border rounded-xl overflow-hidden card-shadow">
+
+          {/* Encabezado del panel con estado */}
+          <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border">
+            <h3 className="text-sm font-semibold text-foreground">Ingesta y procesamiento</h3>
+            {estado === "listo" ? (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-md bg-green-50 text-green-700 border border-green-200 dark:bg-green-950/30 dark:text-green-400 dark:border-green-900">
+                <CheckCircle2 className="w-3 h-3" /> Procesado
+              </span>
+            ) : estado === "analizando" ? (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-md bg-primary/10 text-primary border border-primary/20">
+                <Loader2 className="w-3 h-3 animate-spin" /> Procesando
+              </span>
+            ) : (
+              <span className="text-[10px] font-semibold px-2 py-1 rounded-md bg-muted text-muted-foreground border border-border">
+                Pendiente
+              </span>
+            )}
+          </div>
 
           {/* Zona drop */}
           <div
@@ -201,13 +232,13 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
               className="sr-only"
               onChange={(e) => e.target.files && agregarArchivos(e.target.files)}
             />
-            <div className="flex flex-col items-center gap-2 py-6 px-4 text-center pointer-events-none">
+            <div className="flex flex-col items-center gap-2 py-7 px-4 text-center pointer-events-none">
               <Upload className="w-7 h-7 text-muted-foreground/50" />
               <p className="text-sm font-medium text-foreground">
-                Arrastra o haz clic
+                Arrastra y suelta o haz clic para cargar archivos
               </p>
               <p className="text-xs text-muted-foreground">
-                Traslado, Sentencia, AOE y/o SUB
+                Traslado, Sentencia, AOE y/o SUB · PDF · hasta 3 archivos
               </p>
             </div>
           </div>
@@ -270,11 +301,14 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
                   </div>
                 ))}
               </div>
+              <p className="text-[11px] text-muted-foreground leading-snug">
+                Los archivos se analizan automáticamente para completar la información del proceso.
+              </p>
               <button
                 onClick={analizar}
-                className="text-[11px] text-primary hover:underline mt-1"
+                className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-primary hover:underline mt-1"
               >
-                Re-analizar
+                <RefreshCw className="w-3 h-3" /> Volver a procesar
               </button>
             </div>
           )}
@@ -361,6 +395,50 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
           <p className="px-3 pb-3 text-[10px] text-muted-foreground/60 leading-snug">
             Solo visible en escritorio. Los datos se revisan antes de guardar.
           </p>
+        </div>
+
+        {/* ── Documentos previos del caso ── */}
+        <div className="bg-card border border-border rounded-xl overflow-hidden card-shadow">
+          <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border">
+            <h3 className="text-sm font-semibold text-foreground">Documentos previos</h3>
+            {documentos && documentos.length > 0 && (
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-muted text-muted-foreground border border-border">
+                {documentos.length}
+              </span>
+            )}
+          </div>
+          <div className="p-3 space-y-1">
+            {documentos && documentos.length > 0 ? (
+              documentos.map((d) => (
+                <div key={d.id} className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted/50 transition-colors">
+                  <FileText className="w-4 h-4 text-primary shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium text-foreground truncate">{d.nombre}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {d.tipo ? `${d.tipo} · ` : ""}{fmtFechaDoc(d.created_at)}
+                    </p>
+                  </div>
+                  {d.url && (
+                    <a href={d.url} target="_blank" rel="noopener noreferrer" title="Descargar"
+                       className="text-muted-foreground hover:text-primary transition-colors shrink-0">
+                      <Download className="w-4 h-4" />
+                    </a>
+                  )}
+                </div>
+              ))
+            ) : (
+              <p className="px-2.5 py-4 text-center text-xs text-muted-foreground">
+                Sin documentos cargados en el caso.
+              </p>
+            )}
+          </div>
+          {casoId && (
+            <div className="px-4 py-2.5 border-t border-border">
+              <a href={`/casos/${casoId}`} className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline">
+                Ver todos los documentos <ChevronRight className="w-3 h-3" />
+              </a>
+            </div>
+          )}
         </div>
       </div>
     </div>

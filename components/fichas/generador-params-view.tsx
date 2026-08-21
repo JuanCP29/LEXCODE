@@ -6,8 +6,17 @@ import { PanelDocumentosExtra } from "@/components/fichas/panel-documentos-extra
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type CamposExtraidos = Record<string, any>;
 
+export type DocumentoPrevio = {
+  id: string;
+  tipo: string | null;
+  nombre: string;
+  created_at: string;
+  url: string | null;
+};
+
 interface GeneradorParamsViewProps {
   casoId: string;
+  documentos?: DocumentoPrevio[];
   casoData: {
     pretension: string | null;
     clase_pretension: string | null;
@@ -20,7 +29,7 @@ interface GeneradorParamsViewProps {
   };
 }
 
-export function GeneradorParamsView({ casoId, casoData }: GeneradorParamsViewProps) {
+export function GeneradorParamsView({ casoId, casoData, documentos }: GeneradorParamsViewProps) {
   const [valoresPrellenados, setValoresPrellenados] = useState<CamposExtraidos | null>(null);
   const [sintesisHechos, setSintesisHechos] = useState<string | null>(null);
   const [pretensiones, setPretensiones] = useState<string | null>(null);
@@ -70,8 +79,8 @@ export function GeneradorParamsView({ casoId, casoData }: GeneradorParamsViewPro
         causanteCedulaSugerida={causanteCedula}
       />
 
-      {/* Panel lateral: prerrellenar desde PDFs */}
-      <PanelDocumentosExtra onCamposExtraidos={handleCampos} onSugerencias={handleSugerencias} despacho={casoData.despacho} />
+      {/* Panel lateral: ingesta + documentos previos */}
+      <PanelDocumentosExtra onCamposExtraidos={handleCampos} onSugerencias={handleSugerencias} despacho={casoData.despacho} documentos={documentos} casoId={casoId} />
     </div>
   );
 }
