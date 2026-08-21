@@ -219,17 +219,18 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
       doc.x = left;
 
       // ── Sección 14 (Elaboró): firma manuscrita encima del bloque de datos ──
-      const firma = s.key === "sec_19_elaboro" ? firmaBuffer() : null;
+      const esFirma = s.key === "sec_19_elaboro";
+      const firma = esFirma ? firmaBuffer() : null;
       if (firma) {
         const imgH = 48, gap = 4;
-        doc.font(FONT).fontSize(9).fillColor(NEGRO);
+        doc.font(FONT_BOLD).fontSize(9).fillColor(NEGRO);
         const hTxt = doc.heightOfString(contenido, { width: W - 12, lineGap: 2.5 });
         const boxH = 6 + imgH + gap + hTxt + 8;
         if (doc.y + boxH > bottom) { doc.addPage(); doc.y = M; }
         const by = doc.y;
         doc.rect(left, by, W, boxH).stroke(BORDE);
         try { doc.image(firma, left + 6, by + 6, { fit: [170, imgH] }); } catch { /* imagen inválida */ }
-        doc.font(FONT).fontSize(9).fillColor(NEGRO)
+        doc.font(FONT_BOLD).fontSize(9).fillColor(NEGRO)
           .text(contenido, left + 6, by + 6 + imgH + gap, { width: W - 12, align: "left", lineGap: 2.5 });
         doc.y = by + boxH;
         doc.x = left;
@@ -238,8 +239,8 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
 
       // Caja de respuesta — el contenido largo se divide entre páginas y el borde
       // se dibuja por segmentos en cada página que ocupa.
-      const opts = { width: W - 12, align: (centrarEst ? "center" : "justify") as "center" | "justify", lineGap: 2.5 };
-      doc.font(FONT).fontSize(9).fillColor(NEGRO);
+      const opts = { width: W - 12, align: (centrarEst ? "center" : esFirma ? "left" : "justify") as "center" | "justify" | "left", lineGap: 2.5 };
+      doc.font(esFirma ? FONT_BOLD : FONT).fontSize(9).fillColor(NEGRO);
       const pIni = paginaActual;
       const yIni = doc.y;
       doc.text(contenido, left + 6, yIni + 6, opts);
