@@ -45,13 +45,13 @@
     --ring:                #1f2a3b;
     --radius:              0.75rem;
 
-    /* Sidebar — panel gris muy sutil flotante (Kiwiform), texto oscuro, activo navy tenue */
-    --sidebar:             #f7f8fa;
-    --sidebar-foreground:  #3f4b5a;
-    --sidebar-border:      #e5e9ef;
-    --sidebar-accent:      #e9edf3;
-    --sidebar-accent-foreground: #1f2a3b;
-    --sidebar-muted:       #8a97a6;
+    /* Sidebar — shell navy, texto claro, activo azul */
+    --sidebar:             #1f2a3b;
+    --sidebar-foreground:  #c6d1dd;
+    --sidebar-border:      #2b384b;
+    --sidebar-accent:      #2a3a4f;
+    --sidebar-accent-foreground: #ffffff;
+    --sidebar-muted:       #8494a6;
 
     /* Topbar */
     --topbar:              #ffffff;
