@@ -88,7 +88,7 @@ function Select({
 function Bloque({ numero, titulo, children, icono }: { numero?: number; titulo: string; children: React.ReactNode; icono?: React.ReactNode }) {
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden card-shadow">
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-border bg-primary/5 border-l-4 border-l-primary">
+      <div className="flex items-center gap-3 px-6 py-4 border-b border-border bg-primary/10 border-l-4 border-l-primary">
         <span className="w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shrink-0">
           {icono ?? numero}
         </span>
@@ -152,7 +152,7 @@ function ModuloTexto({ value, onChange, sugerencia, placeholder, minHeight = 140
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         style={{ minHeight, maxHeight }}
-        className="w-full rounded-xl border border-input bg-background px-3.5 py-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring/25 resize-none"
+        className="w-full rounded-xl border border-input bg-card px-3.5 py-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring/25 resize-none"
       />
       <div className="mt-2 flex items-center gap-3 text-[11px] text-muted-foreground">
         <span className="tabular-nums">{palabras} palabra{palabras === 1 ? "" : "s"}</span>
