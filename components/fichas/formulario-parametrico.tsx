@@ -239,6 +239,10 @@ const normBupc = (s: string | null | undefined) =>
 
 const DEMANDADO_FIJO = "Administradora Colombiana de Pensiones — COLPENSIONES. NIT 900.336.004-7";
 
+// Estilo sutil para un campo OBLIGATORIO aún vacío (guía visual, desaparece al llenarlo).
+const CLASE_PENDIENTE = "border-amber-300 hover:border-amber-400 focus-visible:ring-amber-400/25 dark:border-amber-700/70";
+const vacio = (v: unknown) => !String(v ?? "").trim();
+
 // Cuantía por defecto (Sección 3) cuando no se logra extraer del traslado: depende del despacho.
 const CUANTIA_DEF_SUP = "Superior a 20 salarios mensuales legales vigentes";
 const CUANTIA_DEF_INF = "Inferior a 20 salarios mensuales legales vigentes";
@@ -881,7 +885,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
             <Campo label="Fecha de la diligencia" required>
               <Controller name="fecha_diligencia" control={control}
                 render={({ field }) => (
-                  <InputIcono icon={Calendar} type="date" value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} />
+                  <InputIcono icon={Calendar} type="date" value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} className={cn(vacio(field.value) && CLASE_PENDIENTE)} />
                 )} />
             </Campo>
             <Campo label="Radicación de demanda en Bizagi">
@@ -889,15 +893,15 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
             </Campo>
             <Campo label="Radicación del proceso" required hint="Número completo de 23 dígitos">
               <div className="flex items-center gap-2">
-                <InputIcono icon={Hash} className="flex-1" value={encabezado.radicado} onChange={(e) => setEnc("radicado", e.target.value)} placeholder="Número de radicación completo" />
+                <InputIcono icon={Hash} className={cn(vacio(encabezado.radicado) && CLASE_PENDIENTE)} value={encabezado.radicado} onChange={(e) => setEnc("radicado", e.target.value)} placeholder="Número de radicación completo" />
                 <ConsultaRadicado radicado={encabezado.radicado} />
               </div>
             </Campo>
             <Campo label="Nombre del demandante" required>
-              <InputIcono icon={User} value={encabezado.nombre_demandante} onChange={(e) => setEnc("nombre_demandante", e.target.value)} placeholder="Ej: Wilson Lugo" />
+              <InputIcono icon={User} value={encabezado.nombre_demandante} onChange={(e) => setEnc("nombre_demandante", e.target.value)} placeholder="Ej: Wilson Lugo" className={cn(vacio(encabezado.nombre_demandante) && CLASE_PENDIENTE)} />
             </Campo>
             <Campo label="Cédula del demandante" required>
-              <InputIcono icon={Fingerprint} value={encabezado.cedula_demandante} onChange={(e) => setEnc("cedula_demandante", e.target.value)} placeholder="Ej: 16628522" />
+              <InputIcono icon={Fingerprint} value={encabezado.cedula_demandante} onChange={(e) => setEnc("cedula_demandante", e.target.value)} placeholder="Ej: 16628522" className={cn(vacio(encabezado.cedula_demandante) && CLASE_PENDIENTE)} />
             </Campo>
             <Campo label="Nombre e identificación causante y/o afiliado">
               <Controller name="causante_afiliado" control={control}
@@ -927,7 +931,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
             <CampoLectura label="Nombre e identificación demandado" valor={DEMANDADO_FIJO} />
             <Campo label="Autoridad que efectúa la citación" required>
-              <InputIcono icon={Landmark} value={encabezado.despacho} onChange={(e) => setEnc("despacho", e.target.value)} placeholder="Juzgado / autoridad que cita" />
+              <InputIcono icon={Landmark} value={encabezado.despacho} onChange={(e) => setEnc("despacho", e.target.value)} placeholder="Juzgado / autoridad que cita" className={cn(vacio(encabezado.despacho) && CLASE_PENDIENTE)} />
             </Campo>
             <Campo label="Caducidad">
               <Controller name="caducidad" control={control}
