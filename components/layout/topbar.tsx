@@ -22,7 +22,8 @@ const breadcrumbMap: Record<string, string> = {
 
 function Breadcrumb() {
   const pathname = usePathname();
-  const segments = pathname.split("/").filter(Boolean);
+  // Se omite "dashboard" (inicio): en la home el breadcrumb queda vacío.
+  const segments = pathname.split("/").filter(Boolean).filter((s) => s !== "dashboard");
 
   return (
     <nav className="flex items-center gap-1 text-xs">
