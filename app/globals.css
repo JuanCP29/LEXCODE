@@ -45,11 +45,11 @@
     --ring:                #1f2a3b;
     --radius:              0.75rem;
 
-    /* Sidebar — panel claro flotante (Kiwiform), texto oscuro, activo navy tenue */
-    --sidebar:             #ffffff;
+    /* Sidebar — panel gris muy sutil flotante (Kiwiform), texto oscuro, activo navy tenue */
+    --sidebar:             #f7f8fa;
     --sidebar-foreground:  #3f4b5a;
     --sidebar-border:      #e5e9ef;
-    --sidebar-accent:      #eef1f6;
+    --sidebar-accent:      #e9edf3;
     --sidebar-accent-foreground: #1f2a3b;
     --sidebar-muted:       #8a97a6;
 
