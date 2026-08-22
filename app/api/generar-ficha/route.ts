@@ -39,8 +39,12 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { caso_id, params, caso_override, secciones_manual } = body as {
+    const { caso_id, params, caso_override, secciones_manual, solo_guardar, ficha_id } = body as {
       caso_id: string;
+      // Modo borrador: guarda las secciones manuales + parámetros SIN llamar a la IA.
+      solo_guardar?: boolean;
+      // Si viene, actualiza esa ficha (borrador) en vez de crear una nueva.
+      ficha_id?: string | null;
       params: ParametrosFichaV2 & {
         expediente_pensional_aplica?: string | null;
         // Campos de casos (solo para el prompt, NO van en fichas_conciliacion)
@@ -101,7 +105,7 @@ export async function POST(request: NextRequest) {
       .map((p) => ({ seccion: p.mapping.sectionNumber, detalle: p.advertencia! }));
 
     // 4. Llamada a Claude solo con las secciones generables
-    const prompt = construirPromptV2(caso, params, contexto, plan);
+    const prompt = solo_guardar ? null : construirPromptV2(caso, params, contexto, plan);
     let respuestaTexto = "";
 
     if (prompt) {
@@ -153,16 +157,35 @@ export async function POST(request: NextRequest) {
       ia_respuesta_cruda: respuestaTexto || null,
     };
 
-    const { data: ficha, error: fichaError } = await supabase
-      .from("fichas_conciliacion")
-      .insert(fichaData)
-      .select("id")
-      .single();
+    // Si viene ficha_id (borrador existente del caso), se ACTUALIZA en vez de crear otra.
+    let ficha: { id: string } | null = null;
+    let fichaError: { message: string; details?: string; hint?: string } | null = null;
+    if (ficha_id) {
+      const { data, error } = await supabase
+        .from("fichas_conciliacion")
+        .update(fichaData)
+        .eq("id", ficha_id)
+        .eq("caso_id", caso_id)
+        .select("id")
+        .maybeSingle();
+      ficha = data ?? null;
+      fichaError = error;
+    }
+    // Sin ficha_id, o si la actualización no encontró la fila → insertar.
+    if (!ficha) {
+      const { data, error } = await supabase
+        .from("fichas_conciliacion")
+        .insert(fichaData)
+        .select("id")
+        .single();
+      ficha = data ?? null;
+      fichaError = error;
+    }
 
-    if (fichaError) {
-      console.error("Error guardando ficha:", fichaError.message, fichaError.details, fichaError.hint);
+    if (fichaError || !ficha) {
+      console.error("Error guardando ficha:", fichaError?.message, fichaError?.details, fichaError?.hint);
       return NextResponse.json(
-        { error: `Error guardando ficha: ${fichaError.message}` },
+        { error: `Error guardando ficha: ${fichaError?.message ?? "desconocido"}` },
         { status: 500 }
       );
     }

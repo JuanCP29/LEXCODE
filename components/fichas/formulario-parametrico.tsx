@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn, limpiarDespacho } from "@/lib/utils";
-import { Loader2, ArrowRight, ArrowLeft, ChevronDown, FileSignature, CheckCircle2, AlertCircle, ExternalLink, Mail, Clock, Handshake, Check, ClipboardList, FileText, Eye, FileDown, RotateCcw, Pencil } from "lucide-react";
+import { Loader2, ArrowRight, ArrowLeft, ChevronDown, FileSignature, CheckCircle2, AlertCircle, ExternalLink, Mail, Clock, Handshake, Check, ClipboardList, FileText, Eye, FileDown, RotateCcw, Pencil, Save } from "lucide-react";
 import { ConsultaRadicado } from "@/components/fichas/consulta-radicado";
 import { VistaPreviaDocumento } from "@/components/fichas/vista-previa-documento";
 import { CATALOGO_PRETENSIONES } from "@/lib/data/catalogo-pretensiones";
@@ -305,6 +305,10 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
 
   // Paso "Revisar y descargar"
   const [fichaId, setFichaId] = useState<string | null>(null);
+  // Borrador (Fase C): guardado sin IA, actualiza el mismo registro.
+  const [borradorId, setBorradorId] = useState<string | null>(fichaInicial?.id ?? null);
+  const [guardandoBorrador, setGuardandoBorrador] = useState(false);
+  const [borradorGuardado, setBorradorGuardado] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [generandoPreview, setGenerandoPreview] = useState(false);
   const [descargandoPdf, setDescargandoPdf] = useState(false);
@@ -637,6 +641,50 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
     }
   }
 
+  // Construcción del cuerpo compartida entre generar y guardar borrador.
+  function construirCasoOverride() {
+    return {
+      radicado_bizagi:   encabezado.radicado_bizagi.trim() || null,
+      radicado:          encabezado.radicado.trim() || null,
+      nombre_demandante: encabezado.nombre_demandante.trim() || null,
+      cedula_demandante: encabezado.cedula_demandante.trim() || null,
+      despacho:          encabezado.despacho.trim() || null,
+    };
+  }
+  function construirSeccionesManual(conciliable: boolean) {
+    return {
+      sec_1_hechos: sintesisHechos.trim() || null,
+      sec_2_pretensiones: pretensionesTexto.trim() || null,
+      sec_3_cuantia: cuantiaTexto.trim() || null,
+      sec_4_normas: normasTexto.trim() || null,
+      sec_8_problema: problemaTexto.trim() || null,
+      sec_11_jurisprudencia: jurisprudenciaTexto.trim() || null,
+      sec_16_consideraciones: consideracionesTexto.trim() || null,
+      sec_15_politicas: politicasTexto.trim() || null,
+      sec_17_riesgo: (() => {
+        const lineas = CRITERIOS_RIESGO
+          .filter((c) => riesgoNiveles[c.key])
+          .map((c) => `• ${c.label}: ${riesgoNiveles[c.key]}`);
+        return lineas.length ? lineas.join("\n") : null;
+      })(),
+      // Sección 13 (Recomendación): si el asunto NO es conciliable, recomendación fija.
+      sec_18_recomendacion: conciliable === false
+        ? "Una vez estudiado el caso, recomiendo NO CONCILIAR; de acuerdo con las consideraciones expuestas."
+        : null,
+    };
+  }
+
+  // Datos de cabecera obligatorios que faltan (para el resumen de validación).
+  function camposFaltantes(): string[] {
+    const f: string[] = [];
+    if (!getValues("fecha_diligencia")) f.push("Fecha de la diligencia");
+    if (!encabezado.radicado.trim()) f.push("Radicación del proceso");
+    if (!encabezado.nombre_demandante.trim()) f.push("Nombre del demandante");
+    if (!encabezado.cedula_demandante.trim()) f.push("Cédula del demandante");
+    if (!encabezado.despacho.trim()) f.push("Autoridad que efectúa la citación");
+    return f;
+  }
+
   // Genera la ficha (si aún no existe en esta sesión) y devuelve su id.
   async function asegurarFicha(data: ParametrosFormData): Promise<string> {
     if (fichaId) return fichaId;
@@ -646,33 +694,8 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
       body: JSON.stringify({
         caso_id: casoId,
         params: data,
-        caso_override: {
-          radicado_bizagi:   encabezado.radicado_bizagi.trim() || null,
-          radicado:          encabezado.radicado.trim() || null,
-          nombre_demandante: encabezado.nombre_demandante.trim() || null,
-          cedula_demandante: encabezado.cedula_demandante.trim() || null,
-          despacho:          encabezado.despacho.trim() || null,
-        },
-        secciones_manual: {
-          sec_1_hechos: sintesisHechos.trim() || null,
-          sec_2_pretensiones: pretensionesTexto.trim() || null,
-          sec_3_cuantia: cuantiaTexto.trim() || null,
-          sec_4_normas: normasTexto.trim() || null,
-          sec_8_problema: problemaTexto.trim() || null,
-          sec_11_jurisprudencia: jurisprudenciaTexto.trim() || null,
-          sec_16_consideraciones: consideracionesTexto.trim() || null,
-          sec_15_politicas: politicasTexto.trim() || null,
-          sec_17_riesgo: (() => {
-            const lineas = CRITERIOS_RIESGO
-              .filter((c) => riesgoNiveles[c.key])
-              .map((c) => `• ${c.label}: ${riesgoNiveles[c.key]}`);
-            return lineas.length ? lineas.join("\n") : null;
-          })(),
-          // Sección 13 (Recomendación): si el asunto NO es conciliable, recomendación fija.
-          sec_18_recomendacion: data.conciliable === false
-            ? "Una vez estudiado el caso, recomiendo NO CONCILIAR; de acuerdo con las consideraciones expuestas."
-            : null,
-        },
+        caso_override: construirCasoOverride(),
+        secciones_manual: construirSeccionesManual(data.conciliable),
       }),
     });
     if (!res.ok) {
@@ -681,7 +704,41 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
     }
     const { ficha_id } = await res.json();
     setFichaId(ficha_id);
+    setBorradorId(ficha_id); // la ficha generada pasa a ser el borrador vigente
     return ficha_id;
+  }
+
+  // Guarda un borrador (sin IA), actualizando el mismo registro. Funciona con el formulario incompleto.
+  async function handleGuardarBorrador() {
+    setGuardandoBorrador(true);
+    setError(null);
+    try {
+      const data = getValues();
+      const res = await fetch("/api/generar-ficha", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          caso_id: casoId,
+          params: data,
+          solo_guardar: true,
+          ficha_id: borradorId,
+          caso_override: construirCasoOverride(),
+          secciones_manual: construirSeccionesManual(data.conciliable ?? true),
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "Error al guardar el borrador");
+      }
+      const { ficha_id } = await res.json();
+      setBorradorId(ficha_id);
+      setBorradorGuardado(true);
+      setTimeout(() => setBorradorGuardado(false), 2500);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al guardar el borrador");
+    } finally {
+      setGuardandoBorrador(false);
+    }
   }
 
   // Si la validación falla (campos obligatorios de pasos anteriores), avisa y vuelve al paso 1.
@@ -691,6 +748,12 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
   }
 
   const handleVistaPrevia = handleSubmit(async (data) => {
+    const faltan = camposFaltantes();
+    if (faltan.length) {
+      setError(`Faltan datos obligatorios de la cabecera: ${faltan.join(", ")}. Complétalos en el paso 1.`);
+      setPaso(1);
+      return;
+    }
     setGenerandoPreview(true);
     setError(null);
     try {
@@ -708,6 +771,12 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
   }, onValidacionFallida);
 
   const handleDescargarPdf = handleSubmit(async (data) => {
+    const faltan = camposFaltantes();
+    if (faltan.length) {
+      setError(`Faltan datos obligatorios de la cabecera: ${faltan.join(", ")}. Complétalos en el paso 1.`);
+      setPaso(1);
+      return;
+    }
     setDescargandoPdf(true);
     setError(null);
     try {
@@ -1414,6 +1483,19 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
             <span>Paso {paso} de {totalPasos} · <span className="text-foreground font-medium">{PASOS[paso - 1].t}</span></span>
           </div>
           <div className="flex items-center gap-2.5 ml-auto">
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={guardandoBorrador}
+              onClick={handleGuardarBorrador}
+              className={cn("text-muted-foreground", borradorGuardado && "text-green-600")}
+            >
+              {guardandoBorrador
+                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Guardando…</>
+                : borradorGuardado
+                  ? <><CheckCircle2 className="w-4 h-4 mr-2" /> Guardado</>
+                  : <><Save className="w-4 h-4 mr-2" /> Guardar borrador</>}
+            </Button>
             <Button
               type="button"
               variant="outline"
