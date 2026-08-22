@@ -185,12 +185,12 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
 
   return (
     <div className="hidden lg:block">
-      <div className="sticky top-20 space-y-4">
+      <div className="sticky top-20 space-y-5">
 
         <div className="bg-card border border-border rounded-xl overflow-hidden card-shadow">
 
           {/* Encabezado del panel con estado */}
-          <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border">
+          <div className="flex items-center justify-between gap-2 px-5 py-4 border-b border-border">
             <h3 className="text-sm font-semibold text-foreground">Ingesta y procesamiento</h3>
             {estado === "listo" ? (
               <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-md bg-green-50 text-green-700 border border-green-200 dark:bg-green-950/30 dark:text-green-400 dark:border-green-900">
@@ -210,7 +210,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
           {/* Zona drop */}
           <div
             className={cn(
-              "relative m-3 rounded-lg border-2 border-dashed transition-colors cursor-pointer",
+              "relative m-4 rounded-lg border-2 border-dashed transition-colors cursor-pointer",
               dragging
                 ? "border-primary bg-primary/5"
                 : "border-border hover:border-primary/50 hover:bg-muted/30"
@@ -399,7 +399,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
 
         {/* ── Documentos previos del caso ── */}
         <div className="bg-card border border-border rounded-xl overflow-hidden card-shadow">
-          <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border">
+          <div className="flex items-center justify-between gap-2 px-5 py-4 border-b border-border">
             <h3 className="text-sm font-semibold text-foreground">Documentos previos</h3>
             {documentos && documentos.length > 0 && (
               <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-muted text-muted-foreground border border-border">
@@ -407,7 +407,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
               </span>
             )}
           </div>
-          <div className="p-3 space-y-1">
+          <div className="p-4 space-y-1">
             {documentos && documentos.length > 0 ? (
               documentos.map((d) => (
                 <div key={d.id} className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted/50 transition-colors">
@@ -433,7 +433,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
             )}
           </div>
           {casoId && (
-            <div className="px-4 py-2.5 border-t border-border">
+            <div className="px-5 py-3 border-t border-border">
               <a href={`/casos/${casoId}`} className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline">
                 Ver todos los documentos <ChevronRight className="w-3 h-3" />
               </a>

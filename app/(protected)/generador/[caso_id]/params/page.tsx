@@ -39,7 +39,7 @@ export default async function GeneradorParamsPage({
   );
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-[1400px] mx-auto space-y-7">
 
       {/* Encabezado */}
       <div className="flex items-center gap-3">
@@ -53,9 +53,9 @@ export default async function GeneradorParamsPage({
       </div>
 
       <div>
-        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+        <h1 className="text-3xl font-bold text-foreground flex items-center gap-2.5 tracking-tight">
           Ficha de conciliación
-          <BookMarked className="w-4 h-4 text-muted-foreground/60" />
+          <BookMarked className="w-5 h-5 text-muted-foreground/60" />
         </h1>
         <p className="text-sm text-muted-foreground mt-1 uppercase tracking-wide">
           {caso.nombre_demandante}
