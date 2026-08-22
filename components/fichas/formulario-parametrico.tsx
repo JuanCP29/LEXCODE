@@ -99,8 +99,8 @@ function Bloque({ numero, titulo, children, icono }: { numero?: number; titulo: 
   );
 }
 
-function Campo({ label, required, error, children }: {
-  label: string; required?: boolean; error?: string; children: React.ReactNode;
+function Campo({ label, required, error, hint, children }: {
+  label: string; required?: boolean; error?: string; hint?: string; children: React.ReactNode;
 }) {
   return (
     <div className="space-y-1.5">
@@ -108,6 +108,7 @@ function Campo({ label, required, error, children }: {
         {label}{required && <span className="text-destructive ml-0.5">*</span>}
       </Label>
       {children}
+      {hint && !error && <p className="text-[11px] text-muted-foreground">{hint}</p>}
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   );
@@ -790,9 +791,11 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
             <p className="text-[11px] text-muted-foreground mt-0.5">Datos de la cabecera de la ficha</p>
           </div>
         </div>
-        <div className="px-6 py-6 space-y-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
-            <Campo label="Fecha de la diligencia">
+        <div className="px-6 py-6 space-y-6">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-4">Identificación del proceso</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+            <Campo label="Fecha de la diligencia" required>
               <Controller name="fecha_diligencia" control={control}
                 render={({ field }) => (
                   <Input type="date" value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} />
@@ -801,16 +804,16 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
             <Campo label="Radicación de demanda en Bizagi">
               <Input value={encabezado.radicado_bizagi} onChange={(e) => setEnc("radicado_bizagi", e.target.value)} placeholder="Ej: 2025_1398203" />
             </Campo>
-            <Campo label="Radicación del proceso (23 dígitos)">
+            <Campo label="Radicación del proceso" required hint="Número completo de 23 dígitos">
               <div className="flex items-center gap-2">
                 <Input className="flex-1" value={encabezado.radicado} onChange={(e) => setEnc("radicado", e.target.value)} placeholder="Número de radicación completo" />
                 <ConsultaRadicado radicado={encabezado.radicado} />
               </div>
             </Campo>
-            <Campo label="Nombre del demandante">
+            <Campo label="Nombre del demandante" required>
               <Input value={encabezado.nombre_demandante} onChange={(e) => setEnc("nombre_demandante", e.target.value)} placeholder="Ej: Wilson Lugo" />
             </Campo>
-            <Campo label="Cédula del demandante">
+            <Campo label="Cédula del demandante" required>
               <Input value={encabezado.cedula_demandante} onChange={(e) => setEnc("cedula_demandante", e.target.value)} placeholder="Ej: 16628522" />
             </Campo>
             <Campo label="Nombre e identificación causante y/o afiliado">
@@ -833,8 +836,13 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
                 </p>
               )}
             </Campo>
+            </div>
+          </div>
+          <div className="pt-6 border-t border-border">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-4">Competencia y trámite</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
             <CampoLectura label="Nombre e identificación demandado" valor={DEMANDADO_FIJO} />
-            <Campo label="Autoridad que efectúa la citación">
+            <Campo label="Autoridad que efectúa la citación" required>
               <Input value={encabezado.despacho} onChange={(e) => setEnc("despacho", e.target.value)} placeholder="Juzgado / autoridad que cita" />
             </Campo>
             <Campo label="Caducidad">
@@ -855,6 +863,11 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
                     options={[{ value: "SI", label: "SÍ" }, { value: "NO", label: "NO" }]} />
                 )} />
             </Campo>
+            </div>
+          </div>
+          <div className="pt-6 border-t border-border">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-4">Clasificación de la pretensión</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
             <Campo label="Pretensión">
               <Select
                 value={pretensionSel}
@@ -883,6 +896,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
               ? "Pretensión y clase determinadas automáticamente del análisis de documentos. Ajústalas si es necesario; alimentan la sugerencia de riesgo (paso 4)."
               : "Se determinan automáticamente al analizar los documentos en el panel de la derecha; también puedes seleccionarlas a mano. Alimentan la sugerencia de riesgo (paso 4)."}
           </p>
+          </div>
         </div>
       </div>
 
