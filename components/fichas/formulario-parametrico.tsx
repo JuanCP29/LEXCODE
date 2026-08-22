@@ -29,7 +29,7 @@ function Toggle({
   disabled?: boolean;
 }) {
   return (
-    <div className="flex rounded-lg border border-input overflow-hidden w-fit">
+    <div className="inline-flex items-center gap-1 rounded-lg bg-muted p-1 w-fit">
       {[true, false].map((opt) => (
         <button
           key={String(opt)}
@@ -37,10 +37,10 @@ function Toggle({
           disabled={disabled}
           onClick={() => onChange(opt)}
           className={cn(
-            "px-4 py-1.5 text-sm font-medium transition-colors",
+            "px-5 py-1 text-sm font-medium rounded-md transition-all",
             value === opt
-              ? "bg-primary text-primary-foreground"
-              : "bg-background text-muted-foreground hover:bg-muted"
+              ? "bg-card text-foreground card-shadow"
+              : "text-muted-foreground hover:text-foreground"
           )}
         >
           {opt ? "Sí" : "No"}
