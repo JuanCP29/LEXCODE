@@ -4,16 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Logo } from "@/components/ui/logo";
 import { ArrowRight, Sparkles, CheckCircle2, FileText, ShieldCheck, Zap } from "lucide-react";
-import { cn } from "@/lib/utils";
-
-// Secciones que el "documento" va generando en el bucle de la animación.
-const SECCIONES = [
-  { label: "Síntesis de los hechos", lineas: [92, 84, 66] },
-  { label: "Pretensiones", lineas: [88, 60] },
-  { label: "Cuantía", lineas: [48], valor: "$ 6.664.086" },
-  { label: "Evaluación del riesgo", badge: "MEDIO ALTO" },
-];
-const TOTAL = SECCIONES.length + 1; // +1 para el estado final "Ficha lista"
+import { DemoTour } from "@/components/landing/demo-tour";
 
 // Línea rotativa de capacidades bajo el texto principal.
 const FRASES = [
@@ -23,23 +14,7 @@ const FRASES = [
 ];
 
 export function Landing() {
-  // step 0 = analizando; 1..N = revela sección n-1; TOTAL = ficha lista; luego reinicia.
-  const [step, setStep] = useState(0);
   const [frase, setFrase] = useState(0);
-
-  useEffect(() => {
-    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    if (reduce) { setStep(TOTAL); return; }
-    const dur = [1200, 850, 850, 850, 850, 2400];
-    let t: ReturnType<typeof setTimeout>;
-    const tick = (s: number) => {
-      setStep(s);
-      const next = s >= TOTAL ? 0 : s + 1;
-      t = setTimeout(() => tick(next), dur[Math.min(s, dur.length - 1)]);
-    };
-    tick(0);
-    return () => clearTimeout(t);
-  }, []);
 
   useEffect(() => {
     const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
@@ -47,8 +22,6 @@ export function Landing() {
     const i = setInterval(() => setFrase((f) => (f + 1) % FRASES.length), 2600);
     return () => clearInterval(i);
   }, []);
-
-  const listo = step >= TOTAL;
 
   return (
     <main className="relative min-h-screen bg-background text-foreground flex flex-col overflow-hidden">
@@ -131,95 +104,8 @@ export function Landing() {
             </div>
           </div>
 
-          {/* Derecha: documento que se auto-ensambla */}
-          <div className="relative">
-            {/* halo suave detrás */}
-            <div className="absolute -inset-6 rounded-[2rem] bg-primary/5 blur-2xl" aria-hidden />
-            <div className="relative bg-card border border-border rounded-2xl card-shadow-md overflow-hidden">
-              {/* Encabezado del documento */}
-              <div className="flex items-center justify-between gap-3 px-5 py-4 bg-primary text-white">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <span className="w-7 h-7 rounded-lg bg-white/15 flex items-center justify-center shrink-0 ring-2 ring-[#6ea8e6]">
-                    <FileText className="w-3.5 h-3.5" />
-                  </span>
-                  <span className="text-sm font-semibold truncate">Ficha de Conciliación</span>
-                </div>
-                {listo ? (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full bg-green-400/20 text-green-200 border border-green-300/30">
-                    <CheckCircle2 className="w-3 h-3" /> Lista
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold px-2.5 py-1 rounded-full bg-white/15 text-white/90 border border-white/20">
-                    <Sparkles className="w-3 h-3 animate-pulse" /> IA
-                  </span>
-                )}
-              </div>
-
-              {/* Cuerpo: secciones */}
-              <div className="p-5 space-y-4 bg-primary/[0.04]">
-                {SECCIONES.map((sec, i) => {
-                  const revelada = step > i;
-                  const activa = step === i + 1; // recién generada (muestra el cursor)
-                  return (
-                    <div
-                      key={sec.label}
-                      className={cn(
-                        "rounded-xl border bg-card p-3.5 transition-all duration-500",
-                        activa && "ring-2 ring-primary/15",
-                        revelada ? "opacity-100 translate-y-0 border-border" : "opacity-55 translate-y-1 border-dashed border-border"
-                      )}
-                    >
-                      <div className="flex items-center justify-between gap-2 mb-2">
-                        <span className="text-[11px] font-semibold uppercase tracking-wide text-primary/70">{sec.label}</span>
-                        {revelada
-                          ? <CheckCircle2 className="w-3.5 h-3.5 text-green-600 shrink-0" />
-                          : <span className="w-3.5 h-3.5 rounded-full bg-muted animate-pulse shrink-0" />}
-                      </div>
-
-                      {sec.badge ? (
-                        revelada
-                          ? <span className="inline-flex text-[10px] font-semibold px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200">{sec.badge}</span>
-                          : <span className="inline-block h-4 w-24 rounded bg-muted animate-pulse" />
-                      ) : (
-                        <div className="space-y-1.5">
-                          {(sec.lineas ?? []).map((w, k) => (
-                            <div
-                              key={k}
-                              className={cn(
-                                "h-2 rounded-full transition-colors duration-500",
-                                revelada ? "bg-foreground/15" : "bg-muted animate-pulse"
-                              )}
-                              style={{ width: `${w}%` }}
-                            />
-                          ))}
-                          {sec.valor && (
-                            <p className={cn("pt-1 text-sm font-semibold tabular-nums transition-opacity duration-500", revelada ? "opacity-100 text-foreground" : "opacity-0")}>
-                              {sec.valor}
-                            </p>
-                          )}
-                          {activa && <span className="inline-block w-[2px] h-3.5 bg-primary/70 align-middle animate-caret" aria-hidden />}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Pie: estado */}
-              <div className="px-5 py-3 border-t border-border bg-card flex items-center gap-2 text-xs">
-                {listo ? (
-                  <span className="inline-flex items-center gap-1.5 font-semibold text-green-700">
-                    <CheckCircle2 className="w-4 h-4" /> Ficha generada — lista para revisar y descargar
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-2 text-muted-foreground">
-                    <span className="w-3.5 h-3.5 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
-                    {step === 0 ? "Analizando el traslado de la demanda…" : "Generando las secciones de la ficha…"}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
+          {/* Derecha: mini-tour de la app (Asignaciones · Reparto · Ficha) */}
+          <DemoTour />
         </div>
       </section>
 
