@@ -85,23 +85,6 @@ export function Landing() {
               <Ventaja icon={ShieldCheck} titulo="Evalúa" texto="Riesgo con base histórica real." />
             </div>
 
-            {/* Métricas / prueba social */}
-            <div className="mt-9 flex flex-wrap items-center gap-x-7 gap-y-3 text-sm border-t border-border pt-6 max-w-xl">
-              <span className="flex items-baseline gap-1.5">
-                <b className="text-foreground text-lg tabular-nums">627.775</b>
-                <span className="text-muted-foreground">casos en la base de riesgo</span>
-              </span>
-              <span className="w-1 h-1 rounded-full bg-border" />
-              <span className="flex items-baseline gap-1.5">
-                <b className="text-foreground text-lg tabular-nums">3</b>
-                <span className="text-muted-foreground">documentos automatizados</span>
-              </span>
-              <span className="w-1 h-1 rounded-full bg-border" />
-              <span className="flex items-baseline gap-1.5">
-                <b className="text-foreground text-lg">v3</b>
-                <span className="text-muted-foreground">formato oficial Colpensiones</span>
-              </span>
-            </div>
           </div>
 
           {/* Derecha: mini-tour de la app (Asignaciones · Reparto · Ficha) */}
