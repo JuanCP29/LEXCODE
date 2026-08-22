@@ -94,7 +94,7 @@ function Bloque({ numero, titulo, children, icono }: { numero?: number; titulo: 
         </span>
         <h3 className="text-[15px] font-bold text-foreground">{titulo}</h3>
       </div>
-      <div className="px-6 py-5 space-y-5 bg-[#e9eef6] dark:bg-transparent">{children}</div>
+      <div className="px-6 py-5 space-y-5 bg-[#d7e0ee] dark:bg-transparent">{children}</div>
     </div>
   );
 }
