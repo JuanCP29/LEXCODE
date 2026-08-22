@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn, limpiarDespacho } from "@/lib/utils";
-import { Loader2, ArrowRight, ArrowLeft, ChevronDown, FileSignature, CheckCircle2, AlertCircle, ExternalLink, Mail, Clock, Handshake, Check, ClipboardList, FileText, Eye, FileDown, RotateCcw, Pencil, Save } from "lucide-react";
+import { Loader2, ArrowRight, ArrowLeft, ChevronDown, FileSignature, CheckCircle2, AlertCircle, ExternalLink, Mail, Clock, Handshake, Check, ClipboardList, FileText, Eye, FileDown, RotateCcw, Pencil, Save, Calendar, Hash, User, Fingerprint, Users, Landmark } from "lucide-react";
 import { ConsultaRadicado } from "@/components/fichas/consulta-radicado";
 import { VistaPreviaDocumento } from "@/components/fichas/vista-previa-documento";
 import { CATALOGO_PRETENSIONES } from "@/lib/data/catalogo-pretensiones";
@@ -69,7 +69,7 @@ function Select({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className={cn(
-          "w-full h-10 appearance-none rounded-lg border bg-card px-3.5 py-2 pr-8 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-ring/25 focus:border-ring/50",
+          "w-full h-10 appearance-none rounded-lg border bg-card px-3.5 py-2 pr-8 text-sm transition-all hover:border-ring/40 focus:outline-none focus:ring-2 focus:ring-ring/25 focus:border-ring/50",
           error ? "border-destructive" : "border-input",
           !value && "text-muted-foreground"
         )}
@@ -171,6 +171,16 @@ function ModuloTexto({ value, onChange, sugerencia, placeholder, minHeight = 140
           </button>
         )}
       </div>
+    </div>
+  );
+}
+
+// Input con ícono guía a la izquierda (según el tipo de campo).
+function InputIcono({ icon: Icon, className, ...props }: { icon: React.ElementType } & React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <div className="relative flex-1">
+      <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none z-10" />
+      <Input className={cn("pl-9", className)} {...props} />
     </div>
   );
 }
@@ -871,28 +881,29 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
             <Campo label="Fecha de la diligencia" required>
               <Controller name="fecha_diligencia" control={control}
                 render={({ field }) => (
-                  <Input type="date" value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} />
+                  <InputIcono icon={Calendar} type="date" value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} />
                 )} />
             </Campo>
             <Campo label="Radicación de demanda en Bizagi">
-              <Input value={encabezado.radicado_bizagi} onChange={(e) => setEnc("radicado_bizagi", e.target.value)} placeholder="Ej: 2025_1398203" />
+              <InputIcono icon={Hash} value={encabezado.radicado_bizagi} onChange={(e) => setEnc("radicado_bizagi", e.target.value)} placeholder="Ej: 2025_1398203" />
             </Campo>
             <Campo label="Radicación del proceso" required hint="Número completo de 23 dígitos">
               <div className="flex items-center gap-2">
-                <Input className="flex-1" value={encabezado.radicado} onChange={(e) => setEnc("radicado", e.target.value)} placeholder="Número de radicación completo" />
+                <InputIcono icon={Hash} className="flex-1" value={encabezado.radicado} onChange={(e) => setEnc("radicado", e.target.value)} placeholder="Número de radicación completo" />
                 <ConsultaRadicado radicado={encabezado.radicado} />
               </div>
             </Campo>
             <Campo label="Nombre del demandante" required>
-              <Input value={encabezado.nombre_demandante} onChange={(e) => setEnc("nombre_demandante", e.target.value)} placeholder="Ej: Wilson Lugo" />
+              <InputIcono icon={User} value={encabezado.nombre_demandante} onChange={(e) => setEnc("nombre_demandante", e.target.value)} placeholder="Ej: Wilson Lugo" />
             </Campo>
             <Campo label="Cédula del demandante" required>
-              <Input value={encabezado.cedula_demandante} onChange={(e) => setEnc("cedula_demandante", e.target.value)} placeholder="Ej: 16628522" />
+              <InputIcono icon={Fingerprint} value={encabezado.cedula_demandante} onChange={(e) => setEnc("cedula_demandante", e.target.value)} placeholder="Ej: 16628522" />
             </Campo>
             <Campo label="Nombre e identificación causante y/o afiliado">
               <Controller name="causante_afiliado" control={control}
                 render={({ field }) => (
-                  <Input
+                  <InputIcono
+                    icon={Users}
                     value={field.value ?? ""}
                     onChange={(e) => field.onChange(e.target.value || null)}
                     placeholder="Nombre y cédula del afiliado (se completa al analizar los documentos)"
@@ -916,7 +927,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
             <CampoLectura label="Nombre e identificación demandado" valor={DEMANDADO_FIJO} />
             <Campo label="Autoridad que efectúa la citación" required>
-              <Input value={encabezado.despacho} onChange={(e) => setEnc("despacho", e.target.value)} placeholder="Juzgado / autoridad que cita" />
+              <InputIcono icon={Landmark} value={encabezado.despacho} onChange={(e) => setEnc("despacho", e.target.value)} placeholder="Juzgado / autoridad que cita" />
             </Campo>
             <Campo label="Caducidad">
               <Controller name="caducidad" control={control}
