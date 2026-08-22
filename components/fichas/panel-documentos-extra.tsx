@@ -267,7 +267,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
                 <button
                   onClick={analizar}
                   disabled={estado === "analizando"}
-                  className="w-full mt-1 py-2 rounded-md bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+                  className="w-full mt-1 py-2.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-60 flex items-center justify-center gap-2"
                 >
                   {estado === "analizando" ? (
                     <>
@@ -361,7 +361,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
               {Object.entries(sugerencias)
                 .filter(([k, v]) => !SUGERENCIAS_NO_PROSA.has(k) && v && String(v).trim())
                 .map(([key, texto]) => (
-                  <div key={key} className="rounded-md border border-border bg-muted/30 px-2.5 py-2">
+                  <div key={key} className="rounded-lg border border-border bg-muted/30 px-3 py-2.5">
                     <div className="flex items-center justify-between gap-2 mb-1">
                       <span className="text-[10px] font-semibold text-muted-foreground">
                         {LABEL_SUGERENCIA[key] ?? key}

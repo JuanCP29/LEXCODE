@@ -689,9 +689,9 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
                 <span className={cn(
                   "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-all",
                   activo
-                    ? "bg-primary text-primary-foreground ring-4 ring-primary/10"
+                    ? "bg-primary text-primary-foreground ring-4 ring-primary/10 card-shadow"
                     : hecho
-                    ? "bg-primary text-primary-foreground"
+                    ? "bg-primary text-primary-foreground card-shadow"
                     : "bg-muted text-muted-foreground border border-border"
                 )}>
                   {hecho ? <Check className="w-3.5 h-3.5" /> : n}
@@ -844,7 +844,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
 
         <div className="px-6 py-5 space-y-5">
           {/* Generar Poder de Sustitución */}
-          <div className="rounded-lg border border-primary/30 bg-primary/5 px-4 py-3">
+          <div className="rounded-xl border border-primary/25 bg-primary/5 px-4 py-3.5">
             {poderGenerado ? (
               <div className="flex items-center gap-2 text-sm text-green-700">
                 <CheckCircle2 className="w-4 h-4 shrink-0" />
@@ -874,7 +874,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
                     type="button"
                     disabled={generandoPoder}
                     onClick={handleGenerarPoder}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shrink-0 disabled:opacity-60"
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98] transition-all shrink-0 disabled:opacity-60"
                   >
                     {generandoPoder
                       ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Generando...</>
@@ -925,7 +925,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
             {trasladoBizagi === false && (
               <>
                 {/* Memorial */}
-                <div className="rounded-lg border border-[#c5d8f4] bg-[#eef3fc] dark:bg-blue-950/20 dark:border-blue-800 px-4 py-3 space-y-3">
+                <div className="rounded-xl border border-[#c5d8f4] bg-[#eef3fc] dark:bg-blue-950/20 dark:border-blue-800 px-4 py-3.5 space-y-3">
                   {/* Fila: generar memorial */}
                   <div className="flex items-center justify-between gap-3">
                     <div>
@@ -950,7 +950,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
                         type="button"
                         disabled={generandoMemorial}
                         onClick={handleGenerarMemorial}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-[#6b93de] text-white hover:bg-[#5a82d0] transition-colors disabled:opacity-60"
+                        className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-semibold bg-[#6b93de] text-white hover:bg-[#5a82d0] active:scale-[0.98] transition-all disabled:opacity-60"
                       >
                         {generandoMemorial
                           ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Generando...</>
