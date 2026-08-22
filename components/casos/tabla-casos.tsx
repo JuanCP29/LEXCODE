@@ -1,8 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { FileText, Lock } from "lucide-react";
+import { useMemo, useState } from "react";
+import { FileText, Lock, Search } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { WORKFLOW_ESTADO } from "@/lib/ui/estado-badge";
+
+type ClaveEstado = "completado" | "en_proceso" | "pendiente";
+
+// Deriva el estado de flujo del caso a partir de sus fichas.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function claveEstado(caso: any): ClaveEstado {
+  const fichas = Array.isArray(caso.fichas_conciliacion) ? caso.fichas_conciliacion : [];
+  if (fichas.some((f: { estado: string }) => f.estado === "listo")) return "completado";
+  if (fichas.length > 0) return "en_proceso";
+  return "pendiente";
+}
+
+const FILTROS: { key: "todos" | ClaveEstado; label: string }[] = [
+  { key: "todos", label: "Todos" },
+  { key: "pendiente", label: "Pendientes" },
+  { key: "en_proceso", label: "En proceso" },
+  { key: "completado", label: "Completados" },
+];
 
 // Quita la ciudad repetida y el departamento del despacho
 // ("JUZGADO ... DE CALI — CALI — VALLE DEL CAUCA" → "JUZGADO ... DE CALI")
@@ -52,6 +72,26 @@ interface TablaCasosProps {
 
 export function TablaCasos({ casos }: TablaCasosProps) {
   const lista = casos as CasoConFichas[];
+  const [query, setQuery] = useState("");
+  const [filtro, setFiltro] = useState<"todos" | ClaveEstado>("todos");
+
+  // Contadores por estado (KPIs) y lista filtrada por búsqueda + estado.
+  const { counts, filtrados } = useMemo(() => {
+    const counts: Record<string, number> = { todos: lista.length, pendiente: 0, en_proceso: 0, completado: 0 };
+    const conEstado = lista.map((c) => {
+      const est = claveEstado(c);
+      counts[est]++;
+      return { c, est };
+    });
+    const q = query.trim().toLowerCase();
+    const filtrados = conEstado.filter(({ c, est }) => {
+      if (filtro !== "todos" && est !== filtro) return false;
+      if (!q) return true;
+      return [c.nombre_demandante, c.cedula_demandante, c.radicado, c.radicado_bizagi, c.despacho]
+        .some((v) => (v ?? "").toString().toLowerCase().includes(q));
+    });
+    return { counts, filtrados };
+  }, [lista, query, filtro]);
 
   if (lista.length === 0) {
     return (
@@ -69,147 +109,134 @@ export function TablaCasos({ casos }: TablaCasosProps) {
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-border bg-muted/40">
-            <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
-              F. Conciliación
-            </th>
-            <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
-              Contestación Dda
-            </th>
-            <th className="text-left px-3 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
-              Estado
-            </th>
-            <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
-              Radicado
-            </th>
-            <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
-              Demandante
-            </th>
-            <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
-              Cédula
-            </th>
-            <th className="text-center px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
-              Despacho
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {lista.map((caso: CasoConFichas, i: number) => {
-            const fichas: FichaMin[] = Array.isArray(caso.fichas_conciliacion)
-              ? caso.fichas_conciliacion
-              : [];
-            const fichaLista = fichas.some((f) => f.estado === "listo");
-            const fichaEnProceso = fichas.length > 0 && !fichaLista;
-            const sinFicha = fichas.length === 0;
+    <div>
+      {/* ── Barra de herramientas: búsqueda + filtros con contadores (KPIs) ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-3 border-b border-border">
+        <div className="relative flex-1 sm:max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar demandante, cédula o radicado…"
+            className="w-full h-9 pl-9 pr-3 rounded-full bg-muted/70 border border-transparent text-sm text-foreground placeholder:text-muted-foreground focus:bg-background focus:border-ring/40 focus:ring-2 focus:ring-ring/20 focus:outline-none transition-all"
+          />
+        </div>
+        <div className="inline-flex items-center gap-1 rounded-lg bg-muted p-1 sm:ml-auto overflow-x-auto">
+          {FILTROS.map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              onClick={() => setFiltro(f.key)}
+              className={cn(
+                "px-3 py-1 text-xs font-medium rounded-md whitespace-nowrap transition-all flex items-center gap-1.5",
+                filtro === f.key ? "bg-card text-foreground card-shadow" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {f.label}
+              <span className="tabular-nums opacity-70">{counts[f.key]}</span>
+            </button>
+          ))}
+        </div>
+      </div>
 
-            return (
-              <tr
-                key={caso.id}
-                className={`border-b border-border last:border-0 hover:bg-primary/5 transition-colors group ${
-                  i % 2 === 0 ? "bg-card" : "bg-muted/20"
-                }`}
-              >
-                {/* Botón F. Conciliación */}
-                <td className="px-4 py-3 whitespace-nowrap">
-                  <Link
-                    href={`/generador/${caso.id}/params`}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-semibold transition-colors border-primary text-primary hover:bg-[var(--sidebar)] hover:border-[var(--sidebar)] hover:text-white"
-                  >
-                    F. Conciliación
-                  </Link>
-                </td>
-
-                {/* Botón Demanda */}
-                <td className="px-4 py-3 whitespace-nowrap">
-                  {fichaLista ? (
-                    <Link
-                      href={`/demanda/${caso.id}`}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-semibold transition-colors border-[#7c3aed] text-[#7c3aed] hover:bg-[#7c3aed] hover:text-primary-foreground"
-                    >
-                      Contestación Dda
-                    </Link>
-                  ) : (
-                    <span
-                      title={
-                        sinFicha
-                          ? "Genera y cierra la ficha de conciliación primero"
-                          : "La ficha de conciliación aún no está lista"
-                      }
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-semibold border-border text-muted-foreground cursor-not-allowed opacity-50"
-                    >
-                      <Lock className="w-3 h-3" />
-                      Contestación Dda
-                    </span>
-                  )}
-                </td>
-
-                {/* Estado ficha */}
-                <td className="px-3 py-3">
-                  {(() => {
-                    const clave = fichaLista ? "completado" : fichaEnProceso ? "en_proceso" : "pendiente";
-                    const est = WORKFLOW_ESTADO[clave];
-                    return (
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold whitespace-nowrap ${est.clase}`}>
-                        {est.label}
-                      </span>
-                    );
-                  })()}
-                </td>
-
-                {/* Radicado */}
-                <td className="px-4 py-3">
-                  <span className="font-mono text-xs text-foreground/80">
-                    {caso.radicado}
-                  </span>
-                  {caso.radicado_bizagi && (
-                    <p className="font-mono text-[10px] text-muted-foreground mt-0.5">
-                      {caso.radicado_bizagi}
-                    </p>
-                  )}
-                </td>
-
-                {/* Demandante */}
-                <td className="px-4 py-3">
-                  <span className="font-medium text-foreground text-sm">
-                    {aNombrePropio(caso.nombre_demandante)}
-                  </span>
-                </td>
-
-                {/* Cédula */}
-                <td className="px-4 py-3 text-sm text-muted-foreground">
-                  {caso.cedula_demandante ?? "—"}
-                </td>
-
-                {/* Despacho */}
-                <td className="px-4 py-3 text-sm text-muted-foreground min-w-[280px]">
-                  {caso.despacho ? aNombrePropio(limpiarDespacho(caso.despacho)) : "—"}
+      {/* ── Tabla con encabezado fijo (scroll interno) ── */}
+      <div className="overflow-auto max-h-[calc(100vh-320px)] min-h-[200px]">
+        <table className="w-full text-sm">
+          <thead className="sticky top-0 z-10">
+            <tr className="border-b border-border bg-muted [&>th]:bg-muted">
+              <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">F. Conciliación</th>
+              <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Contestación Dda</th>
+              <th className="text-left px-3 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Estado</th>
+              <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Radicado</th>
+              <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Demandante</th>
+              <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Cédula</th>
+              <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Despacho</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtrados.length === 0 && (
+              <tr>
+                <td colSpan={7} className="px-4 py-16 text-center text-sm text-muted-foreground">
+                  Sin resultados para el filtro o la búsqueda actual.
                 </td>
               </tr>
-            );
-          })}
-        </tbody>
-      </table>
+            )}
+            {filtrados.map(({ c: caso, est: clave }) => {
+              const fichaLista = clave === "completado";
+              const sinFicha = clave === "pendiente";
+              const est = WORKFLOW_ESTADO[clave];
 
-      {/* Leyenda */}
-      <div className="flex flex-wrap items-center gap-5 px-4 py-3 border-t border-border bg-muted/20 text-[11px] text-muted-foreground">
-        <span className="flex items-center gap-1.5">
-          <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${WORKFLOW_ESTADO.completado.clase}`}>Completado</span>
-          Conciliación lista — Contestación Dda habilitada
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${WORKFLOW_ESTADO.en_proceso.clase}`}>En proceso</span>
-          Ficha en proceso
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${WORKFLOW_ESTADO.pendiente.clase}`}>Pendiente</span>
-          Sin ficha generada
-        </span>
-        <span className="flex items-center gap-1.5 ml-auto">
+              return (
+                <tr key={caso.id} className="border-b border-border last:border-0 hover:bg-primary/5 transition-colors group">
+                  {/* Botón F. Conciliación */}
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <Link
+                      href={`/generador/${caso.id}/params`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all active:scale-[0.98] border-primary text-primary hover:bg-[var(--sidebar)] hover:border-[var(--sidebar)] hover:text-white"
+                    >
+                      F. Conciliación
+                    </Link>
+                  </td>
+
+                  {/* Contestación Dda — botón solo si la ficha está lista; si no, candado compacto */}
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    {fichaLista ? (
+                      <Link
+                        href={`/demanda/${caso.id}`}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all active:scale-[0.98] border-[#7c3aed] text-[#7c3aed] hover:bg-[#7c3aed] hover:text-white"
+                      >
+                        Contestación Dda
+                      </Link>
+                    ) : (
+                      <span
+                        title={sinFicha ? "Genera y cierra la ficha de conciliación primero" : "La ficha de conciliación aún no está lista"}
+                        className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-border text-muted-foreground/60 cursor-not-allowed"
+                      >
+                        <Lock className="w-3.5 h-3.5" />
+                      </span>
+                    )}
+                  </td>
+
+                  {/* Estado */}
+                  <td className="px-3 py-3">
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-semibold whitespace-nowrap ${est.clase}`}>
+                      {est.label}
+                    </span>
+                  </td>
+
+                  {/* Radicado */}
+                  <td className="px-4 py-3">
+                    <span className="font-mono text-xs text-foreground/80 tabular-nums">{caso.radicado}</span>
+                    {caso.radicado_bizagi && (
+                      <p className="font-mono text-[10px] text-muted-foreground mt-0.5 tabular-nums">{caso.radicado_bizagi}</p>
+                    )}
+                  </td>
+
+                  {/* Demandante */}
+                  <td className="px-4 py-3">
+                    <span className="font-medium text-foreground text-sm">{aNombrePropio(caso.nombre_demandante)}</span>
+                  </td>
+
+                  {/* Cédula */}
+                  <td className="px-4 py-3 text-sm text-muted-foreground tabular-nums">{caso.cedula_demandante ?? "—"}</td>
+
+                  {/* Despacho */}
+                  <td className="px-4 py-3 text-sm text-muted-foreground min-w-[260px]">
+                    {caso.despacho ? aNombrePropio(limpiarDespacho(caso.despacho)) : "—"}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pie: resumen del filtro */}
+      <div className="flex items-center gap-3 px-4 py-2.5 border-t border-border bg-muted/20 text-[11px] text-muted-foreground">
+        <span>Mostrando <strong className="text-foreground tabular-nums">{filtrados.length}</strong> de {lista.length} procesos</span>
+        <span className="ml-auto flex items-center gap-1.5">
           <Lock className="w-3 h-3" />
-          Contestación Dda bloqueada hasta cerrar conciliación
+          Contestación Dda se habilita al cerrar la conciliación
         </span>
       </div>
     </div>
