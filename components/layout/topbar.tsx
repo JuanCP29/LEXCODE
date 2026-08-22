@@ -68,7 +68,7 @@ export function Topbar({ userEmail }: { userEmail?: string }) {
 
   async function handleSignOut() {
     await supabase.auth.signOut();
-    router.push("/login");
+    router.push("/");
     router.refresh();
   }
 
