@@ -43,23 +43,21 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0f1117]">
-      <div className="w-full max-w-sm px-4">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <div className="w-full max-w-sm">
         <AuthHeader subtitulo="Collegia Abogados — Cali, Colombia" />
 
-        <Card className="bg-[#1a1d27] border-[#2d3148]">
+        <Card className="card-shadow">
           <CardHeader className="pb-4">
-            <CardTitle className="text-white text-lg">Iniciar sesión</CardTitle>
-            <CardDescription className="text-gray-400">
+            <CardTitle className="text-lg">Iniciar sesión</CardTitle>
+            <CardDescription>
               Ingresa con tu correo institucional
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-gray-300">
-                  Correo electrónico
-                </Label>
+                <Label htmlFor="email">Correo electrónico</Label>
                 <Input
                   id="email"
                   type="email"
@@ -67,13 +65,10 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="bg-[#0f1117] border-[#2d3148] text-white placeholder:text-gray-500 focus-visible:ring-primary"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="password" className="text-gray-300">
-                  Contraseña
-                </Label>
+                <Label htmlFor="password">Contraseña</Label>
                 <Input
                   id="password"
                   type="password"
@@ -81,7 +76,6 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="bg-[#0f1117] border-[#2d3148] text-white placeholder:text-gray-500 focus-visible:ring-primary"
                 />
               </div>
 
@@ -91,9 +85,9 @@ export default function LoginPage() {
                     type="checkbox"
                     checked={recordarme}
                     onChange={(e) => setRecordarme(e.target.checked)}
-                    className="w-4 h-4 rounded border-[#2d3148] bg-[#0f1117] accent-primary"
+                    className="w-4 h-4 rounded border-input accent-primary"
                   />
-                  <span className="text-sm text-gray-400">Recordarme</span>
+                  <span className="text-sm text-muted-foreground">Recordarme</span>
                 </label>
                 <Link
                   href="/recuperar-contrasena"
@@ -104,7 +98,7 @@ export default function LoginPage() {
               </div>
 
               {error && (
-                <p className="text-sm text-red-400 bg-red-950/30 border border-red-900/50 rounded-md px-3 py-2">
+                <p className="text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-md px-3 py-2">
                   {error}
                 </p>
               )}
