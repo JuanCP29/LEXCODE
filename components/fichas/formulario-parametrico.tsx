@@ -818,16 +818,8 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
   return (
     <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
 
-      {/* ── Asistente por pasos (fijo con contexto del caso) ── */}
-      <div className="sticky top-14 md:top-[70px] z-20 -mt-2 pt-3 pb-4 bg-background/85 backdrop-blur-md border-b border-border">
-        <div className="mb-3 flex items-center gap-2 text-xs min-w-0">
-          <FileText className="w-3.5 h-3.5 text-primary shrink-0" />
-          <span className="font-semibold text-foreground truncate">{encabezado.nombre_demandante || "Expediente"}</span>
-          {encabezado.cedula_demandante && (
-            <span className="text-muted-foreground shrink-0 whitespace-nowrap">· C.C. {encabezado.cedula_demandante}</span>
-          )}
-        </div>
-        <div className="flex items-center">
+      {/* ── Asistente por pasos ── */}
+      <div className="flex items-center border-b border-border pb-6">
         {PASOS.map((p, i) => {
           const n = i + 1;
           const activo = n === paso;
@@ -870,7 +862,6 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
             </div>
           );
         })}
-        </div>
       </div>
 
       {/* ── Paso 1: Información del proceso + Documentos previos + Conciliabilidad ── */}
