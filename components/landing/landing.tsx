@@ -51,9 +51,15 @@ export function Landing() {
   const listo = step >= TOTAL;
 
   return (
-    <main className="min-h-screen bg-background text-foreground flex flex-col">
+    <main className="relative min-h-screen bg-background text-foreground flex flex-col overflow-hidden">
+      {/* Fondo atmosférico (glows suaves) */}
+      <div className="pointer-events-none absolute inset-0 z-0" aria-hidden>
+        <div className="absolute -top-40 -right-32 w-[38rem] h-[38rem] rounded-full bg-primary/[0.06] blur-3xl" />
+        <div className="absolute top-1/3 -left-48 w-[32rem] h-[32rem] rounded-full bg-[#6ea8e6]/10 blur-3xl" />
+      </div>
+
       {/* Barra superior mínima */}
-      <header className="w-full">
+      <header className="relative z-10 w-full">
         <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
           <Logo size="md" />
           <Link
@@ -66,7 +72,7 @@ export function Landing() {
       </header>
 
       {/* Héroe */}
-      <section className="flex-1 flex items-center">
+      <section className="relative z-10 flex-1 flex items-center">
         <div className="max-w-6xl mx-auto px-6 w-full grid lg:grid-cols-[1.02fr_1fr] gap-12 lg:gap-16 items-center py-12">
 
           {/* Izquierda: mensaje */}
@@ -97,9 +103,6 @@ export function Landing() {
               >
                 Ingresar <ArrowRight className="w-4 h-4" />
               </Link>
-              <span className="text-xs text-muted-foreground">
-                Formato oficial GDJ-GPO-FMT-005 v3 · Colpensiones
-              </span>
             </div>
 
             {/* Ventajas */}
@@ -107,6 +110,24 @@ export function Landing() {
               <Ventaja icon={Zap} titulo="Automatiza" texto="Lee los PDF y prellena las secciones." />
               <Ventaja icon={FileText} titulo="Genera" texto="Ficha, poder y memoriales listos." />
               <Ventaja icon={ShieldCheck} titulo="Evalúa" texto="Riesgo con base histórica real." />
+            </div>
+
+            {/* Métricas / prueba social */}
+            <div className="mt-9 flex flex-wrap items-center gap-x-7 gap-y-3 text-sm border-t border-border pt-6 max-w-xl">
+              <span className="flex items-baseline gap-1.5">
+                <b className="text-foreground text-lg tabular-nums">627.775</b>
+                <span className="text-muted-foreground">casos en la base de riesgo</span>
+              </span>
+              <span className="w-1 h-1 rounded-full bg-border" />
+              <span className="flex items-baseline gap-1.5">
+                <b className="text-foreground text-lg tabular-nums">3</b>
+                <span className="text-muted-foreground">documentos automatizados</span>
+              </span>
+              <span className="w-1 h-1 rounded-full bg-border" />
+              <span className="flex items-baseline gap-1.5">
+                <b className="text-foreground text-lg">v3</b>
+                <span className="text-muted-foreground">formato oficial Colpensiones</span>
+              </span>
             </div>
           </div>
 
