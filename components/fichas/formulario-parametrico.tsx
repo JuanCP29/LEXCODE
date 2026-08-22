@@ -89,7 +89,7 @@ function Bloque({ numero, titulo, children, icono }: { numero?: number; titulo: 
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden card-shadow">
       <div className="flex items-center gap-3 px-6 py-4 border-b border-border bg-primary/5 border-l-4 border-l-primary">
-        <span className="w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shrink-0">
+        <span className="w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shrink-0 ring-2 ring-[#6ea8e6]">
           {icono ?? numero}
         </span>
         <h3 className="text-[15px] font-bold text-foreground">{titulo}</h3>
@@ -856,7 +856,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
       {/* ── Información del proceso (encabezado v3) ── */}
       <div className="rounded-xl border border-border bg-card overflow-hidden card-shadow">
         <div className="flex items-center gap-3 px-6 py-4 bg-primary border-l-4 border-l-[#6ea8e6]">
-          <span className="w-9 h-9 rounded-lg bg-white/15 text-white flex items-center justify-center shrink-0">
+          <span className="w-9 h-9 rounded-lg bg-white/15 text-white flex items-center justify-center shrink-0 ring-2 ring-[#6ea8e6]">
             <ClipboardList className="w-4 h-4" />
           </span>
           <div>
@@ -977,7 +977,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
       <div className="rounded-xl border border-border bg-card overflow-hidden card-shadow">
         {/* Header del bloque — estilo diferenciado del bloque de datos */}
         <div className="flex items-center gap-3 px-6 py-4 border-b border-border bg-primary/5 border-l-4 border-l-primary">
-          <div className="w-9 h-9 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+          <div className="w-9 h-9 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shrink-0 ring-2 ring-[#6ea8e6]">
             <FileSignature className="w-4 h-4" />
           </div>
           <div className="min-w-0">
