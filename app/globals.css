@@ -14,16 +14,16 @@
     --foreground-muted:    #5b6c7c;
     --foreground-subtle:   #8a9aa8;
 
-    /* Primario = acción azul (reemplaza el casi-negro) */
-    --primary:             #0f6fc5;
-    --primary-hover:       #0b5ca6;
+    /* Primario = navy del sidebar (unificado: botones e íconos) */
+    --primary:             #1f2a3b;
+    --primary-hover:       #2c3a4e;
     --primary-foreground:  #ffffff;
-    --primary-subtle:      #e7f0fa;
-    --primary-light:       #4c9fe8;
+    --primary-subtle:      #e9edf3;
+    --primary-light:       #3b4a5e;
 
     /* Acento IA */
-    --ia:                  #0f6fc5;
-    --ia-subtle:           #e7f0fa;
+    --ia:                  #1f2a3b;
+    --ia-subtle:           #e9edf3;
 
     --card:                #ffffff;
     --card-foreground:     #1c2733;
@@ -34,15 +34,15 @@
     --secondary-foreground:#33424f;
     --muted:               #edf1f5;
     --muted-foreground:    #5b6c7c;
-    --accent:              #e7f0fa;
-    --accent-foreground:   #0b4e8f;
+    --accent:              #e9edf3;
+    --accent-foreground:   #1f2a3b;
 
     --destructive:         #d0392b;
     --destructive-foreground: #ffffff;
 
     --border:              #d8e0e8;
     --input:               #d3dce5;
-    --ring:                #0f6fc5;
+    --ring:                #1f2a3b;
     --radius:              0.5rem;
 
     /* Sidebar — shell navy (amazon.jobs), texto claro, activo azul */

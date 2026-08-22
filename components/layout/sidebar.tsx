@@ -39,7 +39,7 @@ function SidebarContent({ onClose }: SidebarContentProps) {
       <div className="flex items-center justify-between px-5 h-14 border-b border-sidebar-border shrink-0">
         <Link href="/dashboard" onClick={onClose} className="flex items-center gap-2.5">
           {/* Ícono angular */}
-          <span className="flex items-center justify-center w-7 h-7 rounded-md bg-primary text-primary-foreground">
+          <span className="flex items-center justify-center w-7 h-7 rounded-md bg-[#6ea8e6] text-[#1f2a3b]">
             <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
               <polygon points="10,2 18,8 2,8" fill="currentColor" />
               <rect x="3"  y="8" width="2.5" height="10" fill="currentColor" />
@@ -48,8 +48,8 @@ function SidebarContent({ onClose }: SidebarContentProps) {
               <rect x="15" y="8" width="2.5" height="10" fill="currentColor" />
             </svg>
           </span>
-          <span className="font-bold text-lg tracking-tight text-sidebar-foreground">
-            <span className="text-primary">LEG</span><span>IUX</span>
+          <span className="font-bold text-lg tracking-tight text-white">
+            <span className="text-[#6ea8e6]">LEG</span><span>IUX</span>
           </span>
         </Link>
         {onClose && (
@@ -83,7 +83,7 @@ function SidebarContent({ onClose }: SidebarContentProps) {
                   : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
               )}
             >
-              <Icon className={cn(sub ? "w-3.5 h-3.5" : "w-4 h-4", "shrink-0", active ? "text-primary" : "text-[var(--sidebar-muted)]")} />
+              <Icon className={cn(sub ? "w-3.5 h-3.5" : "w-4 h-4", "shrink-0", active ? "text-white" : "text-[var(--sidebar-muted)]")} />
               <span className={sub ? "text-xs" : ""}>{label}</span>
             </Link>
           );
@@ -102,7 +102,7 @@ function SidebarContent({ onClose }: SidebarContentProps) {
           className={cn(
             "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
             pathname === "/casos/nuevo"
-              ? "bg-primary text-primary-foreground"
+              ? "bg-sidebar-accent text-white"
               : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
           )}
         >
@@ -114,7 +114,7 @@ function SidebarContent({ onClose }: SidebarContentProps) {
       {/* Pie — bloque de cuenta */}
       <div className="px-3 py-3 border-t border-sidebar-border shrink-0">
         <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg">
-          <span className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold shrink-0 select-none">
+          <span className="w-8 h-8 rounded-full bg-[#6ea8e6] text-[#1f2a3b] flex items-center justify-center text-xs font-bold shrink-0 select-none">
             CO
           </span>
           <div className="min-w-0">
