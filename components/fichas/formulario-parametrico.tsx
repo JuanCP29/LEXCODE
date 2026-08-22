@@ -1338,7 +1338,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
       <div className="h-20" />
 
       {/* ── Barra de acción inferior fija ── */}
-      <div className="fixed bottom-0 left-0 right-0 md:left-[220px] z-30 border-t border-border bg-card/95 backdrop-blur-sm">
+      <div className="fixed bottom-0 left-0 right-0 md:left-[240px] md:right-3 z-30 border-t border-border bg-card/90 backdrop-blur-md md:rounded-b-2xl">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-10 h-16 flex items-center justify-between gap-3">
           <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
             <span className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[11px] font-bold text-foreground">{paso}</span>

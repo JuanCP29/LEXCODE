@@ -71,10 +71,10 @@ export function Topbar({ userEmail }: { userEmail?: string }) {
   return (
     <>
       <header
-        className="fixed top-0 left-0 right-0 h-14 flex items-center px-4 z-50 gap-3"
+        className="fixed z-50 h-14 flex items-center px-4 gap-3 top-0 left-0 right-0 border-b md:top-3 md:left-[240px] md:right-3 md:rounded-2xl md:border md:card-shadow"
         style={{
           backgroundColor: "var(--topbar)",
-          borderBottom: "1px solid var(--topbar-border)",
+          borderColor: "var(--topbar-border)",
         }}
       >
         {/* Hamburguesa móvil */}
@@ -84,9 +84,6 @@ export function Topbar({ userEmail }: { userEmail?: string }) {
         >
           <Menu className="w-5 h-5" />
         </button>
-
-        {/* Espaciador sidebar desktop */}
-        <div className="hidden md:block w-[220px] shrink-0" />
 
         {/* Breadcrumb */}
         <div className="flex-1 hidden sm:block">

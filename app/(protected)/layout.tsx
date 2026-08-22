@@ -22,7 +22,7 @@ export default async function ProtectedLayout({
       <Topbar userEmail={user.email} />
       <Sidebar />
       {/* mt-11 = topbar 44px. md:ml-[220px] = sidebar solo en desktop */}
-      <main className="md:ml-[220px] mt-14 p-6 lg:px-10 lg:py-8 min-h-[calc(100vh-3.5rem)]">
+      <main className="mt-14 p-6 min-h-[calc(100vh-3.5rem)] md:mt-[80px] md:ml-[240px] md:mr-3 md:mb-3 md:p-6 lg:px-9 lg:py-8 md:min-h-[calc(100vh-92px)]">
         <div className="mx-auto max-w-[1400px] w-full">
           {children}
         </div>
