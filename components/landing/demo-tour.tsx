@@ -67,11 +67,12 @@ export function DemoTour() {
 
 // ── Pantalla 1: Asignaciones ──
 function PantallaAsignaciones() {
+  // Datos ficticios (solo demostración; no corresponden a personas reales).
   const rows = [
-    { n: "Jose Leoncio Garces Valencia", c: "16472041", sel: true },
-    { n: "Nelsy Medina Hernández", c: "1113625225", sel: true },
-    { n: "Gilma Elsa Díaz García", c: "20677554", sel: false },
-    { n: "Alberto Lora Valencia", c: "10539081", sel: false },
+    { n: "Juan Camilo Restrepo", c: "10245870", sel: true },
+    { n: "Ana María Gómez Ruiz", c: "52318994", sel: true },
+    { n: "Pedro Luis Ramírez", c: "16402115", sel: false },
+    { n: "Laura Sofía Torres", c: "1144208331", sel: false },
   ];
   return (
     <div className="h-full flex flex-col">
@@ -103,10 +104,11 @@ function PantallaAsignaciones() {
 
 // ── Pantalla 2: Reparto ──
 function PantallaReparto() {
+  // Datos ficticios (solo demostración; no corresponden a personas reales).
   const rows = [
-    { n: "Carlos J. Arias Caicedo", d: "Juzgado 021 Laboral", est: "proc", hot: true },
-    { n: "Wilson Lugo", d: "Juzgado 021 Laboral", est: "proc" },
-    { n: "Rocío Daza Ussa", d: "Juzgado 021 Laboral", est: "pend" },
+    { n: "Andrés Felipe Rojas", d: "Juzgado 021 Laboral", est: "proc", hot: true },
+    { n: "Diana Marcela Ruiz", d: "Juzgado 014 Laboral", est: "proc" },
+    { n: "Carlos Andrés Mora", d: "Juzgado 006 Laboral", est: "pend" },
   ];
   return (
     <div className="h-full flex flex-col">
