@@ -96,7 +96,7 @@ export function Topbar({ userEmail }: { userEmail?: string }) {
           <input
             type="search"
             placeholder="Buscar caso o radicado..."
-            className="w-56 h-8 pl-8 pr-3 text-xs bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
+            className="w-60 h-9 pl-8 pr-3 text-xs bg-muted/70 border border-transparent rounded-full text-foreground placeholder:text-muted-foreground focus:outline-none focus:bg-background focus:border-ring/40 focus:ring-2 focus:ring-ring/20 transition-all"
           />
         </div>
 
@@ -104,13 +104,13 @@ export function Topbar({ userEmail }: { userEmail?: string }) {
         <button
           onClick={toggle}
           title={theme === "dark" ? "Modo claro" : "Modo nocturno"}
-          className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
         >
           {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>
 
         {/* Notificaciones */}
-        <button className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+        <button className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
           <Bell className="w-4 h-4" />
         </button>
 
@@ -123,7 +123,7 @@ export function Topbar({ userEmail }: { userEmail?: string }) {
           <button
             onClick={handleSignOut}
             title="Cerrar sesión"
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-muted transition-colors"
+            className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-muted transition-colors"
           >
             <LogOut className="w-3.5 h-3.5" />
           </button>

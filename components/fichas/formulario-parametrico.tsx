@@ -69,7 +69,7 @@ function Select({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className={cn(
-          "w-full h-10 appearance-none rounded-md border bg-background px-3.5 py-2 pr-8 text-sm focus:outline-none focus:ring-1 focus:ring-ring",
+          "w-full h-10 appearance-none rounded-lg border bg-background px-3.5 py-2 pr-8 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-ring/25 focus:border-ring/50",
           error ? "border-destructive" : "border-input",
           !value && "text-muted-foreground"
         )}
@@ -1111,7 +1111,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
             onChange={(e) => setSintesisHechos(e.target.value)}
             rows={8}
             placeholder="Se traerá automáticamente desde el documento «Traslado de la demanda» (título HECHOS) al analizar los PDFs en el paso 1. También puedes escribirlo o editarlo aquí."
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-ring resize-y min-h-[140px]"
+            className="w-full rounded-xl border border-input bg-background px-3.5 py-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring/25 resize-y min-h-[140px]"
           />
         </Campo>
         <p className="text-[11px] text-muted-foreground flex items-start gap-1">
@@ -1130,7 +1130,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
             onChange={(e) => setPretensionesTexto(e.target.value)}
             rows={8}
             placeholder="Se traerá automáticamente desde el documento «Traslado de la demanda» (título PRETENSIONES) al analizar los PDFs en el paso 1. También puedes escribirlo o editarlo aquí."
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-ring resize-y min-h-[140px]"
+            className="w-full rounded-xl border border-input bg-background px-3.5 py-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring/25 resize-y min-h-[140px]"
           />
         </Campo>
         <p className="text-[11px] text-muted-foreground flex items-start gap-1">
@@ -1150,7 +1150,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
             onChange={(e) => setCuantiaTexto(e.target.value)}
             rows={3}
             placeholder="La cuantía fue estimada por la parte actora, en ___. (Se trae del título «CUANTÍA» / «COMPETENCIA Y CUANTÍA» del traslado; puede ser en moneda o en SMLMV.)"
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-ring resize-y min-h-[80px]"
+            className="w-full rounded-xl border border-input bg-background px-3.5 py-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring/25 resize-y min-h-[80px]"
           />
         </Campo>
         <p className="text-[11px] text-muted-foreground flex items-start gap-1">
@@ -1169,7 +1169,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
             onChange={(e) => setNormasTexto(e.target.value)}
             rows={8}
             placeholder="Se relacionan las leyes, decretos, artículos y normatividad citada en el título «FUNDAMENTOS Y RAZONES DE DERECHO» / «NORMAS VIOLADAS» / «CONCEPTO DE VIOLACIÓN» del traslado (una por línea)."
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-ring resize-y min-h-[140px]"
+            className="w-full rounded-xl border border-input bg-background px-3.5 py-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring/25 resize-y min-h-[140px]"
           />
         </Campo>
         <p className="text-[11px] text-muted-foreground flex items-start gap-1">
@@ -1191,7 +1191,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
             onChange={(e) => setProblemaTexto(e.target.value)}
             rows={5}
             placeholder="Plantea el problema jurídico central del caso. Si lo dejas vacío, se generará automáticamente al crear la ficha."
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-ring resize-y min-h-[100px]"
+            className="w-full rounded-xl border border-input bg-background px-3.5 py-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring/25 resize-y min-h-[100px]"
           />
         </Campo>
       </Bloque>
@@ -1203,7 +1203,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
             onChange={(e) => setJurisprudenciaTexto(e.target.value)}
             rows={7}
             placeholder="Cita la jurisprudencia aplicable (corporación, número de sentencia/radicado y ratio decidendi). Si lo dejas vacío, se generará automáticamente."
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-ring resize-y min-h-[130px]"
+            className="w-full rounded-xl border border-input bg-background px-3.5 py-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring/25 resize-y min-h-[130px]"
           />
         </Campo>
       </Bloque>
@@ -1215,7 +1215,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
             onChange={(e) => setConsideracionesTexto(e.target.value)}
             rows={8}
             placeholder="Consideraciones jurídicas de fondo sobre la procedencia de la conciliación. Si lo dejas vacío, se generará automáticamente."
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-ring resize-y min-h-[140px]"
+            className="w-full rounded-xl border border-input bg-background px-3.5 py-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring/25 resize-y min-h-[140px]"
           />
         </Campo>
       </Bloque>
@@ -1230,7 +1230,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
             onChange={(e) => setPoliticasTexto(e.target.value)}
             rows={6}
             placeholder="Políticas institucionales y llamamientos aplicables. Si lo dejas vacío, se usará el texto por defecto."
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-ring resize-y min-h-[120px]"
+            className="w-full rounded-xl border border-input bg-background px-3.5 py-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring/25 resize-y min-h-[120px]"
           />
         </Campo>
       </Bloque>
