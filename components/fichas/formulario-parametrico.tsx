@@ -855,13 +855,13 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
 
       {/* ── Información del proceso (encabezado v3) ── */}
       <div className="rounded-xl border border-border bg-card overflow-hidden card-shadow">
-        <div className="flex items-center gap-3 px-6 py-4 border-b border-border bg-muted/30">
-          <span className="w-9 h-9 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+        <div className="flex items-center gap-3 px-6 py-4 bg-primary border-l-4 border-l-[#6ea8e6]">
+          <span className="w-9 h-9 rounded-lg bg-white/15 text-white flex items-center justify-center shrink-0">
             <ClipboardList className="w-4 h-4" />
           </span>
           <div>
-            <h3 className="text-sm font-semibold text-foreground">Información del proceso</h3>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Datos de la cabecera de la ficha</p>
+            <h3 className="text-sm font-semibold text-white">Información del proceso</h3>
+            <p className="text-[11px] text-white/70 mt-0.5">Datos de la cabecera de la ficha</p>
           </div>
         </div>
         <div className="px-6 py-6 space-y-6">
@@ -976,13 +976,13 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
       {/* ── Bloque 0: Documentos previos ── */}
       <div className="rounded-xl border border-border bg-card overflow-hidden card-shadow">
         {/* Header del bloque — estilo diferenciado del bloque de datos */}
-        <div className="flex items-center gap-3 px-6 py-4 border-b border-border bg-primary/5 border-l-4 border-l-primary">
-          <div className="w-9 h-9 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+        <div className="flex items-center gap-3 px-6 py-4 bg-primary border-l-4 border-l-[#6ea8e6]">
+          <div className="w-9 h-9 rounded-lg bg-white/15 text-white flex items-center justify-center shrink-0">
             <FileSignature className="w-4 h-4" />
           </div>
           <div className="min-w-0">
-            <h3 className="text-[15px] font-bold text-foreground leading-tight">Documentos previos</h3>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Poder de sustitución y traslado de la demanda</p>
+            <h3 className="text-[15px] font-bold text-white leading-tight">Documentos previos</h3>
+            <p className="text-[11px] text-white/70 mt-0.5">Poder de sustitución y traslado de la demanda</p>
           </div>
         </div>
 
@@ -1413,9 +1413,9 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
       {/* ── Paso 5: Revisar y descargar ── */}
       {paso === 5 && (
       <div className="rounded-xl border border-border bg-card overflow-hidden card-shadow">
-        <div className="px-5 py-4 border-b border-border">
-          <h3 className="text-[15px] font-bold text-foreground">Revisar y descargar</h3>
-          <p className="text-sm text-muted-foreground mt-0.5">
+        <div className="px-6 py-4 bg-primary border-l-4 border-l-[#6ea8e6]">
+          <h3 className="text-[15px] font-bold text-white">Revisar y descargar</h3>
+          <p className="text-sm text-white/70 mt-0.5">
             Plantilla: Ficha de Conciliación Judicial (GDJ-GPO-FMT-005 v3).
           </p>
         </div>

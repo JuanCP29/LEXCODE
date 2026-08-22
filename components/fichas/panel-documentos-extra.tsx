@@ -190,18 +190,18 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
         <div className="bg-card border border-border rounded-xl overflow-hidden card-shadow">
 
           {/* Encabezado del panel con estado */}
-          <div className="flex items-center justify-between gap-2 px-5 py-4 border-b border-border">
-            <h3 className="text-sm font-semibold text-foreground">Ingesta y procesamiento</h3>
+          <div className="flex items-center justify-between gap-2 px-5 py-4 bg-primary border-l-4 border-l-[#6ea8e6]">
+            <h3 className="text-sm font-semibold text-white">Ingesta y procesamiento</h3>
             {estado === "listo" ? (
               <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full bg-green-50 text-green-700 border border-green-200 dark:bg-green-950/30 dark:text-green-400 dark:border-green-900">
                 <CheckCircle2 className="w-3 h-3" /> Procesado
               </span>
             ) : estado === "analizando" ? (
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full bg-white/15 text-white border border-white/25">
                 <Loader2 className="w-3 h-3 animate-spin" /> Procesando
               </span>
             ) : (
-              <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-muted text-muted-foreground border border-border">
+              <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-white/15 text-white/90 border border-white/20">
                 Pendiente
               </span>
             )}
@@ -399,10 +399,10 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
 
         {/* ── Documentos previos del caso ── */}
         <div className="bg-card border border-border rounded-xl overflow-hidden card-shadow">
-          <div className="flex items-center justify-between gap-2 px-5 py-4 border-b border-border">
-            <h3 className="text-sm font-semibold text-foreground">Documentos previos</h3>
+          <div className="flex items-center justify-between gap-2 px-5 py-4 bg-primary border-l-4 border-l-[#6ea8e6]">
+            <h3 className="text-sm font-semibold text-white">Documentos previos</h3>
             {documentos && documentos.length > 0 && (
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-muted text-muted-foreground border border-border">
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-white/15 text-white border border-white/20">
                 {documentos.length}
               </span>
             )}
