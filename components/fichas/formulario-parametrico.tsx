@@ -151,6 +151,8 @@ interface FormularioParametricoProps {
   claseSugerida?: string | null;        // clase BUPC detectada
   causanteNombreSugerido?: string | null; // nombre del causante/afiliado detectado (si difiere del demandante)
   causanteCedulaSugerida?: string | null; // cédula del causante/afiliado detectado
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  fichaInicial?: Record<string, any>;     // última ficha guardada del caso (para prellenar al re-entrar)
 }
 
 // Mapea una pretensión BUPC (MAYÚSCULAS) al enum del formulario/ficha; null si no hay equivalencia.
@@ -206,7 +208,7 @@ function limpiarNum(v: string | null | undefined): string {
   return s;
 }
 
-export function FormularioParametrico({ casoId, casoData, valoresPrellenados, sintesisHechosSugerida, pretensionesSugerida, cuantiaSugerida, normasSugerida, problemaSugerido, consideracionesSugerida, pretensionSugerida, claseSugerida, causanteNombreSugerido, causanteCedulaSugerida }: FormularioParametricoProps) {
+export function FormularioParametrico({ casoId, casoData, valoresPrellenados, sintesisHechosSugerida, pretensionesSugerida, cuantiaSugerida, normasSugerida, problemaSugerido, consideracionesSugerida, pretensionSugerida, claseSugerida, causanteNombreSugerido, causanteCedulaSugerida, fichaInicial }: FormularioParametricoProps) {
   const [error, setError] = useState<string | null>(null);
   const [generandoPoder, setGenerandoPoder] = useState(false);
   const [poderGenerado, setPoderGenerado] = useState(false);
@@ -241,6 +243,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
   });
   const clasesDePretension = CATALOGO_PRETENSIONES.find((c) => c.pretension === pretensionSel)?.clases ?? [];
   const prevPrellenados = useRef<Partial<ParametrosFormData> | undefined>(undefined);
+  const fichaPrefilled = useRef(false);
 
   // Paso "Revisar y descargar"
   const [fichaId, setFichaId] = useState<string | null>(null);
@@ -367,6 +370,48 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
       }
     );
   }, [valoresPrellenados, setValue]);
+
+  // Prellenar desde la ÚLTIMA ficha guardada del caso (al re-entrar): módulos de texto + campos.
+  // Se ejecuta una sola vez, al montar. Así el trabajo previo no se pierde entre sesiones.
+  useEffect(() => {
+    if (!fichaInicial || fichaPrefilled.current) return;
+    fichaPrefilled.current = true;
+    const f = fichaInicial;
+    if (f.sec_1_hechos) setSintesisHechos(String(f.sec_1_hechos));
+    if (f.sec_2_pretensiones) setPretensionesTexto(String(f.sec_2_pretensiones));
+    if (f.sec_3_cuantia) setCuantiaTexto(String(f.sec_3_cuantia));
+    if (f.sec_4_normas) setNormasTexto(String(f.sec_4_normas));
+    if (f.sec_8_problema) setProblemaTexto(String(f.sec_8_problema));
+    if (f.sec_11_jurisprudencia) setJurisprudenciaTexto(String(f.sec_11_jurisprudencia));
+    if (f.sec_15_politicas) setPoliticasTexto(String(f.sec_15_politicas));
+    if (f.sec_16_consideraciones) setConsideracionesTexto(String(f.sec_16_consideraciones));
+    // Campos del formulario (react-hook-form)
+    if (typeof f.conciliable === "boolean") setValue("conciliable", f.conciliable);
+    if (f.directriz_conciliacion) setValue("directriz_conciliacion", f.directriz_conciliacion);
+    if (f.caducidad) setValue("caducidad", f.caducidad);
+    if (f.reconsideracion) setValue("reconsideracion", f.reconsideracion);
+    if (f.cuantia_tipo) setValue("cuantia_tipo", f.cuantia_tipo);
+    if (f.cuantia_valor != null) setValue("cuantia_valor", f.cuantia_valor);
+    if (typeof f.pretende_intereses === "boolean") setValue("pretende_intereses", f.pretende_intereses);
+    if (typeof f.pretende_indexacion === "boolean") setValue("pretende_indexacion", f.pretende_indexacion);
+    if (typeof f.hay_fallo === "boolean") setValue("hay_fallo", f.hay_fallo);
+    if (f.sintesis_fallo) setValue("sintesis_fallo", f.sintesis_fallo);
+    if (f.fecha_diligencia) setValue("fecha_diligencia", f.fecha_diligencia);
+    if (f.causante_afiliado) setValue("causante_afiliado", f.causante_afiliado);
+    if (f.resolucion_prestacion) setValue("resolucion_prestacion", f.resolucion_prestacion);
+    // Niveles de riesgo desde el texto guardado (sec_17): "• <label>: <NIVEL>"
+    if (f.sec_17_riesgo) {
+      const txt = String(f.sec_17_riesgo);
+      setRiesgoNiveles((prev) => {
+        const next = { ...prev };
+        for (const c of CRITERIOS_RIESGO) {
+          const m = txt.match(new RegExp(`${c.label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}:\\s*(ALTO|MEDIO ALTO|MEDIO BAJO|BAJO)`));
+          if (m) next[c.key] = m[1];
+        }
+        return next;
+      });
+    }
+  }, [fichaInicial, setValue]);
 
   // Traer la síntesis de hechos extraída del traslado al cuadro de texto (Sección 1),
   // mientras esté vacío (no pisar lo que el abogado escriba).

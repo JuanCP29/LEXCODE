@@ -14,9 +14,13 @@ export type DocumentoPrevio = {
   url: string | null;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type FichaInicial = Record<string, any>;
+
 interface GeneradorParamsViewProps {
   casoId: string;
   documentos?: DocumentoPrevio[];
+  fichaInicial?: FichaInicial;
   casoData: {
     pretension: string | null;
     clase_pretension: string | null;
@@ -29,7 +33,7 @@ interface GeneradorParamsViewProps {
   };
 }
 
-export function GeneradorParamsView({ casoId, casoData, documentos }: GeneradorParamsViewProps) {
+export function GeneradorParamsView({ casoId, casoData, documentos, fichaInicial }: GeneradorParamsViewProps) {
   const [valoresPrellenados, setValoresPrellenados] = useState<CamposExtraidos | null>(null);
   const [sintesisHechos, setSintesisHechos] = useState<string | null>(null);
   const [pretensiones, setPretensiones] = useState<string | null>(null);
@@ -77,6 +81,7 @@ export function GeneradorParamsView({ casoId, casoData, documentos }: GeneradorP
         claseSugerida={claseDet}
         causanteNombreSugerido={causanteNombre}
         causanteCedulaSugerida={causanteCedula}
+        fichaInicial={fichaInicial}
       />
 
       {/* Panel lateral: ingesta + documentos previos */}

@@ -38,6 +38,17 @@ export default async function GeneradorParamsPage({
     }))
   );
 
+  // Última ficha guardada del caso: para prellenar los módulos de texto y campos al re-entrar.
+  const { data: fichaInicial } = await supabase
+    .from("fichas_conciliacion")
+    .select(
+      "id, sec_1_hechos, sec_2_pretensiones, sec_3_cuantia, sec_4_normas, sec_8_problema, sec_11_jurisprudencia, sec_15_politicas, sec_16_consideraciones, sec_17_riesgo, conciliable, directriz_conciliacion, cuantia_tipo, cuantia_valor, pretende_intereses, pretende_indexacion, hay_fallo, sintesis_fallo, fecha_diligencia, caducidad, reconsideracion, causante_afiliado, resolucion_prestacion"
+    )
+    .eq("caso_id", caso.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
   return (
     <div className="max-w-[1400px] mx-auto space-y-7">
 
@@ -68,6 +79,7 @@ export default async function GeneradorParamsPage({
       <GeneradorParamsView
         casoId={caso.id}
         documentos={documentos}
+        fichaInicial={fichaInicial ?? undefined}
         casoData={{
           pretension: caso.pretension,
           clase_pretension: caso.clase_pretension,
