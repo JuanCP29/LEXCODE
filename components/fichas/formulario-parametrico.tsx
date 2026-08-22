@@ -69,7 +69,7 @@ function Select({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className={cn(
-          "w-full h-10 appearance-none rounded-lg border bg-background px-3.5 py-2 pr-8 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-ring/25 focus:border-ring/50",
+          "w-full h-10 appearance-none rounded-lg border bg-card px-3.5 py-2 pr-8 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-ring/25 focus:border-ring/50",
           error ? "border-destructive" : "border-input",
           !value && "text-muted-foreground"
         )}
