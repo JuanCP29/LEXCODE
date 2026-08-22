@@ -122,20 +122,24 @@ function contarPalabras(s: string): number {
 
 // Módulo de texto con IA: autoexpansión, contador de palabras, marca "editado"
 // y botón para restaurar la sugerencia original de la IA.
-function ModuloTexto({ value, onChange, sugerencia, placeholder, minHeight = 140 }: {
+function ModuloTexto({ value, onChange, sugerencia, placeholder, minHeight = 140, maxHeight = 340 }: {
   value: string;
   onChange: (v: string) => void;
   sugerencia?: string | null;
   placeholder?: string;
   minHeight?: number;
+  maxHeight?: number;
 }) {
   const ref = useRef<HTMLTextAreaElement>(null);
+  // Autoexpande con el contenido hasta maxHeight; más allá, scroll interno del cuadro.
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = `${Math.max(minHeight, el.scrollHeight)}px`;
-  }, [value, minHeight]);
+    const alto = Math.min(Math.max(minHeight, el.scrollHeight), maxHeight);
+    el.style.height = `${alto}px`;
+    el.style.overflowY = el.scrollHeight > maxHeight ? "auto" : "hidden";
+  }, [value, minHeight, maxHeight]);
 
   const editado = !!(sugerencia && sugerencia.trim() && value !== sugerencia);
   const palabras = contarPalabras(value);
@@ -147,8 +151,8 @@ function ModuloTexto({ value, onChange, sugerencia, placeholder, minHeight = 140
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        style={{ minHeight }}
-        className="w-full rounded-xl border border-input bg-background px-3.5 py-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring/25 resize-none overflow-hidden"
+        style={{ minHeight, maxHeight }}
+        className="w-full rounded-xl border border-input bg-background px-3.5 py-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring/25 resize-none"
       />
       <div className="mt-2 flex items-center gap-3 text-[11px] text-muted-foreground">
         <span className="tabular-nums">{palabras} palabra{palabras === 1 ? "" : "s"}</span>
