@@ -118,7 +118,7 @@ function CampoLectura({ label, valor }: { label: string; valor?: string | null }
   return (
     <div className="space-y-1.5">
       <Label className="text-[11px] font-semibold uppercase tracking-wide text-primary/70">{label}</Label>
-      <div className="w-full rounded-md border border-input bg-muted/40 px-3 py-2 text-sm text-foreground/80 min-h-[38px] break-words">
+      <div className="w-full rounded-lg border border-input bg-muted/40 px-3.5 py-2.5 text-sm text-foreground/80 min-h-[40px] break-words">
         {valor && valor.trim() ? valor : <span className="text-muted-foreground">—</span>}
       </div>
     </div>
@@ -897,7 +897,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
                   ¿Se cuenta con traslado y anexos de la demanda en Bizagi?
                 </p>
               </div>
-              <div className="flex rounded-lg border border-input overflow-hidden w-fit shrink-0">
+              <div className="inline-flex items-center gap-1 rounded-lg bg-muted p-1 w-fit shrink-0">
                 {([true, false] as const).map((opt) => (
                   <button
                     key={String(opt)}
@@ -907,12 +907,12 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
                       if (opt) setMemorialGenerado(false);
                     }}
                     className={cn(
-                      "px-4 py-1.5 text-sm font-medium transition-colors",
+                      "px-5 py-1 text-sm font-medium rounded-md transition-all",
                       trasladoBizagi === opt
                         ? opt
-                          ? "bg-green-600 text-white"
-                          : "bg-[#6b93de] text-white"
-                        : "bg-background text-muted-foreground hover:bg-muted"
+                          ? "bg-green-600 text-white card-shadow"
+                          : "bg-[#6b93de] text-white card-shadow"
+                        : "text-muted-foreground hover:text-foreground"
                     )}
                   >
                     {opt ? "Sí" : "No"}
