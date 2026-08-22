@@ -22,15 +22,18 @@ const breadcrumbMap: Record<string, string> = {
 
 function Breadcrumb() {
   const pathname = usePathname();
-  // Se omite "dashboard" (inicio): en la home el breadcrumb queda vacío.
-  const segments = pathname.split("/").filter(Boolean).filter((s) => s !== "dashboard");
+  // Se omite "dashboard" (inicio) y los IDs crudos (UUID). Los href se calculan sobre la
+  // ruta original para que los enlaces intermedios sigan siendo correctos.
+  const esUuid = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+  const raw = pathname.split("/").filter(Boolean);
+  const items = raw
+    .map((seg, i) => ({ seg, href: "/" + raw.slice(0, i + 1).join("/"), isLast: i === raw.length - 1 }))
+    .filter(({ seg }) => seg !== "dashboard" && !esUuid(seg));
 
   return (
     <nav className="flex items-center gap-1 text-xs">
-      {segments.map((seg, i) => {
-        const isLast = i === segments.length - 1;
+      {items.map(({ seg, href, isLast }, i) => {
         const label = breadcrumbMap[seg] ?? seg;
-        const href = "/" + segments.slice(0, i + 1).join("/");
         return (
           <span key={href} className="flex items-center gap-1">
             {i > 0 && <ChevronRight className="w-3 h-3 text-muted-foreground" />}
