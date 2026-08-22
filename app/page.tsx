@@ -1,5 +1,10 @@
 import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { Landing } from "@/components/landing/landing";
 
-export default function Home() {
-  redirect("/dashboard");
+export default async function Home() {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) redirect("/dashboard");
+  return <Landing />;
 }
