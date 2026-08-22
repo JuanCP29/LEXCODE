@@ -160,6 +160,10 @@
 
 @layer utilities {
   .text-balance { text-wrap: balance; }
+  @keyframes fade-up { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .animate-fade-up { animation: fade-up .5s ease both; }
+  @keyframes caret-blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+  .animate-caret { animation: caret-blink 1s steps(1) infinite; }
   /* Sombras suaves y difusas estilo macOS (dos capas: contacto + elevación) */
   .card-shadow  { box-shadow: 0 1px 2px rgba(16,24,40,.04), 0 8px 24px -10px rgba(16,24,40,.10); }
   .card-shadow-md { box-shadow: 0 1px 2px rgba(16,24,40,.05), 0 16px 36px -12px rgba(16,24,40,.14); }

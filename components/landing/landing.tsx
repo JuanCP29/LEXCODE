@@ -15,9 +15,17 @@ const SECCIONES = [
 ];
 const TOTAL = SECCIONES.length + 1; // +1 para el estado final "Ficha lista"
 
+// Línea rotativa de capacidades bajo el texto principal.
+const FRASES = [
+  "Extrae los hechos y las pretensiones del traslado",
+  "Calcula el riesgo con base en 627.775 casos",
+  "Genera la ficha, el poder y los memoriales",
+];
+
 export function Landing() {
   // step 0 = analizando; 1..N = revela sección n-1; TOTAL = ficha lista; luego reinicia.
   const [step, setStep] = useState(0);
+  const [frase, setFrase] = useState(0);
 
   useEffect(() => {
     const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
@@ -31,6 +39,13 @@ export function Landing() {
     };
     tick(0);
     return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) return;
+    const i = setInterval(() => setFrase((f) => (f + 1) % FRASES.length), 2600);
+    return () => clearInterval(i);
   }, []);
 
   const listo = step >= TOTAL;
@@ -66,6 +81,14 @@ export function Landing() {
               LEGIUX lee el traslado, extrae los hechos y las pretensiones, calcula el riesgo
               y arma tus documentos jurídicos automatizados. Menos digitación, más criterio.
             </p>
+
+            {/* Línea rotativa de capacidades */}
+            <div className="mt-4 h-6 flex items-center gap-2 text-sm">
+              <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+              <span key={frase} className="text-foreground/80 animate-fade-up">
+                {FRASES[frase]}
+              </span>
+            </div>
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link
@@ -115,11 +138,13 @@ export function Landing() {
               <div className="p-5 space-y-4 bg-primary/[0.04]">
                 {SECCIONES.map((sec, i) => {
                   const revelada = step > i;
+                  const activa = step === i + 1; // recién generada (muestra el cursor)
                   return (
                     <div
                       key={sec.label}
                       className={cn(
                         "rounded-xl border bg-card p-3.5 transition-all duration-500",
+                        activa && "ring-2 ring-primary/15",
                         revelada ? "opacity-100 translate-y-0 border-border" : "opacity-55 translate-y-1 border-dashed border-border"
                       )}
                     >
@@ -151,6 +176,7 @@ export function Landing() {
                               {sec.valor}
                             </p>
                           )}
+                          {activa && <span className="inline-block w-[2px] h-3.5 bg-primary/70 align-middle animate-caret" aria-hidden />}
                         </div>
                       )}
                     </div>
