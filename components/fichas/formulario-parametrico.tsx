@@ -820,9 +820,9 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
                 <span className={cn(
                   "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-all",
                   activo
-                    ? "bg-primary text-primary-foreground ring-2 ring-[#6ea8e6] card-shadow"
+                    ? "bg-primary text-primary-foreground ring-4 ring-primary/10"
                     : hecho
-                    ? "bg-primary text-primary-foreground ring-2 ring-[#6ea8e6] card-shadow"
+                    ? "bg-primary text-primary-foreground"
                     : "bg-muted text-muted-foreground border border-border"
                 )}>
                   {hecho ? <Check className="w-3.5 h-3.5" /> : n}
