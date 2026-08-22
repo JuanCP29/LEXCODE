@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn, limpiarDespacho } from "@/lib/utils";
-import { Loader2, ArrowRight, ArrowLeft, ChevronDown, FileSignature, CheckCircle2, AlertCircle, ExternalLink, Mail, Clock, Handshake, Check, ClipboardList, FileText, Eye, FileDown } from "lucide-react";
+import { Loader2, ArrowRight, ArrowLeft, ChevronDown, FileSignature, CheckCircle2, AlertCircle, ExternalLink, Mail, Clock, Handshake, Check, ClipboardList, FileText, Eye, FileDown, RotateCcw, Pencil } from "lucide-react";
 import { ConsultaRadicado } from "@/components/fichas/consulta-radicado";
 import { VistaPreviaDocumento } from "@/components/fichas/vista-previa-documento";
 import { CATALOGO_PRETENSIONES } from "@/lib/data/catalogo-pretensiones";
@@ -109,6 +109,63 @@ function Campo({ label, required, error, children }: {
       </Label>
       {children}
       {error && <p className="text-xs text-destructive">{error}</p>}
+    </div>
+  );
+}
+
+// Cuenta palabras de un texto.
+function contarPalabras(s: string): number {
+  const t = (s ?? "").trim();
+  return t ? t.split(/\s+/).length : 0;
+}
+
+// Módulo de texto con IA: autoexpansión, contador de palabras, marca "editado"
+// y botón para restaurar la sugerencia original de la IA.
+function ModuloTexto({ value, onChange, sugerencia, placeholder, minHeight = 140 }: {
+  value: string;
+  onChange: (v: string) => void;
+  sugerencia?: string | null;
+  placeholder?: string;
+  minHeight?: number;
+}) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.max(minHeight, el.scrollHeight)}px`;
+  }, [value, minHeight]);
+
+  const editado = !!(sugerencia && sugerencia.trim() && value !== sugerencia);
+  const palabras = contarPalabras(value);
+
+  return (
+    <div>
+      <textarea
+        ref={ref}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        style={{ minHeight }}
+        className="w-full rounded-xl border border-input bg-background px-3.5 py-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring/25 resize-none overflow-hidden"
+      />
+      <div className="mt-2 flex items-center gap-3 text-[11px] text-muted-foreground">
+        <span className="tabular-nums">{palabras} palabra{palabras === 1 ? "" : "s"}</span>
+        {editado && value.trim() && (
+          <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
+            <Pencil className="w-3 h-3" /> editado
+          </span>
+        )}
+        {editado && (
+          <button
+            type="button"
+            onClick={() => onChange(sugerencia as string)}
+            className="ml-auto inline-flex items-center gap-1 font-semibold text-primary hover:underline"
+          >
+            <RotateCcw className="w-3 h-3" /> Restaurar sugerencia IA
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -1106,12 +1163,12 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
       {/* Síntesis de los hechos (Sección 1) — traída del traslado por el API */}
       <Bloque icono={<FileText className="w-4 h-4" />} titulo="Síntesis de los hechos">
         <Campo label="Resumen de los hechos (Sección 1 del documento)">
-          <textarea
+          <ModuloTexto
             value={sintesisHechos}
-            onChange={(e) => setSintesisHechos(e.target.value)}
-            rows={8}
+            onChange={setSintesisHechos}
+            sugerencia={sintesisHechosSugerida}
+            minHeight={140}
             placeholder="Se traerá automáticamente desde el documento «Traslado de la demanda» (título HECHOS) al analizar los PDFs en el paso 1. También puedes escribirlo o editarlo aquí."
-            className="w-full rounded-xl border border-input bg-background px-3.5 py-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring/25 resize-y min-h-[140px]"
           />
         </Campo>
         <p className="text-[11px] text-muted-foreground flex items-start gap-1">
@@ -1125,12 +1182,12 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
       {/* Pretensiones (Sección 2) — traídas del título PRETENSIONES del traslado */}
       <Bloque icono={<FileText className="w-4 h-4" />} titulo="Pretensiones">
         <Campo label="Resumen de las pretensiones (Sección 2 del documento)">
-          <textarea
+          <ModuloTexto
             value={pretensionesTexto}
-            onChange={(e) => setPretensionesTexto(e.target.value)}
-            rows={8}
+            onChange={setPretensionesTexto}
+            sugerencia={pretensionesSugerida}
+            minHeight={140}
             placeholder="Se traerá automáticamente desde el documento «Traslado de la demanda» (título PRETENSIONES) al analizar los PDFs en el paso 1. También puedes escribirlo o editarlo aquí."
-            className="w-full rounded-xl border border-input bg-background px-3.5 py-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring/25 resize-y min-h-[140px]"
           />
         </Campo>
         <p className="text-[11px] text-muted-foreground flex items-start gap-1">
@@ -1145,12 +1202,12 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
       {/* Cuantía (Sección 3) — traída del título CUANTÍA del traslado */}
       <Bloque icono={<FileText className="w-4 h-4" />} titulo="Cuantía">
         <Campo label="Cuantía (Sección 3 del documento)">
-          <textarea
+          <ModuloTexto
             value={cuantiaTexto}
-            onChange={(e) => setCuantiaTexto(e.target.value)}
-            rows={3}
+            onChange={setCuantiaTexto}
+            sugerencia={cuantiaSugerida}
+            minHeight={80}
             placeholder="La cuantía fue estimada por la parte actora, en ___. (Se trae del título «CUANTÍA» / «COMPETENCIA Y CUANTÍA» del traslado; puede ser en moneda o en SMLMV.)"
-            className="w-full rounded-xl border border-input bg-background px-3.5 py-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring/25 resize-y min-h-[80px]"
           />
         </Campo>
         <p className="text-[11px] text-muted-foreground flex items-start gap-1">
@@ -1164,12 +1221,12 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
       {/* Presuntas normas violadas (Sección 4) — del título FUNDAMENTOS Y RAZONES DE DERECHO / NORMAS VIOLADAS */}
       <Bloque icono={<FileText className="w-4 h-4" />} titulo="Presuntas normas violadas">
         <Campo label="Presuntas normas violadas (Sección 4 del documento)">
-          <textarea
+          <ModuloTexto
             value={normasTexto}
-            onChange={(e) => setNormasTexto(e.target.value)}
-            rows={8}
+            onChange={setNormasTexto}
+            sugerencia={normasSugerida}
+            minHeight={140}
             placeholder="Se relacionan las leyes, decretos, artículos y normatividad citada en el título «FUNDAMENTOS Y RAZONES DE DERECHO» / «NORMAS VIOLADAS» / «CONCEPTO DE VIOLACIÓN» del traslado (una por línea)."
-            className="w-full rounded-xl border border-input bg-background px-3.5 py-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring/25 resize-y min-h-[140px]"
           />
         </Campo>
         <p className="text-[11px] text-muted-foreground flex items-start gap-1">
@@ -1186,36 +1243,35 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
       {paso === 3 && (<>
       <Bloque icono={<FileText className="w-4 h-4" />} titulo="Problema jurídico">
         <Campo label="Problema jurídico (Sección 7 del documento)">
-          <textarea
+          <ModuloTexto
             value={problemaTexto}
-            onChange={(e) => setProblemaTexto(e.target.value)}
-            rows={5}
+            onChange={setProblemaTexto}
+            sugerencia={problemaSugerido}
+            minHeight={100}
             placeholder="Plantea el problema jurídico central del caso. Si lo dejas vacío, se generará automáticamente al crear la ficha."
-            className="w-full rounded-xl border border-input bg-background px-3.5 py-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring/25 resize-y min-h-[100px]"
           />
         </Campo>
       </Bloque>
 
       <Bloque icono={<FileText className="w-4 h-4" />} titulo="Jurisprudencia">
         <Campo label="Jurisprudencia (Sección 9 del documento)">
-          <textarea
+          <ModuloTexto
             value={jurisprudenciaTexto}
-            onChange={(e) => setJurisprudenciaTexto(e.target.value)}
-            rows={7}
+            onChange={setJurisprudenciaTexto}
+            minHeight={130}
             placeholder="Cita la jurisprudencia aplicable (corporación, número de sentencia/radicado y ratio decidendi). Si lo dejas vacío, se generará automáticamente."
-            className="w-full rounded-xl border border-input bg-background px-3.5 py-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring/25 resize-y min-h-[130px]"
           />
         </Campo>
       </Bloque>
 
       <Bloque icono={<FileText className="w-4 h-4" />} titulo="Consideraciones">
         <Campo label="Consideraciones (Sección 11 del documento)">
-          <textarea
+          <ModuloTexto
             value={consideracionesTexto}
-            onChange={(e) => setConsideracionesTexto(e.target.value)}
-            rows={8}
+            onChange={setConsideracionesTexto}
+            sugerencia={consideracionesSugerida}
+            minHeight={140}
             placeholder="Consideraciones jurídicas de fondo sobre la procedencia de la conciliación. Si lo dejas vacío, se generará automáticamente."
-            className="w-full rounded-xl border border-input bg-background px-3.5 py-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring/25 resize-y min-h-[140px]"
           />
         </Campo>
       </Bloque>
@@ -1225,12 +1281,11 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
       {paso === 4 && (<>
       <Bloque icono={<FileText className="w-4 h-4" />} titulo="Políticas / llamamientos">
         <Campo label="Políticas / llamamientos (Sección 10 del documento)">
-          <textarea
+          <ModuloTexto
             value={politicasTexto}
-            onChange={(e) => setPoliticasTexto(e.target.value)}
-            rows={6}
+            onChange={setPoliticasTexto}
+            minHeight={120}
             placeholder="Políticas institucionales y llamamientos aplicables. Si lo dejas vacío, se usará el texto por defecto."
-            className="w-full rounded-xl border border-input bg-background px-3.5 py-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring/25 resize-y min-h-[120px]"
           />
         </Campo>
       </Bloque>
