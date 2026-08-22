@@ -116,7 +116,7 @@ export function TablaCasos({ casos }: TablaCasosProps) {
                 <td className="px-4 py-3 whitespace-nowrap">
                   <Link
                     href={`/generador/${caso.id}/params`}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-semibold transition-colors border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-semibold transition-colors border-primary text-primary hover:bg-[var(--sidebar)] hover:border-[var(--sidebar)] hover:text-white"
                   >
                     F. Conciliación
                   </Link>
