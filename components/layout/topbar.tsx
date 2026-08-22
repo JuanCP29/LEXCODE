@@ -22,14 +22,18 @@ const breadcrumbMap: Record<string, string> = {
 
 function Breadcrumb() {
   const pathname = usePathname();
-  const segments = pathname.split("/").filter(Boolean);
+  // Se omite "dashboard" (inicio) y los IDs crudos (UUID). Los href se calculan sobre la
+  // ruta original para que los enlaces intermedios sigan siendo correctos.
+  const esUuid = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+  const raw = pathname.split("/").filter(Boolean);
+  const items = raw
+    .map((seg, i) => ({ seg, href: "/" + raw.slice(0, i + 1).join("/"), isLast: i === raw.length - 1 }))
+    .filter(({ seg }) => seg !== "dashboard" && !esUuid(seg));
 
   return (
     <nav className="flex items-center gap-1 text-xs">
-      {segments.map((seg, i) => {
-        const isLast = i === segments.length - 1;
+      {items.map(({ seg, href, isLast }, i) => {
         const label = breadcrumbMap[seg] ?? seg;
-        const href = "/" + segments.slice(0, i + 1).join("/");
         return (
           <span key={href} className="flex items-center gap-1">
             {i > 0 && <ChevronRight className="w-3 h-3 text-muted-foreground" />}
@@ -71,10 +75,10 @@ export function Topbar({ userEmail }: { userEmail?: string }) {
   return (
     <>
       <header
-        className="fixed top-0 left-0 right-0 h-14 flex items-center px-4 z-50 gap-3"
+        className="fixed z-50 h-14 flex items-center px-4 gap-3 top-0 left-0 right-0 border-b md:top-3 md:left-[240px] md:right-3 md:rounded-2xl md:border md:card-shadow"
         style={{
           backgroundColor: "var(--topbar)",
-          borderBottom: "1px solid var(--topbar-border)",
+          borderColor: "var(--topbar-border)",
         }}
       >
         {/* Hamburguesa móvil */}
@@ -84,9 +88,6 @@ export function Topbar({ userEmail }: { userEmail?: string }) {
         >
           <Menu className="w-5 h-5" />
         </button>
-
-        {/* Espaciador sidebar desktop */}
-        <div className="hidden md:block w-[220px] shrink-0" />
 
         {/* Breadcrumb */}
         <div className="flex-1 hidden sm:block">
@@ -99,7 +100,7 @@ export function Topbar({ userEmail }: { userEmail?: string }) {
           <input
             type="search"
             placeholder="Buscar caso o radicado..."
-            className="w-56 h-8 pl-8 pr-3 text-xs bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
+            className="w-60 h-9 pl-8 pr-3 text-xs bg-muted/70 border border-transparent rounded-full text-foreground placeholder:text-muted-foreground focus:outline-none focus:bg-background focus:border-ring/40 focus:ring-2 focus:ring-ring/20 transition-all"
           />
         </div>
 
@@ -107,13 +108,13 @@ export function Topbar({ userEmail }: { userEmail?: string }) {
         <button
           onClick={toggle}
           title={theme === "dark" ? "Modo claro" : "Modo nocturno"}
-          className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
         >
           {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>
 
         {/* Notificaciones */}
-        <button className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+        <button className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
           <Bell className="w-4 h-4" />
         </button>
 
@@ -126,7 +127,7 @@ export function Topbar({ userEmail }: { userEmail?: string }) {
           <button
             onClick={handleSignOut}
             title="Cerrar sesión"
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-muted transition-colors"
+            className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-muted transition-colors"
           >
             <LogOut className="w-3.5 h-3.5" />
           </button>

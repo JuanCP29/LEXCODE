@@ -190,18 +190,18 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
         <div className="bg-card border border-border rounded-xl overflow-hidden card-shadow">
 
           {/* Encabezado del panel con estado */}
-          <div className="flex items-center justify-between gap-2 px-5 py-4 border-b border-border">
+          <div className="flex items-center justify-between gap-2 px-5 py-4 border-b border-border bg-primary/5 border-l-4 border-l-primary">
             <h3 className="text-sm font-semibold text-foreground">Ingesta y procesamiento</h3>
             {estado === "listo" ? (
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-md bg-green-50 text-green-700 border border-green-200 dark:bg-green-950/30 dark:text-green-400 dark:border-green-900">
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full bg-green-50 text-green-700 border border-green-200 dark:bg-green-950/30 dark:text-green-400 dark:border-green-900">
                 <CheckCircle2 className="w-3 h-3" /> Procesado
               </span>
             ) : estado === "analizando" ? (
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-md bg-primary/10 text-primary border border-primary/20">
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
                 <Loader2 className="w-3 h-3 animate-spin" /> Procesando
               </span>
             ) : (
-              <span className="text-[10px] font-semibold px-2 py-1 rounded-md bg-muted text-muted-foreground border border-border">
+              <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-muted text-muted-foreground border border-border">
                 Pendiente
               </span>
             )}
@@ -210,7 +210,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
           {/* Zona drop */}
           <div
             className={cn(
-              "relative m-4 rounded-lg border-2 border-dashed transition-colors cursor-pointer",
+              "relative m-4 rounded-xl border-2 border-dashed transition-colors cursor-pointer",
               dragging
                 ? "border-primary bg-primary/5"
                 : "border-border hover:border-primary/50 hover:bg-muted/30"
@@ -249,7 +249,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
               {archivos.map((f) => (
                 <div
                   key={f.name}
-                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-muted/40 text-xs"
+                  className="flex items-center gap-2 px-2.5 py-2 rounded-lg bg-muted/40 text-xs"
                 >
                   <FileText className="w-3.5 h-3.5 text-primary shrink-0" />
                   <span className="flex-1 truncate text-foreground/80">{f.name}</span>
@@ -267,7 +267,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
                 <button
                   onClick={analizar}
                   disabled={estado === "analizando"}
-                  className="w-full mt-1 py-2 rounded-md bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+                  className="w-full mt-1 py-2.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-60 flex items-center justify-center gap-2"
                 >
                   {estado === "analizando" ? (
                     <>
@@ -361,7 +361,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
               {Object.entries(sugerencias)
                 .filter(([k, v]) => !SUGERENCIAS_NO_PROSA.has(k) && v && String(v).trim())
                 .map(([key, texto]) => (
-                  <div key={key} className="rounded-md border border-border bg-muted/30 px-2.5 py-2">
+                  <div key={key} className="rounded-lg border border-border bg-muted/30 px-3 py-2.5">
                     <div className="flex items-center justify-between gap-2 mb-1">
                       <span className="text-[10px] font-semibold text-muted-foreground">
                         {LABEL_SUGERENCIA[key] ?? key}
@@ -399,7 +399,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
 
         {/* ── Documentos previos del caso ── */}
         <div className="bg-card border border-border rounded-xl overflow-hidden card-shadow">
-          <div className="flex items-center justify-between gap-2 px-5 py-4 border-b border-border">
+          <div className="flex items-center justify-between gap-2 px-5 py-4 border-b border-border bg-primary/5 border-l-4 border-l-primary">
             <h3 className="text-sm font-semibold text-foreground">Documentos previos</h3>
             {documentos && documentos.length > 0 && (
               <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-muted text-muted-foreground border border-border">

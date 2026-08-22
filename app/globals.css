@@ -40,12 +40,12 @@
     --destructive:         #d0392b;
     --destructive-foreground: #ffffff;
 
-    --border:              #d8e0e8;
-    --input:               #d3dce5;
+    --border:              #e5e9ef;
+    --input:               #dfe4ea;
     --ring:                #1f2a3b;
-    --radius:              0.5rem;
+    --radius:              0.75rem;
 
-    /* Sidebar — shell navy (amazon.jobs), texto claro, activo azul */
+    /* Sidebar — shell navy, texto claro, activo azul */
     --sidebar:             #1f2a3b;
     --sidebar-foreground:  #c6d1dd;
     --sidebar-border:      #2b384b;
@@ -138,12 +138,29 @@
   * { @apply border-border; }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    /* Stack tipo Apple: SF Pro en macOS, Inter en el resto */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+      var(--font-ui), "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-feature-settings: "cv02" 1, "cv03" 1, "cv04" 1, "calt" 1;
+    letter-spacing: -0.011em;
+  }
+
+  /* Scrollbars finos estilo macOS */
+  * { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--foreground) 22%, transparent) transparent; }
+  ::-webkit-scrollbar { width: 12px; height: 12px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--foreground) 18%, transparent);
+    border-radius: 999px; border: 3px solid transparent; background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, var(--foreground) 32%, transparent); background-clip: padding-box;
   }
 }
 
 @layer utilities {
   .text-balance { text-wrap: balance; }
-  .card-shadow  { box-shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05); }
-  .card-shadow-md { box-shadow: 0 4px 6px -1px rgba(0,0,0,.08), 0 2px 4px -2px rgba(0,0,0,.05); }
+  /* Sombras suaves y difusas estilo macOS (dos capas: contacto + elevación) */
+  .card-shadow  { box-shadow: 0 1px 2px rgba(16,24,40,.04), 0 8px 24px -10px rgba(16,24,40,.10); }
+  .card-shadow-md { box-shadow: 0 1px 2px rgba(16,24,40,.05), 0 16px 36px -12px rgba(16,24,40,.14); }
 }

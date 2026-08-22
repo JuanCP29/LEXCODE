@@ -33,7 +33,7 @@ function SidebarContent({ onClose }: SidebarContentProps) {
   const pathname = usePathname();
 
   return (
-    <div className="flex flex-col h-full bg-sidebar border-r border-sidebar-border">
+    <div className="flex flex-col h-full bg-sidebar">
 
       {/* Logo */}
       <div className="flex items-center justify-between px-5 h-14 border-b border-sidebar-border shrink-0">
@@ -129,7 +129,7 @@ function SidebarContent({ onClose }: SidebarContentProps) {
 
 export function Sidebar() {
   return (
-    <aside className="hidden md:flex fixed left-0 top-0 h-screen w-[220px] flex-col z-40">
+    <aside className="hidden md:flex fixed left-3 top-3 bottom-3 w-[216px] flex-col z-40 rounded-2xl overflow-hidden border border-sidebar-border card-shadow">
       <SidebarContent />
     </aside>
   );

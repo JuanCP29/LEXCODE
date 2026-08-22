@@ -13,7 +13,7 @@ export default async function CasosPage() {
   const total = casos?.length ?? 0;
 
   return (
-    <div className="space-y-5 max-w-6xl">
+    <div className="space-y-5 max-w-[1400px]">
       <CasosHeader total={total} />
       <div className="bg-card rounded-xl border border-border card-shadow overflow-hidden">
         <TablaCasos casos={casos ?? []} />
