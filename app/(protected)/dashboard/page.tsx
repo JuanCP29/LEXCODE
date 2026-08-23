@@ -51,7 +51,7 @@ export default async function DashboardPage() {
       <div>
         <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest mb-3">Mi actividad</p>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard label="Total de procesos" value={counts.total} icon={FolderOpen} tint="#1f2a3b" href="/casos" />
+          <StatCard label="Total de procesos" value={counts.total} icon={FolderOpen} tint="#1690b8" href="/casos" />
           <StatCard label="Pendientes" value={counts.pendiente} icon={Clock} tint="#2563eb" sub={`${pct(counts.pendiente)}%`} href="/casos" />
           <StatCard label="En proceso" value={counts.en_proceso} icon={Loader2} tint="#d97706" sub={`${pct(counts.en_proceso)}%`} href="/casos" />
           <StatCard label="Completados" value={counts.completado} icon={CheckCircle2} tint="#16a34a" sub={`${pct(counts.completado)}%`} href="/casos" />
@@ -93,14 +93,14 @@ function QuickAction({ href, icon: Icon, label, desc }: {
 }) {
   return (
     <Link href={href} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted transition-colors group">
-      <div className="w-9 h-9 rounded-lg bg-primary-subtle flex items-center justify-center shrink-0">
-        <Icon className="w-4 h-4 text-primary" />
+      <div className="w-9 h-9 rounded-lg bg-brand-subtle flex items-center justify-center shrink-0 transition-colors group-hover:bg-brand/15">
+        <Icon className="w-4 h-4 text-brand-ink" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">{label}</p>
+        <p className="text-sm font-semibold text-foreground group-hover:text-brand-ink transition-colors">{label}</p>
         <p className="text-xs text-muted-foreground truncate">{desc}</p>
       </div>
-      <div className="flex items-center gap-1 text-xs text-muted-foreground group-hover:text-primary transition-all shrink-0">
+      <div className="flex items-center gap-1 text-xs text-muted-foreground group-hover:text-brand-ink transition-all shrink-0">
         Abrir <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
       </div>
     </Link>

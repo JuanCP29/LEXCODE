@@ -65,14 +65,17 @@ function SidebarContent({ onClose }: SidebarContentProps) {
               href={href}
               onClick={onClose}
               className={cn(
-                "flex items-center gap-3 rounded-lg text-sm font-medium transition-colors",
+                "relative flex items-center gap-3 rounded-lg text-sm font-medium transition-colors",
                 sub ? "px-3 py-2 ml-3" : "px-3 py-2.5",
                 active
                   ? "bg-sidebar-accent text-sidebar-accent-foreground"
                   : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
               )}
             >
-              <Icon className={cn(sub ? "w-3.5 h-3.5" : "w-4 h-4", "shrink-0", active ? "text-white" : "text-[var(--sidebar-muted)]")} />
+              {active && !sub && (
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-[#35b9db]" />
+              )}
+              <Icon className={cn(sub ? "w-3.5 h-3.5" : "w-4 h-4", "shrink-0", active ? "text-[#35b9db]" : "text-[var(--sidebar-muted)]")} />
               <span className={sub ? "text-xs" : ""}>{label}</span>
             </Link>
           );

@@ -26,6 +26,11 @@ const config: Config = {
           foreground: "var(--primary-foreground)",
           subtle:     "var(--primary-subtle)",
         },
+        brand: {
+          DEFAULT:    "var(--brand)",
+          ink:        "var(--brand-ink)",
+          subtle:     "var(--brand-subtle)",
+        },
         secondary: {
           DEFAULT:    "var(--secondary)",
           foreground: "var(--secondary-foreground)",

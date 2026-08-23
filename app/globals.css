@@ -21,9 +21,14 @@
     --primary-subtle:      #e9edf3;
     --primary-light:       #3b4a5e;
 
-    /* Acento IA */
-    --ia:                  #1f2a3b;
-    --ia-subtle:           #e9edf3;
+    /* Acento de marca (cian FoQs) — realces, activo, foco, IA */
+    --brand:               #35b9db;   /* relleno / borde vivo */
+    --brand-ink:           #1690b8;   /* cian legible como texto/ícono sobre claro */
+    --brand-subtle:        #e6f6fb;   /* fondo tenue */
+
+    /* Acento IA = marca */
+    --ia:                  #1690b8;
+    --ia-subtle:           #e6f6fb;
 
     --card:                #ffffff;
     --card-foreground:     #1c2733;
@@ -42,7 +47,7 @@
 
     --border:              #e5e9ef;
     --input:               #dfe4ea;
-    --ring:                #1f2a3b;
+    --ring:                #35b9db;
     --radius:              0.75rem;
 
     /* Sidebar — shell navy, texto claro, activo azul */
@@ -88,8 +93,13 @@
     --primary-subtle:      #16283c;
     --primary-light:       #2e6da6;
 
-    --ia:                  #4c9fe8;
-    --ia-subtle:           #16283c;
+    /* Acento de marca (cian FoQs) */
+    --brand:               #35b9db;
+    --brand-ink:           #5fc7e6;
+    --brand-subtle:        #10303d;
+
+    --ia:                  #35b9db;
+    --ia-subtle:           #10303d;
 
     --card:                #1b232d;
     --card-foreground:     #e7edf3;
@@ -108,7 +118,7 @@
 
     --border:              #2e3a47;
     --input:               #33414f;
-    --ring:                #4c9fe8;
+    --ring:                #35b9db;
 
     --sidebar:             #12181f;
     --sidebar-foreground:  #c7d2de;
