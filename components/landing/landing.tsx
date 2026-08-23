@@ -10,7 +10,6 @@ import { DemoTour } from "@/components/landing/demo-tour";
 const FRASES = [
   "Extrae los hechos y las pretensiones del traslado",
   "Asocia las pretensiones y arma tus documentos jurídicos",
-  "Genera la ficha, el poder y los memoriales",
 ];
 
 export function Landing() {
