@@ -80,10 +80,10 @@ export function Landing() {
             {/* Ventajas */}
             <div className="mt-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 max-w-3xl">
               <Ventaja icon={Zap} titulo="Automatiza" texto="Lee los PDF y prellena las secciones." />
-              <Ventaja icon={Lightbulb} titulo="Analiza" texto="Identifica el problema jurídico y sugiere." />
               <Ventaja icon={FileText} titulo="Genera" texto="Ficha, poder y memoriales listos." />
-              <Ventaja icon={ShieldCheck} titulo="Evalúa" texto="Riesgo con base histórica real." />
+              <Ventaja icon={Lightbulb} titulo="Analiza" texto="Identifica el problema jurídico y sugiere." />
               <Ventaja icon={Scale} titulo="Acompaña" texto="Optimiza tu criterio jurídico." />
+              <Ventaja icon={ShieldCheck} titulo="Evalúa" texto="Riesgo con base histórica real." />
             </div>
 
           </div>
