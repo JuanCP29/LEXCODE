@@ -6,12 +6,14 @@ import { FileText, CheckCircle2, MousePointer2, Loader2, Check, Upload, FileDown
 
 // Recorrido tipo video: 5 escenas encadenadas en bucle.
 const ESCENAS = [
-  { id: "reparto",  cap: "Abre la ficha desde el caso",  dur: 2800 },
-  { id: "ingesta",  cap: "La IA analiza el traslado",     dur: 2800 },
-  { id: "llenado",  cap: "Prellena hechos y pretensiones", dur: 3400 },
-  { id: "riesgo",   cap: "Calcula el riesgo procesal",    dur: 2000 },
-  { id: "descarga", cap: "Genera y descarga el documento", dur: 3000 },
+  { id: "reparto",  cap: "Abre la ficha desde el caso",   dur: 2600 },
+  { id: "ingesta",  cap: "La IA analiza el traslado",     dur: 2900 },
+  { id: "llenado",  cap: "Prellena hechos y pretensiones", dur: 3200 },
+  { id: "riesgo",   cap: "Calcula el riesgo procesal",    dur: 2200 },
+  { id: "descarga", cap: "Genera y descarga el documento", dur: 3200 },
 ] as const;
+// El "clic" del cursor ocurre ~850 ms después de entrar (cuando ya llegó al botón).
+const CLICK_DELAY = 850;
 
 // Posición del cursor (en %) por escena.
 const CURSOR: Record<string, { top: string; left: string; click: boolean }> = {
@@ -24,13 +26,22 @@ const CURSOR: Record<string, { top: string; left: string; click: boolean }> = {
 
 export function DemoTour() {
   const [i, setI] = useState(0);
+  const [pressed, setPressed] = useState(false);
   const esc = ESCENAS[i].id;
 
   useEffect(() => {
     const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     if (reduce) { setI(2); return; }
+    setPressed(false);
     const t = setTimeout(() => setI((n) => (n + 1) % ESCENAS.length), ESCENAS[i].dur);
-    return () => clearTimeout(t);
+    // Clic del cursor (solo escenas con botón): llega y luego pulsa.
+    let tDown: ReturnType<typeof setTimeout> | undefined;
+    let tUp: ReturnType<typeof setTimeout> | undefined;
+    if (CURSOR[ESCENAS[i].id].click) {
+      tDown = setTimeout(() => setPressed(true), CLICK_DELAY);
+      tUp = setTimeout(() => setPressed(false), CLICK_DELAY + 600);
+    }
+    return () => { clearTimeout(t); if (tDown) clearTimeout(tDown); if (tUp) clearTimeout(tUp); };
   }, [i]);
 
   const cur = CURSOR[esc];
@@ -54,7 +65,7 @@ export function DemoTour() {
             {esc === "reparto" && <EscReparto />}
             {esc === "ingesta" && <EscIngesta />}
             {(esc === "llenado" || esc === "riesgo") && <EscFicha riesgo={esc === "riesgo"} />}
-            {esc === "descarga" && <EscDescarga />}
+            {esc === "descarga" && <EscDescarga descargado={pressed} />}
           </div>
 
           {/* Cursor animado */}
@@ -63,8 +74,8 @@ export function DemoTour() {
             style={{ top: cur.top, left: cur.left }}
             aria-hidden
           >
-            {cur.click && <span key={esc + "-r"} className="absolute -top-1 -left-1 w-6 h-6 rounded-full bg-primary/30 animate-ripple" />}
-            <MousePointer2 className="w-5 h-5 text-primary fill-white drop-shadow" />
+            {pressed && <span className="absolute -top-1 -left-1 w-6 h-6 rounded-full bg-primary/30 animate-ripple" />}
+            <MousePointer2 className={cn("w-5 h-5 text-primary fill-white drop-shadow transition-transform duration-150", pressed && "scale-90")} />
           </div>
         </div>
 
@@ -185,7 +196,7 @@ function EscFicha({ riesgo }: { riesgo: boolean }) {
 }
 
 // ── Escena: Descarga (ficha lista + botón) ──
-function EscDescarga() {
+function EscDescarga({ descargado }: { descargado: boolean }) {
   return (
     <div className="h-full flex flex-col">
       <div className="rounded-xl border border-border bg-card overflow-hidden flex-1">
@@ -202,11 +213,13 @@ function EscDescarga() {
           <SecOK label="Recomendación" />
         </div>
       </div>
-      <div className="mt-3 flex items-center justify-between">
-        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-green-700 animate-fade-up">
-          <CheckCircle2 className="w-4 h-4" /> PDF descargado
-        </span>
-        <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg bg-primary text-white">
+      <div className="mt-3 flex items-center justify-between min-h-[36px]">
+        {descargado ? (
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-green-700 animate-fade-up">
+            <CheckCircle2 className="w-4 h-4" /> PDF descargado
+          </span>
+        ) : <span />}
+        <span className={cn("inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg bg-primary text-white transition-transform duration-150", descargado && "scale-95")}>
           <FileDown className="w-4 h-4" /> Descargar PDF
         </span>
       </div>
