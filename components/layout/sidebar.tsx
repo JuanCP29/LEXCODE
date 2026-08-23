@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { FoqsLogo } from "@/components/ui/foqs-logo";
 import {
   LayoutDashboard,
   FolderOpen,
@@ -37,20 +38,8 @@ function SidebarContent({ onClose }: SidebarContentProps) {
 
       {/* Logo */}
       <div className="flex items-center justify-between px-5 h-14 border-b border-sidebar-border shrink-0">
-        <Link href="/dashboard" onClick={onClose} className="flex items-center gap-2.5">
-          {/* Ícono angular */}
-          <span className="flex items-center justify-center w-7 h-7 rounded-md bg-[#6ea8e6] text-[#1f2a3b]">
-            <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
-              <polygon points="10,2 18,8 2,8" fill="currentColor" />
-              <rect x="3"  y="8" width="2.5" height="10" fill="currentColor" />
-              <rect x="7"  y="8" width="2.5" height="10" fill="currentColor" />
-              <rect x="11" y="8" width="2.5" height="10" fill="currentColor" />
-              <rect x="15" y="8" width="2.5" height="10" fill="currentColor" />
-            </svg>
-          </span>
-          <span className="font-bold text-lg tracking-tight text-white">
-            <span className="text-[#6ea8e6]">Fo</span><span>Qs</span>
-          </span>
+        <Link href="/dashboard" onClick={onClose}>
+          <FoqsLogo tone="dark" size="md" />
         </Link>
         {onClose && (
           <button onClick={onClose} className="text-sidebar-muted hover:text-sidebar-foreground md:hidden">

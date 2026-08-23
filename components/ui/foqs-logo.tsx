@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-const CYAN = "#35b9db";
+export const FOQS_CYAN = "#35b9db";
 
 // Marca "Q": anillo + cola, con arco cian (órbita) y destello. `ink` es el color de trazo.
 export function FoqsMark({ className, ink = "#1c2733" }: { className?: string; ink?: string }) {
@@ -8,8 +8,8 @@ export function FoqsMark({ className, ink = "#1c2733" }: { className?: string; i
     <svg viewBox="0 0 100 100" className={className} fill="none" aria-hidden>
       <circle cx="45" cy="55" r="29" stroke={ink} strokeWidth="8" />
       <line x1="57" y1="67" x2="79" y2="89" stroke={ink} strokeWidth="8" strokeLinecap="round" />
-      <path d="M18 44 A34 34 0 0 1 46 18" stroke={CYAN} strokeWidth="8" strokeLinecap="round" />
-      <path d="M85 11 L88.5 22 L99 25.5 L88.5 29 L85 40 L81.5 29 L71 25.5 L81.5 22 Z" fill={CYAN} />
+      <path d="M18 44 A34 34 0 0 1 46 18" stroke={FOQS_CYAN} strokeWidth="8" strokeLinecap="round" />
+      <path d="M85 11 L88.5 22 L99 25.5 L88.5 29 L85 40 L81.5 29 L71 25.5 L81.5 22 Z" fill={FOQS_CYAN} />
     </svg>
   );
 }
