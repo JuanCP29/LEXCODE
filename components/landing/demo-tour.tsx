@@ -93,7 +93,7 @@ export function DemoTour() {
             key={e.id}
             type="button"
             onClick={() => setI(n)}
-            className={cn("h-1.5 rounded-full transition-all", n === i ? "w-8 bg-primary" : "w-4 bg-border hover:bg-muted-foreground/40")}
+            className={cn("h-1.5 rounded-full transition-all", n === i ? "w-8 bg-[#35b9db]" : "w-4 bg-white/20 hover:bg-white/40")}
             aria-label={e.cap}
           />
         ))}

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { FoqsLogo } from "@/components/ui/foqs-logo";
-import { ArrowRight, Sparkles, CheckCircle2, FileText, ShieldCheck, Zap, Scale } from "lucide-react";
+import { ArrowRight, Sparkles, CheckCircle2, FileText, ShieldCheck, Zap, Scale, Lightbulb } from "lucide-react";
 import { DemoTour } from "@/components/landing/demo-tour";
 
 // Línea rotativa de capacidades bajo el texto principal.
@@ -78,8 +78,9 @@ export function Landing() {
             </div>
 
             {/* Ventajas */}
-            <div className="mt-10 grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-2xl">
+            <div className="mt-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 max-w-3xl">
               <Ventaja icon={Zap} titulo="Automatiza" texto="Lee los PDF y prellena las secciones." />
+              <Ventaja icon={Lightbulb} titulo="Analiza" texto="Identifica el problema jurídico y sugiere." />
               <Ventaja icon={FileText} titulo="Genera" texto="Ficha, poder y memoriales listos." />
               <Ventaja icon={ShieldCheck} titulo="Evalúa" texto="Riesgo con base histórica real." />
               <Ventaja icon={Scale} titulo="Acompaña" texto="Optimiza tu criterio jurídico." />
