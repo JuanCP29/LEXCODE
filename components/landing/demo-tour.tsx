@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { FileText, CheckCircle2, MousePointer2, Loader2, Check, Upload, FileDown } from "lucide-react";
 
 // Recorrido tipo video: 5 escenas encadenadas en bucle.
-const ESCENAS = [
+export const ESCENAS = [
   { id: "reparto",  cap: "Abre la ficha desde el caso",   dur: 2600 },
   { id: "ingesta",  cap: "La IA analiza el traslado",     dur: 2900 },
   { id: "llenado",  cap: "Prellena hechos y pretensiones", dur: 3200 },
@@ -24,25 +24,21 @@ const CURSOR: Record<string, { top: string; left: string; click: boolean }> = {
   descarga: { top: "86%", left: "62%", click: true },
 };
 
-export function DemoTour() {
-  const [i, setI] = useState(0);
+export function DemoTour({ escena, onSelect }: { escena: number; onSelect: (i: number) => void }) {
   const [pressed, setPressed] = useState(false);
-  const esc = ESCENAS[i].id;
+  const esc = ESCENAS[escena].id;
 
   useEffect(() => {
-    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    if (reduce) { setI(2); return; }
     setPressed(false);
-    const t = setTimeout(() => setI((n) => (n + 1) % ESCENAS.length), ESCENAS[i].dur);
     // Clic del cursor (solo escenas con botón): llega y luego pulsa.
     let tDown: ReturnType<typeof setTimeout> | undefined;
     let tUp: ReturnType<typeof setTimeout> | undefined;
-    if (CURSOR[ESCENAS[i].id].click) {
+    if (CURSOR[ESCENAS[escena].id].click) {
       tDown = setTimeout(() => setPressed(true), CLICK_DELAY);
       tUp = setTimeout(() => setPressed(false), CLICK_DELAY + 600);
     }
-    return () => { clearTimeout(t); if (tDown) clearTimeout(tDown); if (tUp) clearTimeout(tUp); };
-  }, [i]);
+    return () => { if (tDown) clearTimeout(tDown); if (tUp) clearTimeout(tUp); };
+  }, [escena]);
 
   const cur = CURSOR[esc];
 
@@ -82,7 +78,7 @@ export function DemoTour() {
         {/* Pie: subtítulo de la escena */}
         <div className="px-5 py-3 border-t border-border bg-card flex items-center gap-2 text-xs">
           <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-          <span className="font-medium text-foreground">{ESCENAS[i].cap}</span>
+          <span className="font-medium text-foreground">{ESCENAS[escena].cap}</span>
         </div>
       </div>
 
@@ -92,8 +88,8 @@ export function DemoTour() {
           <button
             key={e.id}
             type="button"
-            onClick={() => setI(n)}
-            className={cn("h-1.5 rounded-full transition-all", n === i ? "w-8 bg-[#35b9db]" : "w-4 bg-white/20 hover:bg-white/40")}
+            onClick={() => onSelect(n)}
+            className={cn("h-1.5 rounded-full transition-all", n === escena ? "w-8 bg-[#35b9db]" : "w-4 bg-white/20 hover:bg-white/40")}
             aria-label={e.cap}
           />
         ))}
