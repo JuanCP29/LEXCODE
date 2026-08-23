@@ -9,7 +9,7 @@ import { DemoTour } from "@/components/landing/demo-tour";
 // Línea rotativa de capacidades bajo el texto principal.
 const FRASES = [
   "Extrae los hechos y las pretensiones del traslado",
-  "Calcula el riesgo procesal del caso",
+  "Asocia las pretensiones y arma tus documentos jurídicos",
   "Genera la ficha, el poder y los memoriales",
 ];
 
