@@ -106,7 +106,7 @@ function SidebarContent({ onClose }: SidebarContentProps) {
       {/* Pie — bloque de cuenta */}
       <div className="px-3 py-3 border-t border-sidebar-border shrink-0">
         <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg">
-          <span className="w-8 h-8 rounded-full bg-[#6ea8e6] text-[#1f2a3b] flex items-center justify-center text-xs font-bold shrink-0 select-none">
+          <span className="w-8 h-8 rounded-full bg-[#35b9db] text-[#08131f] flex items-center justify-center text-xs font-bold shrink-0 select-none">
             CO
           </span>
           <div className="min-w-0">
