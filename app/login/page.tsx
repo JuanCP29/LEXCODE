@@ -52,11 +52,31 @@ export default function LoginPage() {
 
   return (
     <div className="relative min-h-screen grid lg:grid-cols-[1.05fr_1fr] bg-background overflow-hidden">
-      {/* Ola navy decorativa (cresta vertical que sangra por la derecha) */}
-      <div className="pointer-events-none absolute inset-y-0 right-0 hidden lg:block" aria-hidden>
-        <div className="absolute top-1/2 -translate-y-1/2 right-[-25rem] w-[34rem] h-[54rem] rounded-full bg-primary" />
-        <div className="absolute top-1/2 -translate-y-1/2 right-[-24.5rem] w-[34rem] h-[54rem] rounded-full ring-2 ring-[#35b9db]/30 blur-[2px]" />
-      </div>
+      {/* Onda navy decorativa (curva orgánica que sangra por la derecha) */}
+      <svg
+        className="pointer-events-none absolute inset-y-0 right-0 h-full w-[34%] hidden lg:block"
+        viewBox="0 0 400 1000"
+        preserveAspectRatio="xMidYMid slice"
+        aria-hidden
+      >
+        <defs>
+          <linearGradient id="wave" x1="0" y1="0" x2="0.4" y2="1">
+            <stop offset="0" stopColor="#2b3d57" />
+            <stop offset="1" stopColor="#131f2e" />
+          </linearGradient>
+        </defs>
+        <path
+          d="M150,0 C60,230 60,430 140,560 C210,675 60,820 150,1000 L400,1000 L400,0 Z"
+          fill="url(#wave)"
+        />
+        <path
+          d="M150,0 C60,230 60,430 140,560 C210,675 60,820 150,1000"
+          fill="none"
+          stroke="#35b9db"
+          strokeOpacity="0.35"
+          strokeWidth="2"
+        />
+      </svg>
 
       {/* ── Panel izquierdo: marca ── */}
       <aside className="relative z-10 hidden lg:flex flex-col justify-between overflow-hidden px-12 xl:px-16 py-12">
@@ -100,7 +120,7 @@ export default function LoginPage() {
       </aside>
 
       {/* ── Panel derecho: formulario ── */}
-      <main className="relative z-10 flex flex-col items-center justify-center px-5 py-10">
+      <main className="relative z-10 flex flex-col items-center justify-center px-5 py-10 lg:pr-24">
         {/* Marca compacta (solo móvil) */}
         <div className="lg:hidden mb-8 flex flex-col items-center gap-1.5">
           <FoqsLogo size="lg" />
@@ -208,7 +228,7 @@ export default function LoginPage() {
 
           <p className="mt-5 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
             <Lock className="w-3.5 h-3.5" />
-            Conexión segura y encriptada · Tus datos están protegidos
+            Conexión segura y encriptada
           </p>
         </div>
       </main>
