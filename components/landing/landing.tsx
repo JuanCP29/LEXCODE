@@ -54,7 +54,7 @@ export function Landing() {
               <Sparkles className="w-3.5 h-3.5" /> Collegia Abogados · LEGIUX
             </p>
             <h1 className="mt-4 text-4xl sm:text-5xl font-bold tracking-tight leading-[1.08] text-balance">
-              De los documentos del proceso a la <span className="text-primary">ficha lista</span>, en minutos.
+              Del expediente al <span className="text-primary">documento</span>, en minutos.
             </h1>
             <p className="mt-5 text-lg text-muted-foreground max-w-xl leading-relaxed">
               LEGIUX lee el traslado, extrae los hechos y las pretensiones, calcula el riesgo
