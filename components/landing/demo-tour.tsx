@@ -112,7 +112,7 @@ function EscReparto() {
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center gap-1.5 text-sm font-semibold text-foreground mb-3">
-        <FileText className="w-4 h-4 text-primary" /> Reparto <span className="text-muted-foreground font-normal">· 61 procesos</span>
+        <FileText className="w-4 h-4 text-primary" /> Reparto
       </div>
       <div className="space-y-2">
         {rows.map((r, k) => (
@@ -179,7 +179,7 @@ function EscFicha({ riesgo }: { riesgo: boolean }) {
           <SecOK label="Pretensiones" />
           {riesgo ? (
             <>
-              <SecOK label="Cuantía" valor="$ 6.664.086" />
+              <SecOK label="Cuantía" />
               <div className="flex items-center gap-2 animate-fade-up">
                 <CheckCircle2 className="w-3.5 h-3.5 text-green-600 shrink-0" />
                 <span className="text-[11px] font-semibold text-foreground shrink-0">Riesgo</span>
@@ -209,7 +209,7 @@ function EscDescarga({ descargado }: { descargado: boolean }) {
         <div className="p-3 space-y-2.5">
           <SecOK label="Síntesis de los hechos" />
           <SecOK label="Pretensiones" />
-          <SecOK label="Cuantía" valor="$ 6.664.086" />
+          <SecOK label="Cuantía" />
           <SecOK label="Recomendación" />
         </div>
       </div>
