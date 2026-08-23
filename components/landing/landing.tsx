@@ -81,7 +81,7 @@ export function Landing() {
               Del expediente al <span className="text-[#35b9db]">documento</span>, en minutos.
             </h1>
             <p className="mt-5 text-lg text-[#9db2cc] max-w-lg leading-relaxed">
-              La IA que lee el expediente y arma tus documentos jurídicos.
+              Automatiza lo repetitivo. Conserva el criterio jurídico.
             </p>
 
             {/* Línea rotativa de capacidades */}
