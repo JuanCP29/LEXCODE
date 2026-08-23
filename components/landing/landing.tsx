@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Logo } from "@/components/ui/logo";
+import { FoqsLogo } from "@/components/landing/foqs-logo";
 import { ArrowRight, Sparkles, CheckCircle2, FileText, ShieldCheck, Zap, Scale } from "lucide-react";
 import { DemoTour } from "@/components/landing/demo-tour";
 
@@ -33,7 +33,7 @@ export function Landing() {
       {/* Barra superior mínima */}
       <header className="relative z-10 w-full">
         <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
-          <Logo size="md" />
+          <FoqsLogo size="md" />
           <Link
             href="/login"
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
@@ -50,10 +50,10 @@ export function Landing() {
           {/* Izquierda: mensaje */}
           <div>
             <p className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-widest text-primary/70">
-              <Sparkles className="w-3.5 h-3.5" /> Collegia Abogados · FoQs
+              <Sparkles className="w-3.5 h-3.5 text-[#0f97bd]" /> Inteligencia legal · Enfoque real
             </p>
             <h1 className="mt-4 text-4xl sm:text-5xl font-bold tracking-tight leading-[1.08] text-balance">
-              Del expediente al <span className="text-primary">documento</span>, en minutos.
+              Del expediente al <span className="text-[#0f97bd]">documento</span>, en minutos.
             </h1>
             <p className="mt-5 text-lg text-muted-foreground max-w-xl leading-relaxed">
               FoQs lee el traslado, extrae los hechos y las pretensiones, asocia las pretensiones
@@ -62,7 +62,7 @@ export function Landing() {
 
             {/* Línea rotativa de capacidades */}
             <div className="mt-4 h-6 flex items-center gap-2 text-sm">
-              <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+              <CheckCircle2 className="w-4 h-4 text-[#0f97bd] shrink-0" />
               <span key={frase} className="text-foreground/80 animate-fade-up">
                 {FRASES[frase]}
               </span>
