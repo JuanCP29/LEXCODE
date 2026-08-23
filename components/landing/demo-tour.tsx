@@ -145,7 +145,7 @@ function EscIngesta() {
       </div>
       <div className="mt-4">
         <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-1.5">
-          <span className="inline-flex items-center gap-1.5"><Loader2 className="w-3.5 h-3.5 animate-spin text-primary" /> Analizando con IA…</span>
+          <span className="inline-flex items-center gap-1.5"><Loader2 className="w-3.5 h-3.5 animate-spin text-primary" /> Analizando…</span>
         </div>
         <div className="h-2 rounded-full bg-muted overflow-hidden">
           <div className="h-full rounded-full bg-primary animate-grow" />
