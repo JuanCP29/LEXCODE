@@ -57,7 +57,7 @@ export function Landing() {
               Del expediente al <span className="text-primary">documento</span>, en minutos.
             </h1>
             <p className="mt-5 text-lg text-muted-foreground max-w-xl leading-relaxed">
-              LEGIUX lee el traslado, extrae los hechos y las pretensiones, calcula el riesgo
+              LEGIUX lee el traslado, extrae los hechos y las pretensiones, asocia las pretensiones
               y arma tus documentos jurídicos automatizados. Menos digitación, más criterio.
             </p>
 
