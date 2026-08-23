@@ -186,7 +186,7 @@ export async function POST(request: NextRequest) {
       doc
         .fontSize(8)
         .fillColor(GRIS)
-        .text(`Documento generado por LEGIUX — Collegia Abogados  ·  ${fechaHoy}`, { align: "center" });
+        .text(`Documento generado por FoQs — Collegia Abogados  ·  ${fechaHoy}`, { align: "center" });
 
       doc.end();
     });

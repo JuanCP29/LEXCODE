@@ -49,7 +49,7 @@ function SidebarContent({ onClose }: SidebarContentProps) {
             </svg>
           </span>
           <span className="font-bold text-lg tracking-tight text-white">
-            <span className="text-[#6ea8e6]">LEG</span><span>IUX</span>
+            <span className="text-[#6ea8e6]">Fo</span><span>Qs</span>
           </span>
         </Link>
         {onClose && (

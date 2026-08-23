@@ -136,14 +136,14 @@ export async function generarFichaDocx(datos: DatosFicha): Promise<Buffer> {
     : new Date().toLocaleDateString("es-CO");
 
   const doc = new Document({
-    creator: "LEGIUX — Collegia Abogados",
+    creator: "FoQs — Collegia Abogados",
     title: `Ficha de Conciliación — ${datos.radicado}`,
     sections: [{
       children: [
         // ── Encabezado ──────────────────────────────────────────────────────
         new Paragraph({
           children: [
-            new TextRun({ text: "LEGIUX", bold: true, size: 28, color: AZUL }),
+            new TextRun({ text: "FoQs", bold: true, size: 28, color: AZUL }),
             new TextRun({ text: "  |  Collegia Abogados  |  ", size: 20, color: "64748B" }),
             new TextRun({ text: "GDJ-GPO-FMT-005  v3", size: 20, color: "64748B" }),
           ],
@@ -267,7 +267,7 @@ export async function generarFichaDocx(datos: DatosFicha): Promise<Buffer> {
         new Paragraph({
           children: [
             new TextRun({
-              text: "\nDocumento generado por LEGIUX — Collegia Abogados",
+              text: "\nDocumento generado por FoQs — Collegia Abogados",
               size: 16,
               color: "94A3B8",
               italics: true,

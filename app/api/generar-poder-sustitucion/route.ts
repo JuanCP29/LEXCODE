@@ -238,7 +238,7 @@ export async function POST(request: NextRequest) {
         .fillColor(GRIS)
         .font("Helvetica")
         .text(
-          `Documento generado por LEGIUX — Collegia Abogados  ·  ${fechaHoy}`,
+          `Documento generado por FoQs — Collegia Abogados  ·  ${fechaHoy}`,
           { align: "center" }
         );
 

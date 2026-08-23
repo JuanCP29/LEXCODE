@@ -50,13 +50,13 @@ export function Landing() {
           {/* Izquierda: mensaje */}
           <div>
             <p className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-widest text-primary/70">
-              <Sparkles className="w-3.5 h-3.5" /> Collegia Abogados · LEGIUX
+              <Sparkles className="w-3.5 h-3.5" /> Collegia Abogados · FoQs
             </p>
             <h1 className="mt-4 text-4xl sm:text-5xl font-bold tracking-tight leading-[1.08] text-balance">
               Del expediente al <span className="text-primary">documento</span>, en minutos.
             </h1>
             <p className="mt-5 text-lg text-muted-foreground max-w-xl leading-relaxed">
-              LEGIUX lee el traslado, extrae los hechos y las pretensiones, asocia las pretensiones
+              FoQs lee el traslado, extrae los hechos y las pretensiones, asocia las pretensiones
               y arma tus documentos jurídicos automatizados. Menos digitación, más criterio.
             </p>
 

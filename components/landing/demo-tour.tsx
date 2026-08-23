@@ -56,7 +56,7 @@ export function DemoTour() {
           <span className="w-2.5 h-2.5 rounded-full bg-white/25" />
           <span className="w-2.5 h-2.5 rounded-full bg-white/25" />
           <span className="w-2.5 h-2.5 rounded-full bg-white/25" />
-          <span className="ml-3 text-[11px] font-semibold text-white/90">LEGIUX · Generador de ficha</span>
+          <span className="ml-3 text-[11px] font-semibold text-white/90">FoQs · Generador de ficha</span>
         </div>
 
         {/* Escenario */}

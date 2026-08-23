@@ -8,7 +8,7 @@ import { ThemeProvider } from "@/components/ui/theme-provider";
 const inter = Inter({ subsets: ["latin"], variable: "--font-ui", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "LEGIUX — Collegia Abogados",
+  title: "FoQs — Collegia Abogados",
   description: "Sistema de gestión de conciliaciones y demandas judiciales",
 };
 
