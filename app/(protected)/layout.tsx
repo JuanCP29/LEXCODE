@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Topbar } from "@/components/layout/topbar";
 import { Sidebar } from "@/components/layout/sidebar";
+import { ThemeScope } from "@/components/layout/theme-scope";
 
 export default async function ProtectedLayout({
   children,
@@ -18,7 +19,7 @@ export default async function ProtectedLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <ThemeScope className="min-h-screen bg-background">
       <Topbar userEmail={user.email} />
       <Sidebar />
       {/* mt-11 = topbar 44px. md:ml-[220px] = sidebar solo en desktop */}
@@ -27,6 +28,6 @@ export default async function ProtectedLayout({
           {children}
         </div>
       </main>
-    </div>
+    </ThemeScope>
   );
 }

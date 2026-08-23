@@ -51,7 +51,7 @@ export default async function DashboardPage() {
       <div>
         <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest mb-3">Mi actividad</p>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard label="Total de procesos" value={counts.total} icon={FolderOpen} tint="#1690b8" href="/casos" />
+          <StatCard label="Total de procesos" value={counts.total} icon={FolderOpen} tint="#35b9db" href="/casos" />
           <StatCard label="Pendientes" value={counts.pendiente} icon={Clock} tint="#2563eb" sub={`${pct(counts.pendiente)}%`} href="/casos" />
           <StatCard label="En proceso" value={counts.en_proceso} icon={Loader2} tint="#d97706" sub={`${pct(counts.en_proceso)}%`} href="/casos" />
           <StatCard label="Completados" value={counts.completado} icon={CheckCircle2} tint="#16a34a" sub={`${pct(counts.completado)}%`} href="/casos" />

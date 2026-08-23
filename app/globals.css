@@ -76,71 +76,71 @@
     --contestacion-color:   #b4463a;
   }
 
-  /* ── MODO NOCTURNO · Opción A (navy profundo, azul claro como acento) ──── */
+  /* ── MODO NOCTURNO · Antesala FoQs (navy profundo, cian de marca, letras blancas) ── */
   .dark {
-    --background:          #12181f;
-    --surface:             #1b232d;
-    --surface-raised:      #232f3e;
+    --background:          #0a1a30;   /* navy profundo de la antesala */
+    --surface:             #0f2540;
+    --surface-raised:      #143255;
 
-    --foreground:          #e7edf3;
-    --foreground-muted:    #a2b2c0;
-    --foreground-subtle:   #6c7e8d;
+    --foreground:          #eaf1f9;   /* letras blancas */
+    --foreground-muted:    #9db2cc;
+    --foreground-subtle:   #6b7f9c;
 
-    /* Primario: azul claro con texto oscuro para contraste sobre relleno */
-    --primary:             #4c9fe8;
-    --primary-hover:       #6bb2ee;
-    --primary-foreground:  #0b1722;
-    --primary-subtle:      #16283c;
-    --primary-light:       #2e6da6;
+    /* Primario = cian de marca (relleno con texto navy, como el CTA de la antesala) */
+    --primary:             #35b9db;
+    --primary-hover:       #54c6e6;
+    --primary-foreground:  #08131f;
+    --primary-subtle:      #10303d;
+    --primary-light:       #6ed0ea;
 
     /* Acento de marca (cian FoQs) */
     --brand:               #35b9db;
-    --brand-ink:           #5fc7e6;
+    --brand-ink:           #6ed0ea;
     --brand-subtle:        #10303d;
 
     --ia:                  #35b9db;
     --ia-subtle:           #10303d;
 
-    --card:                #1b232d;
-    --card-foreground:     #e7edf3;
-    --popover:             #232f3e;
-    --popover-foreground:  #e7edf3;
+    --card:                #0f2540;
+    --card-foreground:     #eaf1f9;
+    --popover:             #143255;
+    --popover-foreground:  #eaf1f9;
 
-    --secondary:           #232f3e;
-    --secondary-foreground:#c7d2de;
-    --muted:               #232f3e;
-    --muted-foreground:    #a2b2c0;
-    --accent:              #16283c;
-    --accent-foreground:   #9ccaf3;
+    --secondary:           #16304f;
+    --secondary-foreground:#cdd9e8;
+    --muted:               #14304f;
+    --muted-foreground:    #9db2cc;
+    --accent:              #10303d;
+    --accent-foreground:   #7fd6ee;
 
-    --destructive:         #ef4444;
+    --destructive:         #f0564a;
     --destructive-foreground: #ffffff;
 
-    --border:              #2e3a47;
-    --input:               #33414f;
+    --border:              #1e3a5c;
+    --input:               #22436a;
     --ring:                #35b9db;
 
-    --sidebar:             #12181f;
-    --sidebar-foreground:  #c7d2de;
-    --sidebar-border:      #2e3a47;
-    --sidebar-accent:      #1b2a3b;
-    --sidebar-accent-foreground: #9ccaf3;
-    --sidebar-muted:       #6c7e8d;
+    --sidebar:             #08192e;
+    --sidebar-foreground:  #c6d1dd;
+    --sidebar-border:      #1a3253;
+    --sidebar-accent:      #123a52;
+    --sidebar-accent-foreground: #ffffff;
+    --sidebar-muted:       #6b7f9c;
 
-    --topbar:              #12181f;
-    --topbar-border:       #2e3a47;
+    --topbar:              #0a1a30;
+    --topbar-border:       #1a3253;
 
     --estado-listo-text:    #7fd6a3;
-    --estado-listo-bg:      #152a20;
+    --estado-listo-bg:      #10281d;
     --estado-revision-text: #e0b565;
-    --estado-revision-bg:   #2c2411;
-    --estado-borrador-text: #9ccaf3;
-    --estado-borrador-bg:   #16283c;
+    --estado-revision-bg:   #2a2411;
+    --estado-borrador-text: #7fd6ee;
+    --estado-borrador-bg:   #10303d;
     --estado-pendiente-text:#e3a64a;
     --estado-pendiente-bg:  #2a2411;
 
-    --ficha-color:          #c7d2de;
-    --contestacion-color:   #ef4444;
+    --ficha-color:          #cdd9e8;
+    --contestacion-color:   #f0564a;
   }
 }
 
