@@ -51,9 +51,15 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-[1.05fr_1fr] bg-background">
+    <div className="relative min-h-screen grid lg:grid-cols-[1.05fr_1fr] bg-background overflow-hidden">
+      {/* Ola navy decorativa (cresta vertical que sangra por la derecha) */}
+      <div className="pointer-events-none absolute inset-y-0 right-0 hidden lg:block" aria-hidden>
+        <div className="absolute top-1/2 -translate-y-1/2 right-[-25rem] w-[34rem] h-[54rem] rounded-full bg-primary" />
+        <div className="absolute top-1/2 -translate-y-1/2 right-[-24.5rem] w-[34rem] h-[54rem] rounded-full ring-2 ring-[#35b9db]/30 blur-[2px]" />
+      </div>
+
       {/* ── Panel izquierdo: marca ── */}
-      <aside className="relative hidden lg:flex flex-col justify-between overflow-hidden px-12 xl:px-16 py-12">
+      <aside className="relative z-10 hidden lg:flex flex-col justify-between overflow-hidden px-12 xl:px-16 py-12">
         {/* Glows atmosféricos de marca */}
         <div className="pointer-events-none absolute inset-0" aria-hidden>
           <div className="absolute -top-32 -left-24 w-[34rem] h-[34rem] rounded-full bg-[#35b9db]/10 blur-3xl" />
@@ -94,15 +100,17 @@ export default function LoginPage() {
       </aside>
 
       {/* ── Panel derecho: formulario ── */}
-      <main className="flex flex-col items-center justify-center px-5 py-10">
+      <main className="relative z-10 flex flex-col items-center justify-center px-5 py-10">
         {/* Marca compacta (solo móvil) */}
         <div className="lg:hidden mb-8 flex flex-col items-center gap-1.5">
           <FoqsLogo size="lg" />
           <p className="text-sm text-muted-foreground">Collegia Abogados — Cali, Colombia</p>
         </div>
 
-        <div className="w-full max-w-sm">
-          <div className="bg-card border border-border rounded-2xl card-shadow-md p-7 sm:p-8">
+        <div className="relative w-full max-w-sm">
+          {/* Glow cian detrás del recuadro */}
+          <div className="pointer-events-none absolute -inset-3 rounded-[1.75rem] bg-[#35b9db]/10 blur-2xl" aria-hidden />
+          <div className="relative bg-gradient-to-b from-card to-[#f5f8fc] border border-border rounded-2xl card-shadow-md p-7 sm:p-8">
             {/* Escudo */}
             <div className="flex justify-center -mt-14 mb-4">
               <span className="w-14 h-14 rounded-full bg-card border border-border flex items-center justify-center card-shadow">
