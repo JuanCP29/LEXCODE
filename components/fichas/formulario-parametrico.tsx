@@ -825,11 +825,15 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
           const activo = n === paso;
           const hecho = n < paso;
           return (
-            <div key={n} className="flex items-center flex-1 last:flex-none">
+            <div key={n} className="flex items-center flex-1 last:flex-none min-w-0">
               <button
                 type="button"
                 onClick={() => setPaso(n)}
-                className="flex items-center gap-2.5 group shrink-0 text-left"
+                className={cn(
+                  "flex items-center gap-2.5 group text-left",
+                  // El paso activo no se encoge (su etiqueta se lee completa); los demás sí.
+                  activo ? "shrink-0" : "min-w-0"
+                )}
               >
                 <span className={cn(
                   "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-all",
@@ -841,15 +845,19 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
                 )}>
                   {hecho ? <Check className="w-3.5 h-3.5" /> : n}
                 </span>
-                <span className="hidden md:flex flex-col leading-tight">
+                <span className={cn(
+                  "flex-col leading-tight min-w-0",
+                  // Etiqueta del paso activo desde lg; el resto solo en pantallas anchas (2xl).
+                  activo ? "hidden lg:flex" : "hidden 2xl:flex"
+                )}>
                   <span className={cn(
-                    "text-sm transition-colors",
+                    "text-sm transition-colors truncate",
                     activo ? "text-foreground font-semibold" : hecho ? "text-foreground/70" : "text-muted-foreground group-hover:text-foreground"
                   )}>
                     {p.t}
                   </span>
                   <span className={cn(
-                    "text-[11px] transition-colors",
+                    "text-[11px] transition-colors truncate",
                     activo ? "text-muted-foreground" : "text-muted-foreground/60"
                   )}>
                     {p.s}
@@ -857,7 +865,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
                 </span>
               </button>
               {n < totalPasos && (
-                <div className={cn("flex-1 h-px mx-3 min-w-[16px]", hecho ? "bg-primary/40" : "bg-border")} />
+                <div className={cn("flex-1 h-px mx-2 lg:mx-3 min-w-[12px]", hecho ? "bg-primary/40" : "bg-border")} />
               )}
             </div>
           );

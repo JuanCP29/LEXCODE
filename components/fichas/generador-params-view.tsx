@@ -65,24 +65,26 @@ export function GeneradorParamsView({ casoId, casoData, documentos, fichaInicial
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8 items-start">
-      {/* Formulario por pasos */}
-      <FormularioParametrico
-        casoId={casoId}
-        casoData={casoData}
-        valoresPrellenados={valoresPrellenados ?? undefined}
-        sintesisHechosSugerida={sintesisHechos}
-        pretensionesSugerida={pretensiones}
-        cuantiaSugerida={cuantia}
-        normasSugerida={normas}
-        problemaSugerido={problema}
-        consideracionesSugerida={consideraciones}
-        pretensionSugerida={pretensionDet}
-        claseSugerida={claseDet}
-        causanteNombreSugerido={causanteNombre}
-        causanteCedulaSugerida={causanteCedula}
-        fichaInicial={fichaInicial}
-      />
+    <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_340px] gap-8 items-start">
+      {/* Formulario por pasos — min-w-0 permite que la columna se encoja sin desbordar */}
+      <div className="min-w-0">
+        <FormularioParametrico
+          casoId={casoId}
+          casoData={casoData}
+          valoresPrellenados={valoresPrellenados ?? undefined}
+          sintesisHechosSugerida={sintesisHechos}
+          pretensionesSugerida={pretensiones}
+          cuantiaSugerida={cuantia}
+          normasSugerida={normas}
+          problemaSugerido={problema}
+          consideracionesSugerida={consideraciones}
+          pretensionSugerida={pretensionDet}
+          claseSugerida={claseDet}
+          causanteNombreSugerido={causanteNombre}
+          causanteCedulaSugerida={causanteCedula}
+          fichaInicial={fichaInicial}
+        />
+      </div>
 
       {/* Panel lateral: ingesta + documentos previos */}
       <PanelDocumentosExtra onCamposExtraidos={handleCampos} onSugerencias={handleSugerencias} despacho={casoData.despacho} documentos={documentos} casoId={casoId} />
