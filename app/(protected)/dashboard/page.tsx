@@ -37,11 +37,16 @@ export default async function DashboardPage() {
   const pct = (n: number) => (counts.total ? Math.round((n / counts.total) * 100) : 0);
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="relative space-y-6 max-w-4xl">
+      {/* Glow de marca muy tenue (atmósfera, guiño a la antesala) */}
+      <div
+        className="pointer-events-none absolute -top-20 -left-16 w-[30rem] h-[30rem] rounded-full bg-brand/10 blur-3xl -z-10"
+        aria-hidden
+      />
 
-      {/* Encabezado compacto */}
+      {/* Encabezado */}
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <h1 className="text-2xl font-bold text-foreground tracking-tight">
+        <h1 className="font-serif text-3xl sm:text-4xl font-bold text-foreground tracking-tight">
           Hola, {nombre.charAt(0).toUpperCase() + nombre.slice(1)}
         </h1>
         <p className="text-sm text-muted-foreground capitalize">{hoy}</p>
@@ -49,7 +54,9 @@ export default async function DashboardPage() {
 
       {/* KPIs del reparto (clicables) */}
       <div>
-        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest mb-3">Mi actividad</p>
+        <p className="flex items-center gap-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-widest mb-3">
+          <span className="h-3 w-0.5 rounded-full bg-brand" /> Mi actividad
+        </p>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard label="Total de procesos" value={counts.total} icon={FolderOpen} tint="#1690b8" href="/casos" />
           <StatCard label="Pendientes" value={counts.pendiente} icon={Clock} tint="#2563eb" sub={`${pct(counts.pendiente)}%`} href="/casos" />
@@ -59,7 +66,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Accesos rápidos + resumen documentos */}
-      <div className="bg-card rounded-xl border border-border card-shadow p-2">
+      <div className="bg-card rounded-xl border border-border card-shadow-md p-2">
         <QuickAction href="/casos/nuevo" icon={FilePlus} label="Nuevo caso" desc="Registrar un proceso" />
         <QuickAction href="/casos" icon={FolderOpen} label="Reparto" desc="Ver y gestionar casos" />
         <QuickAction href="/cola-de-casos" icon={ListChecks} label="Asignaciones" desc="Asignar casos al equipo" />
@@ -73,14 +80,14 @@ function StatCard({ label, value, icon: Icon, tint, sub, href }: {
   label: string; value: number; icon: React.ElementType; tint: string; sub?: string; href: string;
 }) {
   return (
-    <Link href={href} className="bg-card rounded-xl border border-border card-shadow px-5 py-4 block transition-all hover:card-shadow-md hover:-translate-y-0.5">
+    <Link href={href} className="bg-card rounded-xl border border-border card-shadow-md px-5 py-4 block transition-all hover:-translate-y-0.5 hover:border-brand/30">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-xs text-muted-foreground truncate">{label}</p>
           <p className="text-3xl font-bold text-foreground mt-1 tabular-nums">{value}</p>
           {sub && <p className="text-[11px] text-muted-foreground mt-1 tabular-nums">{sub} del total</p>}
         </div>
-        <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${tint}15` }}>
+        <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${tint}1f` }}>
           <Icon className="w-4 h-4" style={{ color: tint }} />
         </div>
       </div>
