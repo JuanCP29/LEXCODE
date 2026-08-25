@@ -359,6 +359,13 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
   const [paso, setPaso] = useState(1);
   const totalPasos = PASOS.length;
 
+  // Stepper con scroll horizontal: centra el paso activo al avanzar (clave en móvil).
+  const stepperRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const activo = stepperRef.current?.querySelector<HTMLElement>('[data-step-activo="true"]');
+    activo?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  }, [paso]);
+
   const {
     control,
     handleSubmit,
@@ -818,50 +825,52 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
   return (
     <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
 
-      {/* ── Asistente por pasos ── */}
-      <div className="flex items-center border-b border-border pb-6">
-        {PASOS.map((p, i) => {
-          const n = i + 1;
-          const activo = n === paso;
-          const hecho = n < paso;
-          return (
-            <div key={n} className="flex items-center flex-1 last:flex-none min-w-0">
-              <button
-                type="button"
-                onClick={() => setPaso(n)}
-                className="flex items-center gap-2.5 group min-w-0 text-left"
-              >
-                <span className={cn(
-                  "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-all",
-                  activo
-                    ? "bg-primary text-primary-foreground ring-4 ring-primary/10"
-                    : hecho
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground border border-border"
-                )}>
-                  {hecho ? <Check className="w-3.5 h-3.5" /> : n}
-                </span>
-                <span className="hidden md:flex flex-col leading-tight min-w-0">
+      {/* ── Asistente por pasos (scroll horizontal, texto completo) ── */}
+      <div ref={stepperRef} className="no-scrollbar overflow-x-auto border-b border-border pb-6 -mx-1 px-1">
+        <div className="flex items-center w-max">
+          {PASOS.map((p, i) => {
+            const n = i + 1;
+            const activo = n === paso;
+            const hecho = n < paso;
+            return (
+              <div key={n} className="flex items-center shrink-0" data-step-activo={activo}>
+                <button
+                  type="button"
+                  onClick={() => setPaso(n)}
+                  className="flex items-center gap-2.5 group shrink-0 text-left"
+                >
                   <span className={cn(
-                    "text-sm transition-colors truncate",
-                    activo ? "text-foreground font-semibold" : hecho ? "text-foreground/70" : "text-muted-foreground group-hover:text-foreground"
+                    "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-all",
+                    activo
+                      ? "bg-primary text-primary-foreground ring-4 ring-primary/10"
+                      : hecho
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground border border-border"
                   )}>
-                    {p.t}
+                    {hecho ? <Check className="w-3.5 h-3.5" /> : n}
                   </span>
-                  <span className={cn(
-                    "text-[11px] transition-colors truncate",
-                    activo ? "text-muted-foreground" : "text-muted-foreground/60"
-                  )}>
-                    {p.s}
+                  <span className="flex flex-col leading-tight whitespace-nowrap">
+                    <span className={cn(
+                      "text-sm transition-colors",
+                      activo ? "text-foreground font-semibold" : hecho ? "text-foreground/70" : "text-muted-foreground group-hover:text-foreground"
+                    )}>
+                      {p.t}
+                    </span>
+                    <span className={cn(
+                      "text-[11px] transition-colors",
+                      activo ? "text-muted-foreground" : "text-muted-foreground/60"
+                    )}>
+                      {p.s}
+                    </span>
                   </span>
-                </span>
-              </button>
-              {n < totalPasos && (
-                <div className={cn("h-px w-4 sm:w-8 lg:w-12 shrink-0 mx-1.5 lg:mx-2", hecho ? "bg-primary/40" : "bg-border")} />
-              )}
-            </div>
-          );
-        })}
+                </button>
+                {n < totalPasos && (
+                  <div className={cn("h-px w-8 lg:w-14 shrink-0 mx-2 lg:mx-3", hecho ? "bg-primary/40" : "bg-border")} />
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* ── Paso 1: Información del proceso + Documentos previos + Conciliabilidad ── */}

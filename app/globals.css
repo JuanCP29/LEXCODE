@@ -170,6 +170,9 @@
 
 @layer utilities {
   .text-balance { text-wrap: balance; }
+  /* Scroll sin barra visible (p.ej. stepper horizontal) */
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
   @keyframes fade-up { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
   .animate-fade-up { animation: fade-up .5s ease both; }
   @keyframes caret-blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
