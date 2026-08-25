@@ -1090,7 +1090,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
                       trasladoBizagi === opt
                         ? opt
                           ? "bg-green-600 text-white card-shadow"
-                          : "bg-[#6b93de] text-white card-shadow"
+                          : "bg-primary text-primary-foreground card-shadow"
                         : "text-muted-foreground hover:text-foreground"
                     )}
                   >
@@ -1104,130 +1104,166 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
             {trasladoBizagi === false && (
               <>
                 {/* Memorial */}
-                <div className="rounded-xl border border-[#c5d8f4] bg-[#eef3fc] dark:bg-blue-950/20 dark:border-blue-800 px-4 py-3.5 space-y-3">
-                  {/* Fila: generar memorial */}
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-medium text-foreground">
+                <div className="rounded-xl border border-brand/25 bg-brand-subtle/50 dark:bg-brand/[0.06] overflow-hidden">
+                  {/* Cabecera de la tarjeta */}
+                  <div className="flex items-center gap-3 px-4 py-3 border-b border-brand/20 bg-brand/[0.06]">
+                    <span className="w-9 h-9 rounded-lg bg-brand-subtle text-brand-ink flex items-center justify-center shrink-0">
+                      <FileSignature className="w-4 h-4" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-foreground truncate">
                         Memorial — Solicitud de acceso al expediente
                       </p>
-                      <p className="text-[11px] text-muted-foreground">
+                      <p className="text-[11px] text-muted-foreground truncate">
                         Dirigido al Juzgado o despacho judicial del caso
                       </p>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {memorialGenerado && (
-                        <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
-                      )}
-                      <VistaPreviaDocumento
-                        endpoint="/api/generar-memorial-expediente"
-                        casoId={casoId}
-                        titulo="Memorial — Solicitud de acceso al expediente"
-                        filename={`MEMORIAL_EXPEDIENTE_${casoId}.pdf`}
-                      />
-                      <button
-                        type="button"
-                        disabled={generandoMemorial}
-                        onClick={handleGenerarMemorial}
-                        className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-semibold bg-[#6b93de] text-white hover:bg-[#5a82d0] active:scale-[0.98] transition-all disabled:opacity-60"
-                      >
-                        {generandoMemorial
-                          ? <><FoqsLoader size="sm" /> Generando...</>
-                          : memorialGenerado
-                            ? <><AlertCircle className="w-3.5 h-3.5" /> Regenerar</>
-                            : <><AlertCircle className="w-3.5 h-3.5" /> Generar Memorial</>
-                        }
-                      </button>
-                    </div>
+                    {memorialGenerado && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200 dark:bg-green-950/30 dark:text-green-400 dark:border-green-900 shrink-0">
+                        <CheckCircle2 className="w-3 h-3" /> Generado
+                      </span>
+                    )}
                   </div>
 
-                  {/* Botones de envío — se muestran tras generar el memorial */}
-                  {memorialGenerado && (
-                    <div className="border-t border-[#c5d8f4] dark:border-blue-800 pt-3 space-y-2">
-                      {envioUsado ? (
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
-                            <span className="text-xs">
-                              {envioUsado === "portal"
-                                ? "Portal Rama Judicial abierto"
-                                : "Gmail abierto para redactar"}
-                            </span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setEnvioUsado(null)}
-                            className="text-[11px] text-muted-foreground hover:text-foreground underline transition-colors"
-                          >
-                            Usar otro medio
-                          </button>
-                        </div>
-                      ) : (
-                        <>
-                          <p className="text-[11px] font-semibold text-[#4a6fc0] dark:text-blue-400 uppercase tracking-wide">
-                            Enviar documentos
-                          </p>
-                          <div className="flex flex-col sm:flex-row gap-2">
-                            <a
-                              href="https://siugj.ramajudicial.gov.co/principalPortal/index.php"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={() => setEnvioUsado("portal")}
-                              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-primary text-primary bg-white dark:bg-card hover:bg-primary hover:text-primary-foreground transition-colors text-xs font-semibold flex-1"
-                            >
-                              <ExternalLink className="w-3.5 h-3.5 shrink-0" />
-                              Portal Rama Judicial
-                            </a>
-                            <a
-                              href={`https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(
-                                `Solicitud acceso expediente — Rad. ${casoId}`
-                              )}&body=${encodeURIComponent(
-                                `Cordial saludo,\n\nAdjunto memorial de solicitud de acceso al expediente y poder de sustitución correspondientes al proceso.\n\nAtentamente,\nCollegia Abogados`
-                              )}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={() => setEnvioUsado("gmail")}
-                              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-border text-foreground bg-white dark:bg-card hover:bg-muted transition-colors text-xs font-semibold flex-1"
-                            >
-                              <Mail className="w-3.5 h-3.5 shrink-0" />
-                              Enviar por Gmail
-                            </a>
-                          </div>
-                          <p className="text-[10px] text-muted-foreground">
-                            Adjunta el memorial y el poder descargados antes de enviar.
-                          </p>
-                        </>
-                      )}
+                  <div className="p-4 space-y-4">
+                    {/* Paso 1 — generar / regenerar */}
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-[11px] font-bold flex items-center justify-center shrink-0">1</span>
+                        <p className="text-xs text-muted-foreground">Genera el documento del memorial</p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <VistaPreviaDocumento
+                          endpoint="/api/generar-memorial-expediente"
+                          casoId={casoId}
+                          titulo="Memorial — Solicitud de acceso al expediente"
+                          filename={`MEMORIAL_EXPEDIENTE_${casoId}.pdf`}
+                        />
+                        <button
+                          type="button"
+                          disabled={generandoMemorial}
+                          onClick={handleGenerarMemorial}
+                          className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-60"
+                        >
+                          {generandoMemorial
+                            ? <><FoqsLoader size="sm" /> Generando...</>
+                            : memorialGenerado
+                              ? <><RotateCcw className="w-3.5 h-3.5" /> Regenerar</>
+                              : <><FileSignature className="w-3.5 h-3.5" /> Generar memorial</>
+                          }
+                        </button>
+                      </div>
                     </div>
-                  )}
+
+                    {/* Paso 2 — enviar (tras generar el memorial) */}
+                    {memorialGenerado && (
+                      <div className="border-t border-brand/15 pt-4">
+                        {envioUsado ? (
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+                              <span className="text-xs">
+                                {envioUsado === "portal"
+                                  ? "Portal Rama Judicial abierto"
+                                  : "Gmail abierto para redactar"}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setEnvioUsado(null)}
+                              className="text-[11px] text-muted-foreground hover:text-foreground underline transition-colors"
+                            >
+                              Usar otro medio
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="flex items-center gap-2.5 mb-3">
+                              <span className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-[11px] font-bold flex items-center justify-center shrink-0">2</span>
+                              <p className="text-xs font-semibold text-foreground">Envía los documentos</p>
+                            </div>
+                            <div className="grid sm:grid-cols-2 gap-2.5">
+                              <a
+                                href="https://siugj.ramajudicial.gov.co/principalPortal/index.php"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={() => setEnvioUsado("portal")}
+                                className="group flex items-center gap-3 rounded-lg border border-brand/40 bg-card p-3 hover:border-brand hover:bg-brand-subtle/60 hover:-translate-y-0.5 transition-all"
+                              >
+                                <span className="w-9 h-9 rounded-lg bg-brand-subtle text-brand-ink flex items-center justify-center shrink-0">
+                                  <ExternalLink className="w-4 h-4" />
+                                </span>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-sm font-semibold text-foreground">Portal Rama Judicial</p>
+                                  <p className="text-[11px] text-muted-foreground">Cargar en el SIUGJ</p>
+                                </div>
+                                <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-brand-ink group-hover:translate-x-0.5 transition-all shrink-0" />
+                              </a>
+                              <a
+                                href={`https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(
+                                  `Solicitud acceso expediente — Rad. ${casoId}`
+                                )}&body=${encodeURIComponent(
+                                  `Cordial saludo,\n\nAdjunto memorial de solicitud de acceso al expediente y poder de sustitución correspondientes al proceso.\n\nAtentamente,\nCollegia Abogados`
+                                )}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={() => setEnvioUsado("gmail")}
+                                className="group flex items-center gap-3 rounded-lg border border-border bg-card p-3 hover:border-brand/40 hover:bg-muted/40 hover:-translate-y-0.5 transition-all"
+                              >
+                                <span className="w-9 h-9 rounded-lg bg-muted text-foreground/70 flex items-center justify-center shrink-0">
+                                  <Mail className="w-4 h-4" />
+                                </span>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-sm font-semibold text-foreground">Enviar por Gmail</p>
+                                  <p className="text-[11px] text-muted-foreground">Redactar el correo</p>
+                                </div>
+                                <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-brand-ink group-hover:translate-x-0.5 transition-all shrink-0" />
+                              </a>
+                            </div>
+                            <p className="text-[10px] text-muted-foreground mt-2.5 flex items-center gap-1">
+                              <AlertCircle className="w-3 h-3 shrink-0" />
+                              Adjunta el memorial y el poder descargados antes de enviar.
+                            </p>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Bandeja de pendientes — independiente del memorial */}
-                <div className="rounded-lg border border-border bg-card px-4 py-3">
+                <div className="rounded-xl border border-border bg-card px-4 py-3.5">
                   {pendienteId ? (
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
-                        <span>Caso enviado a la bandeja de pendientes</span>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5 text-xs">
+                        <span className="w-9 h-9 rounded-lg bg-green-500/10 text-green-600 dark:text-green-400 flex items-center justify-center shrink-0">
+                          <CheckCircle2 className="w-4 h-4" />
+                        </span>
+                        <span className="text-foreground font-medium">Caso enviado a la bandeja de pendientes</span>
                       </div>
                       <a
                         href="/pendientes"
-                        className="text-xs font-semibold text-primary hover:underline"
+                        className="text-xs font-semibold text-brand-ink hover:underline"
                       >
                         Ver pendientes →
                       </a>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-xs font-medium text-foreground">Bandeja de pendientes</p>
-                        <p className="text-[11px] text-muted-foreground">Registrar este caso para seguimiento posterior</p>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span className="w-9 h-9 rounded-lg bg-muted text-muted-foreground flex items-center justify-center shrink-0">
+                          <Clock className="w-4 h-4" />
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-foreground">Bandeja de pendientes</p>
+                          <p className="text-[11px] text-muted-foreground">Registrar este caso para seguimiento posterior</p>
+                        </div>
                       </div>
                       <button
                         type="button"
                         disabled={enviandoPendiente}
                         onClick={handleEnviarPendiente}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-input text-foreground text-xs font-semibold hover:bg-muted transition-colors disabled:opacity-60 shrink-0"
+                        className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg border border-input text-foreground text-xs font-semibold hover:border-brand/40 hover:bg-muted transition-all disabled:opacity-60 shrink-0"
                       >
                         {enviandoPendiente
                           ? <><FoqsLoader size="sm" /> Guardando...</>
