@@ -24,6 +24,13 @@ const FILTROS: { key: "todos" | ClaveEstado; label: string }[] = [
   { key: "completado", label: "Completados" },
 ];
 
+// Acento de color por estado (riel a la izquierda + punto en el badge) para escaneo rápido.
+const ACENTO: Record<ClaveEstado, string> = {
+  pendiente: "#2563eb",  // azul (coincide con el badge)
+  en_proceso: "#d97706", // ámbar
+  completado: "#16a34a", // verde
+};
+
 // Quita la ciudad repetida y el departamento del despacho
 // ("JUZGADO ... DE CALI — CALI — VALLE DEL CAUCA" → "JUZGADO ... DE CALI")
 function limpiarDespacho(texto: string | null | undefined): string {
@@ -144,19 +151,17 @@ export function TablaCasos({ casos }: TablaCasosProps) {
         <table className="w-full text-sm">
           <thead className="sticky top-0 z-10">
             <tr className="border-b border-border bg-muted [&>th]:bg-muted">
-              <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">F. Conciliación</th>
-              <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Contestación Dda</th>
-              <th className="text-left px-3 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Estado</th>
-              <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Radicado</th>
               <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Demandante</th>
-              <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Cédula</th>
+              <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Radicado</th>
               <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Despacho</th>
+              <th className="text-left px-3 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Estado</th>
+              <th className="text-right px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Acciones</th>
             </tr>
           </thead>
           <tbody>
             {filtrados.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-16 text-center text-sm text-muted-foreground">
+                <td colSpan={5} className="px-4 py-16 text-center text-sm text-muted-foreground">
                   Sin resultados para el filtro o la búsqueda actual.
                 </td>
               </tr>
@@ -168,61 +173,60 @@ export function TablaCasos({ casos }: TablaCasosProps) {
 
               return (
                 <tr key={caso.id} className="border-b border-border last:border-0 hover:bg-primary/5 transition-colors group">
-                  {/* Botón F. Conciliación */}
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <Link
-                      href={`/generador/${caso.id}/params`}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all active:scale-[0.98] border-primary text-primary hover:bg-[var(--sidebar)] hover:border-[var(--sidebar)] hover:text-white"
-                    >
-                      F. Conciliación
-                    </Link>
-                  </td>
-
-                  {/* Contestación Dda — botón solo si la ficha está lista; si no, candado compacto */}
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    {fichaLista ? (
-                      <Link
-                        href={`/demanda/${caso.id}`}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all active:scale-[0.98] border-[#7c3aed] text-[#7c3aed] hover:bg-[#7c3aed] hover:text-white"
-                      >
-                        Contestación Dda
-                      </Link>
-                    ) : (
-                      <span
-                        title={sinFicha ? "Genera y cierra la ficha de conciliación primero" : "La ficha de conciliación aún no está lista"}
-                        className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-border text-muted-foreground/60 cursor-not-allowed"
-                      >
-                        <Lock className="w-3.5 h-3.5" />
-                      </span>
+                  {/* Demandante (ancla) con riel de color por estado */}
+                  <td className="px-4 py-3 border-l-[3px]" style={{ borderLeftColor: ACENTO[clave] }}>
+                    <p className="font-semibold text-foreground text-sm leading-tight">{aNombrePropio(caso.nombre_demandante)}</p>
+                    {caso.cedula_demandante && (
+                      <p className="text-xs text-muted-foreground tabular-nums mt-0.5">C.C. {caso.cedula_demandante}</p>
                     )}
-                  </td>
-
-                  {/* Estado */}
-                  <td className="px-3 py-3">
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-semibold whitespace-nowrap ${est.clase}`}>
-                      {est.label}
-                    </span>
                   </td>
 
                   {/* Radicado */}
                   <td className="px-4 py-3">
-                    <span className="font-mono text-xs text-foreground/80 tabular-nums">{caso.radicado}</span>
+                    <span className="font-mono text-xs text-foreground/70 tabular-nums">{caso.radicado}</span>
                     {caso.radicado_bizagi && (
                       <p className="font-mono text-[10px] text-muted-foreground mt-0.5 tabular-nums">{caso.radicado_bizagi}</p>
                     )}
                   </td>
 
-                  {/* Demandante */}
-                  <td className="px-4 py-3">
-                    <span className="font-medium text-foreground text-sm">{aNombrePropio(caso.nombre_demandante)}</span>
+                  {/* Despacho */}
+                  <td className="px-4 py-3 text-sm text-muted-foreground min-w-[240px]">
+                    {caso.despacho ? aNombrePropio(limpiarDespacho(caso.despacho)) : "—"}
                   </td>
 
-                  {/* Cédula */}
-                  <td className="px-4 py-3 text-sm text-muted-foreground tabular-nums">{caso.cedula_demandante ?? "—"}</td>
+                  {/* Estado */}
+                  <td className="px-3 py-3">
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold whitespace-nowrap ${est.clase}`}>
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: ACENTO[clave] }} />
+                      {est.label}
+                    </span>
+                  </td>
 
-                  {/* Despacho */}
-                  <td className="px-4 py-3 text-sm text-muted-foreground min-w-[260px]">
-                    {caso.despacho ? aNombrePropio(limpiarDespacho(caso.despacho)) : "—"}
+                  {/* Acciones */}
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <div className="flex items-center justify-end gap-2">
+                      <Link
+                        href={`/generador/${caso.id}/params`}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all active:scale-[0.98] border-primary text-primary hover:bg-[var(--sidebar)] hover:border-[var(--sidebar)] hover:text-white"
+                      >
+                        F. Conciliación
+                      </Link>
+                      {fichaLista ? (
+                        <Link
+                          href={`/demanda/${caso.id}`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all active:scale-[0.98] border-[#7c3aed] text-[#7c3aed] hover:bg-[#7c3aed] hover:text-white"
+                        >
+                          Contestación Dda
+                        </Link>
+                      ) : (
+                        <span
+                          title={sinFicha ? "Genera y cierra la ficha de conciliación primero" : "La ficha de conciliación aún no está lista"}
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-border text-muted-foreground/60 cursor-not-allowed"
+                        >
+                          <Lock className="w-3.5 h-3.5" />
+                        </span>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );
