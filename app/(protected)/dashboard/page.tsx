@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import {
   FileText, FolderOpen, Clock, Loader2, CheckCircle2,
-  FilePlus, ArrowRight, ChevronRight, Activity, Users,
+  FilePlus, ArrowRight, ChevronRight, Activity, Users, CalendarDays,
 } from "lucide-react";
 
 type ClaveEstado = "completado" | "en_proceso" | "pendiente";
@@ -27,14 +27,17 @@ function unoDe(rel: any) {
   return Array.isArray(rel) ? rel[0] : rel;
 }
 
-// "Hoy, 10:42 a. m." si es del día; si no, "23 ago, 10:42 a. m."
+// "Hoy, 10:42 a. m." / "Ayer, 9:31 a. m." / "24 de ago, 12:47 a. m."
 function formatEvento(iso: string): string {
   const d = new Date(iso);
+  const ahora = new Date();
   const hora = d.toLocaleTimeString("es-CO", { hour: "numeric", minute: "2-digit", hour12: true });
-  const esHoy = d.toDateString() === new Date().toDateString();
-  if (esHoy) return `Hoy, ${hora}`;
-  const fecha = d.toLocaleDateString("es-CO", { day: "numeric", month: "short" });
-  return `${fecha}, ${hora}`;
+  const dias = Math.floor((+new Date(ahora.toDateString()) - +new Date(d.toDateString())) / 86_400_000);
+  if (dias <= 0) return `Hoy, ${hora}`;
+  if (dias === 1) return `Ayer, ${hora}`;
+  const dia = d.getDate();
+  const mes = d.toLocaleDateString("es-CO", { month: "short" }).replace(".", "");
+  return `${dia} de ${mes}, ${hora}`;
 }
 
 type Evento = { tipo: "documento" | "caso"; titulo: string; desc: string; fecha: string };
@@ -48,7 +51,7 @@ async function getData() {
       // Último borrador/en revisión para "Continuar trabajando"
       supabase
         .from("fichas_conciliacion")
-        .select("id, estado, created_at, caso_id, casos(nombre_demandante)")
+        .select("id, estado, created_at, caso_id, casos(nombre_demandante, radicado)")
         .neq("estado", "listo")
         .order("created_at", { ascending: false })
         .limit(1)
@@ -105,6 +108,7 @@ export default async function DashboardPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const draftAny = draft as any;
   const draftNombre = draftAny ? (unoDe(draftAny.casos)?.nombre_demandante ?? "Ficha sin demandante") : null;
+  const draftRadicado = draftAny ? (unoDe(draftAny.casos)?.radicado ?? null) : null;
 
   return (
     <div className="relative space-y-6 max-w-5xl overflow-x-clip">
@@ -119,15 +123,18 @@ export default async function DashboardPage() {
         <h1 className="font-serif text-3xl sm:text-4xl font-bold text-foreground tracking-tight">
           Hola, {nombre.charAt(0).toUpperCase() + nombre.slice(1)}
         </h1>
-        <p className="text-sm text-muted-foreground capitalize">{hoy}</p>
+        <p className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+          <CalendarDays className="w-4 h-4 shrink-0" />
+          <span className="capitalize">{hoy}</span>
+        </p>
       </div>
 
       {/* KPIs del reparto (clicables) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Total de procesos" value={counts.total} icon={FolderOpen} tint="#35b9db" href="/casos" />
-        <StatCard label="Pendientes" value={counts.pendiente} icon={Clock} tint="#2563eb" sub={`${pct(counts.pendiente)}%`} href="/casos" />
-        <StatCard label="En proceso" value={counts.en_proceso} icon={Loader2} tint="#d97706" sub={`${pct(counts.en_proceso)}%`} href="/casos" />
-        <StatCard label="Completados" value={counts.completado} icon={CheckCircle2} tint="#16a34a" sub={`${pct(counts.completado)}%`} href="/casos" />
+        <StatCard label="Pendientes" value={counts.pendiente} icon={Clock} tint="#2563eb" sub={`${pct(counts.pendiente)}% del total`} href="/casos" />
+        <StatCard label="En proceso" value={counts.en_proceso} icon={Loader2} tint="#d97706" sub={`${pct(counts.en_proceso)}% del total`} href="/casos" />
+        <StatCard label="Completados" value={counts.completado} icon={CheckCircle2} tint="#16a34a" sub={`${pct(counts.completado)}% del total`} href="/casos" />
       </div>
 
       {/* Continuar trabajando + Actividad reciente */}
@@ -145,7 +152,9 @@ export default async function DashboardPage() {
                 </span>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-foreground truncate">{draftNombre}</p>
-                  <p className="text-xs text-muted-foreground truncate">Ficha de conciliación</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    Ficha de conciliación{draftRadicado ? ` · ${draftRadicado}` : ""}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -170,10 +179,13 @@ export default async function DashboardPage() {
           )}
 
           {/* Accesos rápidos */}
-          <div className="mt-4 pt-4 border-t border-border grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-            <AccesoMini href="/casos/nuevo" icon={FilePlus} label="Nuevo caso" />
-            <AccesoMini href="/casos" icon={FolderOpen} label="Reparto" />
-            <AccesoMini href="/documentos" icon={FileText} label="Historial" />
+          <div className="mt-4 pt-4 border-t border-border">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-3">Acciones rápidas</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <AccesoMini href="/casos/nuevo" icon={FilePlus} label="Nuevo caso" />
+              <AccesoMini href="/casos" icon={FolderOpen} label="Reparto" />
+              <AccesoMini href="/documentos" icon={FileText} label="Historial" />
+            </div>
           </div>
         </section>
 
@@ -196,7 +208,7 @@ export default async function DashboardPage() {
                       <span className={cnDot(doc)} />
                       {!ultimo && <span className="w-px flex-1 bg-border mt-1" />}
                     </div>
-                    <div className="flex items-start gap-3 flex-1 pb-4">
+                    <div className="flex items-start gap-3 flex-1 min-w-0 pb-4">
                       <span className={doc
                         ? "w-9 h-9 rounded-lg bg-green-500/10 text-green-600 dark:text-green-400 flex items-center justify-center shrink-0"
                         : "w-9 h-9 rounded-lg bg-brand-subtle text-brand-ink flex items-center justify-center shrink-0"}>
@@ -244,16 +256,14 @@ function StatCard({ label, value, icon: Icon, tint, sub, href }: {
   label: string; value: number; icon: React.ElementType; tint: string; sub?: string; href: string;
 }) {
   return (
-    <Link href={href} className="bg-card rounded-xl border border-border card-shadow-md px-5 py-4 block transition-all hover:-translate-y-0.5 hover:border-brand/30">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="text-xs text-muted-foreground truncate">{label}</p>
-          <p className="text-3xl font-bold text-foreground mt-1 tabular-nums">{value}</p>
-          {sub && <p className="text-[11px] text-muted-foreground mt-1 tabular-nums">{sub} del total</p>}
-        </div>
-        <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${tint}1f` }}>
-          <Icon className="w-4 h-4" style={{ color: tint }} />
-        </div>
+    <Link href={href} className="bg-card rounded-xl border border-border card-shadow-md px-5 py-5 flex items-center gap-4 transition-all hover:-translate-y-0.5 hover:border-brand/30">
+      <span className="w-12 h-12 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tint}1f` }}>
+        <Icon className="w-5 h-5" style={{ color: tint }} />
+      </span>
+      <div className="min-w-0">
+        <p className="text-xs text-muted-foreground leading-tight">{label}</p>
+        <p className="text-2xl sm:text-3xl font-bold text-foreground tabular-nums leading-tight mt-0.5">{value}</p>
+        {sub && <p className="text-[11px] text-muted-foreground mt-0.5 tabular-nums">{sub}</p>}
       </div>
     </Link>
   );
