@@ -12,9 +12,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn, limpiarDespacho } from "@/lib/utils";
-import { ArrowRight, ArrowLeft, ChevronDown, FileSignature, CheckCircle2, AlertCircle, ExternalLink, Clock, Handshake, Check, ClipboardList, FileText, Eye, FileDown, RotateCcw, Pencil, Save, Calendar, Hash, User, Fingerprint, Users, Landmark } from "lucide-react";
+import { ArrowRight, ArrowLeft, ChevronDown, FileSignature, CheckCircle2, AlertCircle, Clock, Handshake, Check, ClipboardList, FileText, Eye, FileDown, RotateCcw, Pencil, Save, Calendar, Hash, User, Fingerprint, Users, Landmark } from "lucide-react";
 import { FoqsLoader } from "@/components/ui/foqs-loader";
 import { GmailIcon } from "@/components/ui/gmail-icon";
+import { SiugjIcon } from "@/components/ui/siugj-icon";
 import { ConsultaRadicado } from "@/components/fichas/consulta-radicado";
 import { VistaPreviaDocumento } from "@/components/fichas/vista-previa-documento";
 import { CATALOGO_PRETENSIONES } from "@/lib/data/catalogo-pretensiones";
@@ -1191,8 +1192,8 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
                                 onClick={() => setEnvioUsado("portal")}
                                 className="group flex items-center gap-3 rounded-lg border border-brand/40 bg-card p-3 hover:border-brand hover:bg-brand-subtle/60 hover:-translate-y-0.5 transition-all"
                               >
-                                <span className="w-9 h-9 rounded-lg bg-brand-subtle text-brand-ink flex items-center justify-center shrink-0">
-                                  <ExternalLink className="w-4 h-4" />
+                                <span className="w-9 h-9 rounded-lg bg-white border border-border flex items-center justify-center shrink-0">
+                                  <SiugjIcon className="w-5 h-5" />
                                 </span>
                                 <div className="min-w-0 flex-1">
                                   <p className="text-sm font-semibold text-foreground">Portal Rama Judicial</p>
