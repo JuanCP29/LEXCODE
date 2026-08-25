@@ -829,11 +829,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
               <button
                 type="button"
                 onClick={() => setPaso(n)}
-                className={cn(
-                  "flex items-center gap-2.5 group text-left",
-                  // El paso activo no se encoge (su etiqueta se lee completa); los demás sí.
-                  activo ? "shrink-0" : "min-w-0"
-                )}
+                className="flex items-center gap-2.5 group min-w-0 text-left"
               >
                 <span className={cn(
                   "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-all",
@@ -845,11 +841,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
                 )}>
                   {hecho ? <Check className="w-3.5 h-3.5" /> : n}
                 </span>
-                <span className={cn(
-                  "flex-col leading-tight min-w-0",
-                  // Etiqueta del paso activo desde lg; el resto solo en pantallas anchas (2xl).
-                  activo ? "hidden lg:flex" : "hidden 2xl:flex"
-                )}>
+                <span className="hidden md:flex flex-col leading-tight min-w-0">
                   <span className={cn(
                     "text-sm transition-colors truncate",
                     activo ? "text-foreground font-semibold" : hecho ? "text-foreground/70" : "text-muted-foreground group-hover:text-foreground"
@@ -865,7 +857,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
                 </span>
               </button>
               {n < totalPasos && (
-                <div className={cn("flex-1 h-px mx-2 lg:mx-3 min-w-[12px]", hecho ? "bg-primary/40" : "bg-border")} />
+                <div className={cn("h-px w-4 sm:w-8 lg:w-12 shrink-0 mx-1.5 lg:mx-2", hecho ? "bg-primary/40" : "bg-border")} />
               )}
             </div>
           );

@@ -65,7 +65,7 @@ export function GeneradorParamsView({ casoId, casoData, documentos, fichaInicial
   }
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_340px] gap-8 items-start">
+    <div className="grid grid-cols-1 2xl:grid-cols-[minmax(0,1fr)_340px] gap-8 items-start">
       {/* Formulario por pasos — min-w-0 permite que la columna se encoja sin desbordar */}
       <div className="min-w-0">
         <FormularioParametrico
