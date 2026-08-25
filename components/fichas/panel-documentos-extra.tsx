@@ -101,6 +101,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
   const [copiado, setCopiado] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [recienCargados, setRecienCargados] = useState<string[]>([]);
   const [sinTexto, setSinTexto] = useState(false);
   const [escaneado, setEscaneado] = useState(false);
 
@@ -119,6 +120,12 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
       const filtrados = lista.filter((f) => !nombres.has(f.name));
       return [...prev, ...filtrados].slice(0, 3);
     });
+    // Confirmación "cargado" transitoria por archivo recién agregado
+    const nombresNuevos = lista.map((f) => f.name);
+    setRecienCargados((prev) => Array.from(new Set([...prev, ...nombresNuevos])));
+    nombresNuevos.forEach((n) =>
+      setTimeout(() => setRecienCargados((prev) => prev.filter((x) => x !== n)), 2200)
+    );
     setEstado("idle");
     setCamposExtraidos(null);
     setSugerencias(null);
@@ -250,16 +257,25 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
               {archivos.map((f) => (
                 <div
                   key={f.name}
-                  className="flex items-center gap-2 px-2.5 py-2 rounded-lg bg-muted/40 text-xs"
+                  className={cn(
+                    "flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs transition-colors duration-500",
+                    recienCargados.includes(f.name) ? "bg-green-500/10" : "bg-muted/40"
+                  )}
                 >
                   <FileText className="w-3.5 h-3.5 text-primary shrink-0" />
                   <span className="flex-1 truncate text-foreground/80">{f.name}</span>
-                  <button
-                    onClick={() => quitarArchivo(f.name)}
-                    className="text-muted-foreground hover:text-destructive transition-colors shrink-0"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
+                  {recienCargados.includes(f.name) ? (
+                    <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-400 font-semibold shrink-0 animate-fade-up">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> cargado
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => quitarArchivo(f.name)}
+                      className="text-muted-foreground hover:text-destructive transition-colors shrink-0"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
               ))}
 

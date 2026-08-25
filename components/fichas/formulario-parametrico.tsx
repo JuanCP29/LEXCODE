@@ -331,6 +331,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [generandoPreview, setGenerandoPreview] = useState(false);
   const [descargandoPdf, setDescargandoPdf] = useState(false);
+  const [pdfDescargado, setPdfDescargado] = useState(false);
   const [nombreArchivo, setNombreArchivo] = useState(() => {
     const hoy = new Date();
     const f = `${hoy.getFullYear()}${String(hoy.getMonth() + 1).padStart(2, "0")}${String(hoy.getDate()).padStart(2, "0")}`;
@@ -816,6 +817,8 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
       a.download = `${nombreArchivo.trim() || "FICHA_CONCILIACION"}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
+      setPdfDescargado(true);
+      setTimeout(() => setPdfDescargado(false), 2500);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al descargar el PDF");
     } finally {
@@ -866,7 +869,14 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
                   </span>
                 </button>
                 {n < totalPasos && (
-                  <div className={cn("h-px w-8 lg:w-14 shrink-0 mx-2 lg:mx-3", hecho ? "bg-primary/40" : "bg-border")} />
+                  <div className="relative h-0.5 w-8 lg:w-14 shrink-0 mx-2 lg:mx-3 rounded-full bg-border overflow-hidden">
+                    <div
+                      className={cn(
+                        "absolute inset-0 rounded-full bg-brand origin-left transition-transform duration-500 ease-out",
+                        hecho ? "scale-x-100" : "scale-x-0"
+                      )}
+                    />
+                  </div>
                 )}
               </div>
             );
@@ -1473,11 +1483,18 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
               type="button"
               onClick={handleDescargarPdf}
               disabled={descargandoPdf || generandoPreview}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-60"
+              className={cn(
+                "inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-60",
+                pdfDescargado
+                  ? "bg-green-600 text-white"
+                  : "bg-primary text-primary-foreground hover:bg-primary/90"
+              )}
             >
               {descargandoPdf
                 ? <><FoqsLoader size="sm" /> Descargando…</>
-                : <><FileDown className="w-4 h-4" /> Descargar PDF</>}
+                : pdfDescargado
+                  ? <><CheckCircle2 className="w-4 h-4 animate-fade-up" /> Descargado</>
+                  : <><FileDown className="w-4 h-4" /> Descargar PDF</>}
             </button>
           </div>
 
