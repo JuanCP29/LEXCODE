@@ -12,7 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn, limpiarDespacho } from "@/lib/utils";
-import { Loader2, ArrowRight, ArrowLeft, ChevronDown, FileSignature, CheckCircle2, AlertCircle, ExternalLink, Mail, Clock, Handshake, Check, ClipboardList, FileText, Eye, FileDown, RotateCcw, Pencil, Save, Calendar, Hash, User, Fingerprint, Users, Landmark } from "lucide-react";
+import { ArrowRight, ArrowLeft, ChevronDown, FileSignature, CheckCircle2, AlertCircle, ExternalLink, Mail, Clock, Handshake, Check, ClipboardList, FileText, Eye, FileDown, RotateCcw, Pencil, Save, Calendar, Hash, User, Fingerprint, Users, Landmark } from "lucide-react";
+import { FoqsLoader } from "@/components/ui/foqs-loader";
 import { ConsultaRadicado } from "@/components/fichas/consulta-radicado";
 import { VistaPreviaDocumento } from "@/components/fichas/vista-previa-documento";
 import { CATALOGO_PRETENSIONES } from "@/lib/data/catalogo-pretensiones";
@@ -1045,7 +1046,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
                     className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98] transition-all shrink-0 disabled:opacity-60"
                   >
                     {generandoPoder
-                      ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Generando...</>
+                      ? <><FoqsLoader size="sm" /> Generando...</>
                       : <><FileSignature className="w-3.5 h-3.5" /> Generar Poder</>
                     }
                   </button>
@@ -1121,7 +1122,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
                         className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-semibold bg-[#6b93de] text-white hover:bg-[#5a82d0] active:scale-[0.98] transition-all disabled:opacity-60"
                       >
                         {generandoMemorial
-                          ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Generando...</>
+                          ? <><FoqsLoader size="sm" /> Generando...</>
                           : memorialGenerado
                             ? <><AlertCircle className="w-3.5 h-3.5" /> Regenerar</>
                             : <><AlertCircle className="w-3.5 h-3.5" /> Generar Memorial</>
@@ -1219,7 +1220,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
                         className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-input text-foreground text-xs font-semibold hover:bg-muted transition-colors disabled:opacity-60 shrink-0"
                       >
                         {enviandoPendiente
-                          ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Guardando...</>
+                          ? <><FoqsLoader size="sm" /> Guardando...</>
                           : <><Clock className="w-3.5 h-3.5" /> Enviar a pendientes</>
                         }
                       </button>
@@ -1465,7 +1466,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-border bg-card text-sm font-semibold text-foreground hover:bg-muted transition-colors disabled:opacity-60"
             >
               {generandoPreview
-                ? <><Loader2 className="w-4 h-4 animate-spin" /> Generando…</>
+                ? <><FoqsLoader size="sm" /> Generando…</>
                 : <><Eye className="w-4 h-4" /> Generar vista previa</>}
             </button>
             <button
@@ -1475,7 +1476,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-60"
             >
               {descargandoPdf
-                ? <><Loader2 className="w-4 h-4 animate-spin" /> Descargando…</>
+                ? <><FoqsLoader size="sm" /> Descargando…</>
                 : <><FileDown className="w-4 h-4" /> Descargar PDF</>}
             </button>
           </div>
@@ -1519,7 +1520,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
               className={cn("text-muted-foreground", borradorGuardado && "text-green-600")}
             >
               {guardandoBorrador
-                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Guardando…</>
+                ? <><FoqsLoader size="sm" className="mr-2" /> Guardando…</>
                 : borradorGuardado
                   ? <><CheckCircle2 className="w-4 h-4 mr-2" /> Guardado</>
                   : <><Save className="w-4 h-4 mr-2" /> Guardar borrador</>}

@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useState, useCallback } from "react";
-import { Upload, X, FileText, Loader2, CheckCircle2, AlertCircle, Copy, Check, Sparkles, RefreshCw, Download, ChevronRight } from "lucide-react";
+import { Upload, X, FileText, CheckCircle2, AlertCircle, Copy, Check, Sparkles, RefreshCw, Download, ChevronRight } from "lucide-react";
+import { FoqsLoader } from "@/components/ui/foqs-loader";
 import { cn } from "@/lib/utils";
 import { subirArchivoStorage } from "@/lib/supabase/subir-storage";
 
@@ -198,7 +199,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
               </span>
             ) : estado === "analizando" ? (
               <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
-                <Loader2 className="w-3 h-3 animate-spin" /> Procesando
+                <FoqsLoader size="xs" /> Procesando
               </span>
             ) : (
               <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-muted text-muted-foreground border border-border">
@@ -271,7 +272,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
                 >
                   {estado === "analizando" ? (
                     <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <FoqsLoader size="sm" />
                       Analizando...
                     </>
                   ) : (
