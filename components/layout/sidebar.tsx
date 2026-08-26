@@ -16,15 +16,42 @@ import {
   X,
 } from "lucide-react";
 
-const navItems = [
-  { href: "/dashboard",                     label: "Inicio",         icon: LayoutDashboard },
-  { href: "/casos",                         label: "Reparto",         icon: FolderOpen },
-  { href: "/documentos",                    label: "Historial",       icon: FileText },
-  { href: "/cola-de-casos",                  label: "Asignaciones",    icon: ListChecks },
-  { href: "/pendientes",                     label: "Pendientes",      icon: Clock },
-  { href: "/configuracion",                 label: "Configuración",   icon: Settings },
-  { href: "/configuracion/directrices",     label: "Directrices",     icon: BookMarked, sub: true },
+type NavItem = { href: string; label: string; icon: typeof LayoutDashboard };
+
+const GRUPOS: { titulo: string; items: NavItem[] }[] = [
+  {
+    titulo: "Espacio de trabajo",
+    items: [
+      { href: "/dashboard",     label: "Inicio",       icon: LayoutDashboard },
+      { href: "/casos",         label: "Reparto",      icon: FolderOpen },
+      { href: "/documentos",    label: "Historial",    icon: FileText },
+      { href: "/cola-de-casos", label: "Asignaciones", icon: ListChecks },
+      { href: "/pendientes",    label: "Pendientes",   icon: Clock },
+    ],
+  },
+  {
+    titulo: "Herramientas",
+    items: [
+      { href: "/configuracion",             label: "Configuración", icon: Settings },
+      { href: "/configuracion/directrices", label: "Directrices",   icon: BookMarked },
+    ],
+  },
+  {
+    titulo: "Creación",
+    items: [
+      { href: "/casos/nuevo", label: "Nuevo caso", icon: FilePlus },
+    ],
+  },
 ];
+
+// Un ítem está activo por coincidencia exacta o por prefijo, evitando solapes
+// (Configuración solo exacto; Reparto no se activa en "/casos/nuevo").
+function esActivo(pathname: string, href: string): boolean {
+  if (pathname === href) return true;
+  if (href === "/configuracion") return false;
+  if (href === "/casos") return pathname.startsWith("/casos/") && pathname !== "/casos/nuevo";
+  return pathname.startsWith(`${href}/`);
+}
 
 interface SidebarContentProps {
   onClose?: () => void;
@@ -48,59 +75,39 @@ function SidebarContent({ onClose }: SidebarContentProps) {
         )}
       </div>
 
-      {/* Etiqueta firma */}
-      <div className="px-5 pt-4 pb-1">
-        <p className="text-[10px] font-semibold text-[var(--sidebar-muted)] uppercase tracking-widest">
-          Collegia Abogados
-        </p>
-      </div>
-
-      {/* Nav */}
-      <nav className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto">
-        {navItems.map(({ href, label, icon: Icon, sub }) => {
-          const active = pathname === href || (href !== "/configuracion" && pathname.startsWith(`${href}/`)) || pathname === href;
-          return (
-            <Link
-              key={href}
-              href={href}
-              onClick={onClose}
-              className={cn(
-                "relative flex items-center gap-3 rounded-lg text-sm font-medium transition-colors",
-                sub ? "px-3 py-2 ml-3" : "px-3 py-2.5",
-                active
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
-              )}
-            >
-              {active && !sub && (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-[#35b9db]" />
-              )}
-              <Icon className={cn(sub ? "w-3.5 h-3.5" : "w-4 h-4", "shrink-0", active ? "text-[#35b9db]" : "text-[var(--sidebar-muted)]")} />
-              <span className={sub ? "text-xs" : ""}>{label}</span>
-            </Link>
-          );
-        })}
-
-        {/* Separador */}
-        <div className="pt-4 pb-1 px-2">
-          <p className="text-[10px] font-semibold text-[var(--sidebar-muted)] uppercase tracking-widest">
-            Generador
-          </p>
-        </div>
-
-        <Link
-          href="/casos/nuevo"
-          onClick={onClose}
-          className={cn(
-            "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-            pathname === "/casos/nuevo"
-              ? "bg-sidebar-accent text-white"
-              : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
-          )}
-        >
-          <FilePlus className={cn("w-4 h-4 shrink-0", pathname === "/casos/nuevo" ? "text-white" : "text-[var(--sidebar-muted)]")} />
-          Nuevo caso
-        </Link>
+      {/* Nav — grupos con líneas separadoras tenues */}
+      <nav className="flex-1 px-3 py-2 overflow-y-auto">
+        {GRUPOS.map((grupo, gi) => (
+          <div key={grupo.titulo} className={cn(gi > 0 && "mt-3 pt-3 border-t border-white/[0.06]")}>
+            <p className="px-2 pb-1.5 text-[10px] font-semibold text-[var(--sidebar-muted)] uppercase tracking-widest">
+              {grupo.titulo}
+            </p>
+            <div className="space-y-0.5">
+              {grupo.items.map(({ href, label, icon: Icon }) => {
+                const active = esActivo(pathname, href);
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    onClick={onClose}
+                    className={cn(
+                      "relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                      active
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
+                    )}
+                  >
+                    {active && (
+                      <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-[#35b9db]" />
+                    )}
+                    <Icon className={cn("w-4 h-4 shrink-0", active ? "text-[#35b9db]" : "text-[var(--sidebar-muted)]")} />
+                    <span>{label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* Pie — bloque de cuenta */}
