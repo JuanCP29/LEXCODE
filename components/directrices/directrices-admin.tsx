@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import {
   Plus, Trash2, FileText, Upload, Loader2,
   CheckCircle2, AlertCircle, ToggleLeft, ToggleRight, Tags,
@@ -54,12 +54,6 @@ type Directriz = {
   directriz_tipologias?: any[];
 };
 
-type GrupoTipologia = {
-  id: string;
-  nombre: string;
-  hijas: { id: string; nombre: string }[];
-};
-
 interface DirectricesAdminProps {
   directrices: Directriz[];
 }
@@ -77,25 +71,8 @@ export function DirectricesAdmin({ directrices: inicial }: DirectricesAdminProps
   const [archivo, setArchivo] = useState<File | null>(null);
   const [nombre, setNombre] = useState("");
   const [tipoDocumento, setTipoDocumento] = useState("directriz");
-  const [pretension, setPretension] = useState("general");
-  const [clase, setClase] = useState("");
   const [codigo, setCodigo] = useState("");
-  const [fechaDirectriz, setFechaDirectriz] = useState("");
-  const [tipologiaIds, setTipologiaIds] = useState<string[]>([]);
-  const [grupos, setGrupos] = useState<GrupoTipologia[]>([]);
-
-  useEffect(() => {
-    fetch("/api/tipologias")
-      .then((r) => r.json())
-      .then((body) => setGrupos(body.tipologias ?? []))
-      .catch(() => {});
-  }, []);
-
-  function toggleTipologia(id: string) {
-    setTipologiaIds((prev) =>
-      prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]
-    );
-  }
+  const [fechaDocumento, setFechaDocumento] = useState("");
 
   function setArchivoYNombre(f: File) {
     setArchivo(f);
@@ -103,7 +80,7 @@ export function DirectricesAdmin({ directrices: inicial }: DirectricesAdminProps
   }
 
   async function handleSubir() {
-    if (!archivo || !nombre.trim() || !pretension) return;
+    if (!archivo || !nombre.trim()) return;
     setSubiendo(true);
     setError(null);
     setExito(null);
@@ -113,11 +90,11 @@ export function DirectricesAdmin({ directrices: inicial }: DirectricesAdminProps
       fd.append("archivo", archivo);
       fd.append("nombre", nombre.trim());
       fd.append("tipo_documento", tipoDocumento);
-      fd.append("pretension", pretension);
-      if (clase.trim()) fd.append("clase_pretension", clase.trim());
+      // 'pretension' se conserva en BD (columna requerida) pero ya no se
+      // clasifica desde el repositorio: los documentos entran como 'general'.
+      fd.append("pretension", "general");
       if (codigo.trim()) fd.append("codigo", codigo.trim());
-      if (fechaDirectriz) fd.append("fecha_directriz", fechaDirectriz);
-      if (tipologiaIds.length > 0) fd.append("tipologia_ids", JSON.stringify(tipologiaIds));
+      if (fechaDocumento) fd.append("fecha_directriz", fechaDocumento);
 
       const res = await fetch("/api/directrices", { method: "POST", body: fd });
       const json = await res.json();
@@ -127,10 +104,8 @@ export function DirectricesAdmin({ directrices: inicial }: DirectricesAdminProps
       setExito(`Documento "${nombre}" cargado correctamente.`);
       setArchivo(null);
       setNombre("");
-      setClase("");
       setCodigo("");
-      setFechaDirectriz("");
-      setTipologiaIds([]);
+      setFechaDocumento("");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error desconocido");
     } finally {
@@ -245,37 +220,20 @@ export function DirectricesAdmin({ directrices: inicial }: DirectricesAdminProps
             </div>
           </div>
 
-          {/* Campos de texto */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">
-                Nombre del documento <span className="text-destructive">*</span>
-              </label>
-              <input
-                value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
-                placeholder="Ej: Memorando lineamiento probatorio vejez"
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">
-                Pretensión{" "}
-                <span className="text-muted-foreground font-normal">(etiqueta — usa &quot;General&quot; si no aplica)</span>
-              </label>
-              <select
-                value={pretension}
-                onChange={(e) => setPretension(e.target.value)}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-              >
-                {PRETENSION_OPTS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-            </div>
+          {/* Nombre del documento */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">
+              Nombre del documento <span className="text-destructive">*</span>
+            </label>
+            <input
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              placeholder="Ej: Memorando lineamiento probatorio vejez"
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            />
           </div>
 
+          {/* Código + Fecha */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="text-sm font-medium">
@@ -291,72 +249,16 @@ export function DirectricesAdmin({ directrices: inicial }: DirectricesAdminProps
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium">
-                Fecha de la directriz{" "}
+                Fecha del documento{" "}
                 <span className="text-muted-foreground font-normal">(opcional)</span>
               </label>
               <input
                 type="date"
-                value={fechaDirectriz}
-                onChange={(e) => setFechaDirectriz(e.target.value)}
+                value={fechaDocumento}
+                onChange={(e) => setFechaDocumento(e.target.value)}
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
               />
             </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium">
-              Clase de pretensión{" "}
-              <span className="text-muted-foreground font-normal">(opcional — deja vacío si aplica a toda la pretensión)</span>
-            </label>
-            <input
-              value={clase}
-              onChange={(e) => setClase(e.target.value)}
-              placeholder="Ej: Régimen de Prima Media con Prestación Definida"
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
-
-          {/* Tipologías asociadas */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium flex items-center gap-1.5">
-              <Tags className="w-3.5 h-3.5 text-primary" />
-              Tipologías asociadas{" "}
-              <span className="text-muted-foreground font-normal">
-                — determinan cuándo aplica la directriz ({tipologiaIds.length} seleccionada{tipologiaIds.length !== 1 ? "s" : ""})
-              </span>
-            </label>
-            {grupos.length === 0 ? (
-              <p className="text-xs text-muted-foreground bg-muted/40 rounded-md px-3 py-2">
-                No hay tipologías registradas. Ejecuta la migración <code className="font-mono">fase1_tipologias_trazabilidad.sql</code> en Supabase.
-              </p>
-            ) : (
-              <div className="border border-border rounded-lg max-h-64 overflow-y-auto divide-y divide-border">
-                {grupos.map((g) => (
-                  <div key={g.id} className="px-3 py-2">
-                    <label className="flex items-center gap-2 cursor-pointer py-1">
-                      <input
-                        type="checkbox"
-                        checked={tipologiaIds.includes(g.id)}
-                        onChange={() => toggleTipologia(g.id)}
-                        className="rounded border-input"
-                      />
-                      <span className="text-xs font-semibold text-foreground">{g.nombre}</span>
-                    </label>
-                    {g.hijas.map((h) => (
-                      <label key={h.id} className="flex items-center gap-2 cursor-pointer py-1 pl-6">
-                        <input
-                          type="checkbox"
-                          checked={tipologiaIds.includes(h.id)}
-                          onChange={() => toggleTipologia(h.id)}
-                          className="rounded border-input"
-                        />
-                        <span className="text-xs text-muted-foreground">{h.nombre}</span>
-                      </label>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Feedback */}
