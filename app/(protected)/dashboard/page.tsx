@@ -8,9 +8,10 @@ import {
 type ClaveEstado = "completado" | "en_proceso" | "pendiente";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+const FICHA_FINAL = new Set(["listo", "aprobada", "exportada", "exportado"]);
 function claveEstado(caso: any): ClaveEstado {
   const fichas = Array.isArray(caso.fichas_conciliacion) ? caso.fichas_conciliacion : [];
-  if (fichas.some((f: { estado: string }) => f.estado === "listo")) return "completado";
+  if (fichas.some((f: { estado: string }) => FICHA_FINAL.has(f.estado))) return "completado";
   if (fichas.length > 0) return "en_proceso";
   return "pendiente";
 }

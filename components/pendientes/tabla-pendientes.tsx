@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import {
-  Clock, CheckCircle2, ChevronDown, ChevronRight,
+  Clock, CheckCircle2, ChevronDown, ChevronRight, ArrowRight,
   FileText, ExternalLink, Mail, FileSignature,
   AlertCircle, StickyNote,
 } from "lucide-react";
@@ -149,8 +150,20 @@ function FilaPendiente({ pendiente, onResuelto }: { pendiente: Pendiente; onResu
           )}
         </div>
 
-        {/* Estado */}
-        <div className="hidden md:block"><Badge estado={pendiente.estado} /></div>
+        {/* Acción / estado resuelto */}
+        <div className="hidden md:block">
+          {pendiente.estado === "pendiente" ? (
+            <Link
+              href={`/generador/${caso.id}/params`}
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 active:scale-[0.98] transition-all"
+            >
+              Continuar <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          ) : (
+            <Badge estado={pendiente.estado} />
+          )}
+        </div>
 
         {/* Fecha */}
         <div className="text-[11px] text-muted-foreground whitespace-nowrap text-right md:text-left">
@@ -300,7 +313,7 @@ export function TablaPendientes({ pendientes }: { pendientes: any[] }) {
             <span className="hidden md:block">Radicado</span>
             <span className="hidden md:block">Despacho</span>
             <span className="hidden md:block">Observación</span>
-            <span className="hidden md:block">Estado</span>
+            <span className="hidden md:block" aria-hidden />
             <span className="text-right md:text-left">Fecha</span>
           </div>
           {filtrados.map((p) => (

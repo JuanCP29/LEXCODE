@@ -9,12 +9,21 @@ export default async function PendientesPage() {
     .from("pendientes")
     .select(`
       id, motivo, descripcion, estado, created_at, resuelto_at,
-      casos (id, radicado, radicado_bizagi, nombre_demandante, cedula_demandante, despacho, pretension),
+      casos (id, radicado, radicado_bizagi, nombre_demandante, cedula_demandante, despacho, pretension, fichas_conciliacion(estado)),
       acciones_pendiente (id, tipo, descripcion, created_at)
     `)
     .order("created_at", { ascending: false });
 
-  const pendientes = data ?? [];
+  // Un caso con ficha finalizada ya está "completado" en Reparto → sale de la bandeja.
+  const FICHA_FINAL = new Set(["listo", "aprobada", "exportada", "exportado"]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const finalizado = (caso: any) => {
+    const fichas = Array.isArray(caso?.fichas_conciliacion) ? caso.fichas_conciliacion : [];
+    return fichas.some((f: { estado: string }) => FICHA_FINAL.has(f.estado));
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const pendientes = (data ?? []).filter((p: any) => !finalizado(p.casos));
   const activos   = pendientes.filter((p) => p.estado === "pendiente").length;
 
   return (
