@@ -33,7 +33,7 @@ export default async function DocumentosPage() {
 
   const { data: fichas } = await supabase
     .from("fichas_conciliacion")
-    .select("id, estado, docx_url, created_at, caso_id, casos(radicado, nombre_demandante, cedula_demandante, despacho)")
+    .select("id, estado, docx_url, created_at, caso_id, casos(radicado, radicado_bizagi, nombre_demandante, cedula_demandante, despacho)")
     .not("docx_url", "is", null)
     .order("created_at", { ascending: false });
 
@@ -86,6 +86,9 @@ export default async function DocumentosPage() {
                       {/* Radicado */}
                       <td className="px-4 py-3">
                         <span className="font-mono text-xs text-foreground/70 tabular-nums">{caso?.radicado ?? "—"}</span>
+                        {caso?.radicado_bizagi && (
+                          <p className="font-mono text-[10px] text-muted-foreground mt-0.5 tabular-nums">{caso.radicado_bizagi}</p>
+                        )}
                       </td>
                       {/* Despacho */}
                       <td className="px-4 py-3 text-sm text-muted-foreground min-w-[220px]">{limpiarDespacho(caso?.despacho)}</td>
