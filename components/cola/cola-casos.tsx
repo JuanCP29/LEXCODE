@@ -71,6 +71,13 @@ function EstadoBadge({ estado }: { estado: string }) {
   );
 }
 
+// Acento de color por estado (riel a la izquierda), consistente con Reparto.
+const ACENTO: Record<string, string> = {
+  pendiente: "#2563eb",  // azul
+  en_proceso: "#d97706", // ámbar
+  completado: "#16a34a", // verde
+};
+
 export function ColaCasos() {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -360,8 +367,11 @@ export function ColaCasos() {
 
             <div className="divide-y divide-border">
               {casosFiltrados.map((c) => (
-                <div key={c.id} className={cn("flex items-center gap-3 px-4 py-3 transition-colors",
-                  seleccion.has(c.id) ? "bg-primary/5" : "hover:bg-muted/30")}>
+                <div key={c.id}
+                  className={cn("flex items-center gap-3 px-4 py-3 border-l-[3px] transition-colors",
+                    seleccion.has(c.id) ? "bg-primary/5" : "hover:bg-muted/30")}
+                  style={{ borderLeftColor: ACENTO[c.cola_estado] ?? "#94a3b8" }}
+                >
                   <input
                     type="checkbox"
                     checked={seleccion.has(c.id)}

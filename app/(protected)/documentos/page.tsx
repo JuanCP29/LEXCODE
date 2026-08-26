@@ -4,6 +4,23 @@ import { Button } from "@/components/ui/button";
 import { FileText, Download } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 
+// Acento + etiqueta por estado de la ficha (para el riel y el badge).
+const ESTADO: Record<string, { label: string; color: string; badge: string }> = {
+  listo:       { label: "Listo",       color: "#16a34a", badge: "bg-green-50 text-green-700 border border-green-200 dark:bg-green-950/40 dark:text-green-300 dark:border-green-900" },
+  en_revision: { label: "En revisión", color: "#d97706", badge: "bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900" },
+  borrador:    { label: "Borrador",    color: "#2563eb", badge: "bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900" },
+};
+function estadoCfg(e: string) {
+  return ESTADO[e] ?? { label: e, color: "#94a3b8", badge: "bg-muted text-muted-foreground border border-border" };
+}
+
+// "NOMBRE APELLIDO" → "Nombre Apellido" (conectores en minúscula)
+const MIN = new Set(["de", "del", "la", "las", "los", "y", "e", "el", "en", "a"]);
+function titulo(t: string | null | undefined): string {
+  if (!t) return "—";
+  return t.toLowerCase().split(/\s+/).map((p, i) => (i > 0 && MIN.has(p)) || /\d/.test(p) ? p : p.charAt(0).toUpperCase() + p.slice(1)).join(" ");
+}
+
 export default async function DocumentosPage() {
   const supabase = createClient();
 
@@ -14,10 +31,12 @@ export default async function DocumentosPage() {
     .order("created_at", { ascending: false });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 max-w-[1400px]">
       <div>
-        <h1 className="text-2xl font-bold">Documentos</h1>
-        <p className="text-muted-foreground mt-1">Historial de fichas de conciliación generadas</p>
+        <h1 className="text-xl font-bold text-foreground">Historial</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">
+          {fichas?.length ?? 0} documento{(fichas?.length ?? 0) !== 1 ? "s" : ""} generado{(fichas?.length ?? 0) !== 1 ? "s" : ""}
+        </p>
       </div>
 
       {!fichas || fichas.length === 0 ? (
@@ -28,45 +47,56 @@ export default async function DocumentosPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-muted/50 border-b border-border">
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Radicado</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Demandante</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Estado</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Fecha</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Acción</th>
-              </tr>
-            </thead>
-            <tbody>
-              {fichas.map((f: any) => (
-                <tr key={f.id} className="border-b border-border last:border-0 hover:bg-muted/20">
-                  <td className="px-4 py-3 font-mono text-xs">{f.casos?.radicado ?? "—"}</td>
-                  <td className="px-4 py-3">{f.casos?.nombre_demandante ?? "—"}</td>
-                  <td className="px-4 py-3">
-                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                      f.estado === "listo" ? "bg-green-100 text-green-700" :
-                      f.estado === "en_revision" ? "bg-yellow-100 text-yellow-700" :
-                      "bg-gray-100 text-gray-600"
-                    }`}>
-                      {f.estado}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground text-xs">{formatDate(f.created_at)}</td>
-                  <td className="px-4 py-3">
-                    {f.docx_url && (
-                      <Button asChild size="sm" variant="outline">
-                        <a href={f.docx_url} download>
-                          <Download className="w-3.5 h-3.5 mr-1" /> Descargar
-                        </a>
-                      </Button>
-                    )}
-                  </td>
+        <div className="bg-card rounded-xl border border-border card-shadow overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-muted border-b border-border">
+                  <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Demandante</th>
+                  <th className="text-left px-3 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Estado</th>
+                  <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Fecha</th>
+                  <th className="text-right px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Acción</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                {fichas.map((f: any) => {
+                  const cfg = estadoCfg(f.estado);
+                  const caso = Array.isArray(f.casos) ? f.casos[0] : f.casos;
+                  return (
+                    <tr key={f.id} className="border-b border-border last:border-0 hover:bg-primary/5 transition-colors">
+                      {/* Demandante (ancla) + riel de color */}
+                      <td className="px-4 py-3 border-l-[3px]" style={{ borderLeftColor: cfg.color }}>
+                        <p className="font-semibold text-foreground text-sm leading-tight">{titulo(caso?.nombre_demandante)}</p>
+                        {caso?.radicado && <p className="font-mono text-[10px] text-muted-foreground mt-0.5 tabular-nums">{caso.radicado}</p>}
+                      </td>
+                      {/* Estado */}
+                      <td className="px-3 py-3">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold whitespace-nowrap ${cfg.badge}`}>
+                          <span className="w-1.5 h-1.5 rounded-full" style={{ background: cfg.color }} />
+                          {cfg.label}
+                        </span>
+                      </td>
+                      {/* Fecha */}
+                      <td className="px-4 py-3 text-muted-foreground text-xs whitespace-nowrap">{formatDate(f.created_at)}</td>
+                      {/* Acción */}
+                      <td className="px-4 py-3">
+                        <div className="flex justify-end">
+                          {f.docx_url && (
+                            <Button asChild size="sm" variant="outline">
+                              <a href={f.docx_url} download>
+                                <Download className="w-3.5 h-3.5 mr-1" /> Descargar
+                              </a>
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

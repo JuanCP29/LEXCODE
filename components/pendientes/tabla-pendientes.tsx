@@ -102,10 +102,13 @@ function FilaPendiente({ pendiente, onResuelto }: { pendiente: Pendiente; onResu
   }
 
   return (
-    <div className={cn(
-      "border-b border-border last:border-0 transition-colors",
-      pendiente.estado === "pendiente" ? "bg-card" : "bg-muted/20"
-    )}>
+    <div
+      className={cn(
+        "border-b border-border last:border-0 border-l-[3px] transition-colors",
+        pendiente.estado === "pendiente" ? "bg-card" : "bg-muted/20"
+      )}
+      style={{ borderLeftColor: pendiente.estado === "pendiente" ? "#ea580c" : "#16a34a" }}
+    >
       {/* Fila principal */}
       <div
         className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-muted/30 transition-colors"
