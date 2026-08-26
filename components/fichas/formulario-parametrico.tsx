@@ -42,7 +42,7 @@ function Toggle({
           className={cn(
             "px-5 py-1 text-sm font-medium rounded-md transition-all",
             value === opt
-              ? "bg-card text-foreground card-shadow"
+              ? "bg-primary text-primary-foreground card-shadow"
               : "text-muted-foreground hover:text-foreground"
           )}
         >
