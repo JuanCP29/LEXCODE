@@ -26,17 +26,18 @@ export default async function DirectricesPage() {
 
   const { data: directrices } = await supabase
     .from("directrices_conciliacion")
-    .select("id, nombre, pretension, clase_pretension, nombre_original, activo, created_at")
+    .select("id, nombre, tipo_documento, codigo, fecha_directriz, pretension, clase_pretension, nombre_original, activo, created_at, directriz_tipologias(tipologia_id)")
     .order("pretension")
     .order("nombre");
 
   return (
     <div className="max-w-4xl space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-foreground">Directrices de Conciliación</h1>
+        <h1 className="text-xl font-bold text-foreground">Repositorio de documentos</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Repositorio permanente de reglas de conciliación por pretensión.
-          Se inyectan automáticamente al generar cada ficha.
+          Repositorio permanente de directrices, memorandos y lineamientos.
+          Se etiquetan por tipo, pretensión y tipología para poder ser
+          consultados y usados más adelante en el análisis de casos.
         </p>
       </div>
       <DirectricesAdmin directrices={directrices ?? []} />

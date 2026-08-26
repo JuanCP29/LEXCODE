@@ -1,12 +1,25 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import {
   Plus, Trash2, FileText, Upload, Loader2,
   CheckCircle2, AlertCircle, ToggleLeft, ToggleRight, Tags,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+const TIPO_OPTS = [
+  { value: "directriz",   label: "Directriz" },
+  { value: "memorando",   label: "Memorando" },
+  { value: "lineamiento", label: "Lineamiento" },
+  { value: "otro",        label: "Otro" },
+];
+
+const TIPO_BADGE: Record<string, string> = {
+  directriz:   "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300",
+  memorando:   "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300",
+  lineamiento: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
+  otro:        "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+};
 
 const PRETENSION_OPTS = [
   { value: "vejez",          label: "Vejez" },
@@ -29,6 +42,7 @@ const PRETENSION_BADGE: Record<string, string> = {
 type Directriz = {
   id: string;
   nombre: string;
+  tipo_documento?: string | null;
   codigo?: string | null;
   fecha_directriz?: string | null;
   pretension: string;
@@ -51,18 +65,19 @@ interface DirectricesAdminProps {
 }
 
 export function DirectricesAdmin({ directrices: inicial }: DirectricesAdminProps) {
-  const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [lista, setLista] = useState<Directriz[]>(inicial);
   const [subiendo, setSubiendo] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [exito, setExito] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [filtroTipo, setFiltroTipo] = useState<string>("");
 
   // Form state
   const [archivo, setArchivo] = useState<File | null>(null);
   const [nombre, setNombre] = useState("");
-  const [pretension, setPretension] = useState("vejez");
+  const [tipoDocumento, setTipoDocumento] = useState("directriz");
+  const [pretension, setPretension] = useState("general");
   const [clase, setClase] = useState("");
   const [codigo, setCodigo] = useState("");
   const [fechaDirectriz, setFechaDirectriz] = useState("");
@@ -97,6 +112,7 @@ export function DirectricesAdmin({ directrices: inicial }: DirectricesAdminProps
       const fd = new FormData();
       fd.append("archivo", archivo);
       fd.append("nombre", nombre.trim());
+      fd.append("tipo_documento", tipoDocumento);
       fd.append("pretension", pretension);
       if (clase.trim()) fd.append("clase_pretension", clase.trim());
       if (codigo.trim()) fd.append("codigo", codigo.trim());
@@ -108,7 +124,7 @@ export function DirectricesAdmin({ directrices: inicial }: DirectricesAdminProps
       if (!res.ok) throw new Error(json.error ?? "Error al subir");
 
       setLista((prev) => [json.directriz, ...prev]);
-      setExito(`Directriz "${nombre}" cargada correctamente.`);
+      setExito(`Documento "${nombre}" cargado correctamente.`);
       setArchivo(null);
       setNombre("");
       setClase("");
@@ -136,12 +152,16 @@ export function DirectricesAdmin({ directrices: inicial }: DirectricesAdminProps
   }
 
   async function handleEliminar(id: string, nombre: string) {
-    if (!confirm(`¿Eliminar la directriz "${nombre}"? Esta acción no se puede deshacer.`)) return;
+    if (!confirm(`¿Eliminar el documento "${nombre}"? Esta acción no se puede deshacer.`)) return;
     const res = await fetch(`/api/directrices/${id}`, { method: "DELETE" });
     if (res.ok) {
       setLista((prev) => prev.filter((d) => d.id !== id));
     }
   }
+
+  const listaFiltrada = filtroTipo
+    ? lista.filter((d) => (d.tipo_documento ?? "directriz") === filtroTipo)
+    : lista;
 
   return (
     <div className="space-y-6">
@@ -150,7 +170,7 @@ export function DirectricesAdmin({ directrices: inicial }: DirectricesAdminProps
       <div className="bg-card border border-border rounded-xl card-shadow overflow-hidden">
         <div className="flex items-center gap-3 px-5 py-3.5 border-b border-border bg-muted/30">
           <Plus className="w-4 h-4 text-primary" />
-          <h2 className="text-sm font-semibold">Agregar nueva directriz</h2>
+          <h2 className="text-sm font-semibold">Agregar documento</h2>
         </div>
         <div className="px-5 py-5 space-y-4">
 
@@ -201,23 +221,48 @@ export function DirectricesAdmin({ directrices: inicial }: DirectricesAdminProps
             )}
           </div>
 
+          {/* Tipo de documento */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">
+              Tipo de documento <span className="text-destructive">*</span>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {TIPO_OPTS.map((o) => (
+                <button
+                  key={o.value}
+                  type="button"
+                  onClick={() => setTipoDocumento(o.value)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-md text-xs font-semibold border transition-colors",
+                    tipoDocumento === o.value
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-background text-muted-foreground border-input hover:border-primary/50"
+                  )}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Campos de texto */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="text-sm font-medium">
-                Nombre de la directriz <span className="text-destructive">*</span>
+                Nombre del documento <span className="text-destructive">*</span>
               </label>
               <input
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
-                placeholder="Ej: Directriz Vejez Régimen de Prima Media"
+                placeholder="Ej: Memorando lineamiento probatorio vejez"
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
               />
             </div>
 
             <div className="space-y-1.5">
               <label className="text-sm font-medium">
-                Pretensión <span className="text-destructive">*</span>
+                Pretensión{" "}
+                <span className="text-muted-foreground font-normal">(etiqueta — usa &quot;General&quot; si no aplica)</span>
               </label>
               <select
                 value={pretension}
@@ -334,34 +379,68 @@ export function DirectricesAdmin({ directrices: inicial }: DirectricesAdminProps
             {subiendo ? (
               <><Loader2 className="w-4 h-4 animate-spin" /> Procesando PDF...</>
             ) : (
-              <><Upload className="w-4 h-4" /> Subir directriz</>
+              <><Upload className="w-4 h-4" /> Subir documento</>
             )}
           </button>
           <p className="text-xs text-muted-foreground mt-1">
-            El texto del PDF se extrae automáticamente para ser usado en la generación de fichas.
+            El texto del PDF se extrae automáticamente y queda disponible en el
+            repositorio para consultas y análisis posteriores.
           </p>
         </div>
       </div>
 
-      {/* ── Lista de directrices ──────────────────────────────── */}
+      {/* ── Lista de documentos ───────────────────────────────── */}
       <div className="bg-card border border-border rounded-xl card-shadow overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-border bg-muted/30">
+        <div className="flex items-center justify-between gap-3 flex-wrap px-5 py-3.5 border-b border-border bg-muted/30">
           <h2 className="text-sm font-semibold">
-            Directrices registradas
+            Documentos registrados
             <span className="ml-2 text-xs font-normal text-muted-foreground">
-              ({lista.length})
+              ({listaFiltrada.length}{filtroTipo ? ` de ${lista.length}` : ""})
             </span>
           </h2>
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              type="button"
+              onClick={() => setFiltroTipo("")}
+              className={cn(
+                "px-2.5 py-1 rounded-md text-[11px] font-semibold border transition-colors",
+                filtroTipo === ""
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-background text-muted-foreground border-input hover:border-primary/50"
+              )}
+            >
+              Todos
+            </button>
+            {TIPO_OPTS.map((o) => (
+              <button
+                key={o.value}
+                type="button"
+                onClick={() => setFiltroTipo(o.value)}
+                className={cn(
+                  "px-2.5 py-1 rounded-md text-[11px] font-semibold border transition-colors",
+                  filtroTipo === o.value
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background text-muted-foreground border-input hover:border-primary/50"
+                )}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {lista.length === 0 ? (
+        {listaFiltrada.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
             <FileText className="w-10 h-10 opacity-30" />
-            <p className="text-sm">No hay directrices cargadas aún</p>
+            <p className="text-sm">
+              {lista.length === 0
+                ? "No hay documentos cargados aún"
+                : "No hay documentos de este tipo"}
+            </p>
           </div>
         ) : (
           <div className="divide-y divide-border">
-            {lista.map((d) => (
+            {listaFiltrada.map((d) => (
               <div key={d.id} className="flex items-center gap-4 px-5 py-4">
                 <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                   <FileText className="w-4 h-4 text-primary" />
@@ -375,6 +454,9 @@ export function DirectricesAdmin({ directrices: inicial }: DirectricesAdminProps
                       </span>
                     )}
                     <p className="text-sm font-medium text-foreground truncate">{d.nombre}</p>
+                    <span className={cn("text-[11px] px-2 py-0.5 rounded font-semibold", TIPO_BADGE[d.tipo_documento ?? "directriz"] ?? TIPO_BADGE.otro)}>
+                      {TIPO_OPTS.find((o) => o.value === (d.tipo_documento ?? "directriz"))?.label ?? "Directriz"}
+                    </span>
                     <span className={cn("text-[11px] px-2 py-0.5 rounded font-semibold", PRETENSION_BADGE[d.pretension] ?? "bg-gray-100 text-gray-600")}>
                       {PRETENSION_OPTS.find((o) => o.value === d.pretension)?.label ?? d.pretension}
                     </span>
@@ -413,7 +495,7 @@ export function DirectricesAdmin({ directrices: inicial }: DirectricesAdminProps
                   </button>
                   <button
                     onClick={() => handleEliminar(d.id, d.nombre)}
-                    title="Eliminar directriz"
+                    title="Eliminar documento"
                     className="text-muted-foreground hover:text-destructive transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />

@@ -32,12 +32,16 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from("directrices_conciliacion")
-      .select("id, nombre, codigo, fecha_directriz, pretension, clase_pretension, nombre_original, activo, created_at, directriz_tipologias(tipologia_id, tipologias(id, nombre, parent_id))")
+      .select("id, nombre, tipo_documento, codigo, fecha_directriz, pretension, clase_pretension, nombre_original, activo, created_at, directriz_tipologias(tipologia_id, tipologias(id, nombre, parent_id))")
       .order("pretension")
       .order("nombre");
 
+    const tipo = searchParams.get("tipo");
     if (pretension) {
       query = query.or(`pretension.eq.${pretension},pretension.eq.general`);
+    }
+    if (tipo) {
+      query = query.eq("tipo_documento", tipo);
     }
 
     const { data, error } = await query;
@@ -71,6 +75,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const archivo  = formData.get("archivo") as File | null;
     const nombre   = formData.get("nombre") as string;
+    const tipo_documento  = (formData.get("tipo_documento") as string | null) || "directriz";
     const pretension      = formData.get("pretension") as string;
     const clase_pretension = formData.get("clase_pretension") as string | null;
     const codigo           = formData.get("codigo") as string | null;
@@ -115,6 +120,9 @@ export async function POST(request: NextRequest) {
       .from("directrices_conciliacion")
       .insert({
         nombre,
+        tipo_documento: ["directriz", "memorando", "lineamiento", "otro"].includes(tipo_documento)
+          ? tipo_documento
+          : "directriz",
         pretension,
         clase_pretension: clase_pretension || null,
         codigo: codigo || null,

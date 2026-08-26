@@ -33,7 +33,7 @@ const GRUPOS: { titulo: string; items: NavItem[] }[] = [
     titulo: "Herramientas",
     items: [
       { href: "/configuracion",             label: "Configuración", icon: Settings },
-      { href: "/configuracion/directrices", label: "Directrices",   icon: BookMarked },
+      { href: "/configuracion/directrices", label: "Repositorio",   icon: BookMarked },
     ],
   },
   {
