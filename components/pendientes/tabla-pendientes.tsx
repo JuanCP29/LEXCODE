@@ -37,6 +37,11 @@ type Pendiente = {
   acciones_pendiente: Accion[];
 };
 
+// Grilla compartida entre el encabezado y las filas (chevron + 6 columnas).
+const GRID_COLS =
+  "grid items-center gap-x-3 md:gap-x-4 grid-cols-[18px_minmax(0,1fr)_auto] " +
+  "md:grid-cols-[18px_minmax(0,1.4fr)_minmax(0,1.15fr)_minmax(0,1.4fr)_minmax(0,1.5fr)_auto_auto]";
+
 const MOTIVO_LABEL: Record<string, string> = {
   sin_traslado_demanda: "Sin traslado de demanda en Bizagi",
   documento_ilegible:   "Documento no procesable (requiere transcripción)",
@@ -111,36 +116,45 @@ function FilaPendiente({ pendiente, onResuelto }: { pendiente: Pendiente; onResu
     >
       {/* Fila principal */}
       <div
-        className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-muted/30 transition-colors"
+        className={cn(GRID_COLS, "px-4 py-3 cursor-pointer hover:bg-muted/30 transition-colors")}
         onClick={() => setExpandido(!expandido)}
       >
+        {/* Chevron */}
         <button type="button" className="text-muted-foreground shrink-0">
-          {expandido
-            ? <ChevronDown className="w-4 h-4" />
-            : <ChevronRight className="w-4 h-4" />
-          }
+          {expandido ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
         </button>
 
-        <div className="flex-1 min-w-0 grid grid-cols-[1fr_auto] sm:grid-cols-[2fr_2fr_1fr_auto] gap-x-4 gap-y-0.5 items-center">
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-foreground truncate">{caso.nombre_demandante}</p>
-            <p className="text-[11px] font-mono text-muted-foreground truncate">{caso.radicado}</p>
-          </div>
-          <div className="hidden sm:block min-w-0">
-            <p className="text-xs text-muted-foreground truncate">{MOTIVO_LABEL[pendiente.motivo] ?? pendiente.motivo}</p>
-            <p className="text-[11px] text-muted-foreground truncate">{caso.despacho ?? "—"}</p>
-          </div>
-          <div className="hidden sm:flex items-center gap-1.5 flex-wrap">
-            <Badge estado={pendiente.estado} />
-            {acciones.length > 0 && (
-              <span className="text-[10px] text-muted-foreground">{acciones.length} acción{acciones.length !== 1 ? "es" : ""}</span>
-            )}
-          </div>
-          <div className="text-right">
-            <p className="text-[11px] text-muted-foreground">
-              {new Date(pendiente.created_at).toLocaleDateString("es-CO", { day: "2-digit", month: "short" })}
-            </p>
-          </div>
+        {/* Demandante (ancla) */}
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-foreground truncate">{caso.nombre_demandante}</p>
+          <p className="md:hidden text-[11px] font-mono text-muted-foreground truncate">{caso.radicado}</p>
+        </div>
+
+        {/* Radicado (+ bizagi) */}
+        <div className="hidden md:block min-w-0">
+          <span className="font-mono text-xs text-foreground/70 tabular-nums">{caso.radicado}</span>
+          {caso.radicado_bizagi && (
+            <p className="font-mono text-[10px] text-muted-foreground mt-0.5 tabular-nums truncate">{caso.radicado_bizagi}</p>
+          )}
+        </div>
+
+        {/* Despacho */}
+        <div className="hidden md:block min-w-0 text-xs text-muted-foreground truncate">{caso.despacho ?? "—"}</div>
+
+        {/* Observación */}
+        <div className="hidden md:block min-w-0">
+          <p className="text-xs text-muted-foreground truncate">{MOTIVO_LABEL[pendiente.motivo] ?? pendiente.motivo}</p>
+          {acciones.length > 0 && (
+            <p className="text-[10px] text-muted-foreground/70 mt-0.5">{acciones.length} acción{acciones.length !== 1 ? "es" : ""}</p>
+          )}
+        </div>
+
+        {/* Estado */}
+        <div className="hidden md:block"><Badge estado={pendiente.estado} /></div>
+
+        {/* Fecha */}
+        <div className="text-[11px] text-muted-foreground whitespace-nowrap text-right md:text-left">
+          {new Date(pendiente.created_at).toLocaleDateString("es-CO", { day: "2-digit", month: "short" })}
         </div>
       </div>
 
@@ -278,9 +292,21 @@ export function TablaPendientes({ pendientes }: { pendientes: any[] }) {
           </p>
         </div>
       ) : (
-        filtrados.map((p) => (
-          <FilaPendiente key={p.id} pendiente={p} onResuelto={onResuelto} />
-        ))
+        <>
+          {/* Encabezado de columnas */}
+          <div className={cn(GRID_COLS, "px-4 py-2.5 border-l-[3px] border-transparent border-b border-border bg-muted/40 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide")}>
+            <span />
+            <span>Demandante</span>
+            <span className="hidden md:block">Radicado</span>
+            <span className="hidden md:block">Despacho</span>
+            <span className="hidden md:block">Observación</span>
+            <span className="hidden md:block">Estado</span>
+            <span className="text-right md:text-left">Fecha</span>
+          </div>
+          {filtrados.map((p) => (
+            <FilaPendiente key={p.id} pendiente={p} onResuelto={onResuelto} />
+          ))}
+        </>
       )}
     </div>
   );
