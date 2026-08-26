@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   Upload, Loader2, Play, CheckCircle2, Clock, RefreshCw,
-  ListChecks, AlertCircle, UserCheck, Search, X, Building2,
+  ListChecks, AlertCircle, UserCheck, Search, X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { WORKFLOW_ESTADO } from "@/lib/ui/estado-badge";
@@ -12,6 +12,7 @@ import { WORKFLOW_ESTADO } from "@/lib/ui/estado-badge";
 type CasoCola = {
   id: string;
   radicado: string;
+  radicado_bizagi: string | null;
   nombre_demandante: string;
   cedula_demandante: string | null;
   despacho: string | null;
@@ -62,21 +63,29 @@ function parsearFila(row: Record<string, unknown>) {
   };
 }
 
-function EstadoBadge({ estado }: { estado: string }) {
-  const est = WORKFLOW_ESTADO[estado] ?? WORKFLOW_ESTADO.pendiente;
-  return (
-    <span className={cn("inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold", est.clase)}>
-      {est.label}
-    </span>
-  );
-}
-
-// Acento de color por estado (riel a la izquierda), consistente con Reparto.
+// Acento de color por estado (riel + punto), consistente con Reparto.
 const ACENTO: Record<string, string> = {
   pendiente: "#2563eb",  // azul
   en_proceso: "#d97706", // ámbar
   completado: "#16a34a", // verde
 };
+
+function EstadoBadge({ estado }: { estado: string }) {
+  const est = WORKFLOW_ESTADO[estado] ?? WORKFLOW_ESTADO.pendiente;
+  return (
+    <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold whitespace-nowrap", est.clase)}>
+      <span className="w-1.5 h-1.5 rounded-full" style={{ background: ACENTO[estado] ?? "#94a3b8" }} />
+      {est.label}
+    </span>
+  );
+}
+
+// "NOMBRE APELLIDO" → "Nombre Apellido" (conectores en minúscula)
+const MIN_COLA = new Set(["de", "del", "la", "las", "los", "y", "e", "el", "en", "a"]);
+function aTitulo(t: string | null | undefined): string {
+  if (!t) return "—";
+  return t.toLowerCase().split(/\s+/).map((p, i) => (i > 0 && MIN_COLA.has(p)) || /\d/.test(p) ? p : p.charAt(0).toUpperCase() + p.slice(1)).join(" ");
+}
 
 export function ColaCasos() {
   const router = useRouter();
@@ -351,59 +360,76 @@ export function ColaCasos() {
             <p className="text-sm font-medium text-muted-foreground">Ningún despacho coincide con “{busqueda}”</p>
           </div>
         ) : (
-          <div>
-            {/* Cabecera de selección */}
-            <div className="flex items-center gap-3 px-4 py-2 border-b border-border bg-muted/10">
-              <input
-                type="checkbox"
-                checked={todosSeleccionados}
-                onChange={toggleTodos}
-                className="w-4 h-4 rounded border-input accent-[color:var(--primary)] cursor-pointer"
-              />
-              <span className="text-[11px] font-medium text-muted-foreground">
-                Seleccionar {busqueda ? "filtrados" : "todos"}
-              </span>
-            </div>
-
-            <div className="divide-y divide-border">
-              {casosFiltrados.map((c) => (
-                <div key={c.id}
-                  className={cn("flex items-center gap-3 px-4 py-3 border-l-[3px] transition-colors",
-                    seleccion.has(c.id) ? "bg-primary/5" : "hover:bg-muted/30")}
-                  style={{ borderLeftColor: ACENTO[c.cola_estado] ?? "#94a3b8" }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={seleccion.has(c.id)}
-                    onChange={() => toggleUno(c.id)}
-                    className="w-4 h-4 rounded border-input accent-[color:var(--primary)] cursor-pointer shrink-0"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground truncate">{c.nombre_demandante}</p>
-                    <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1">
-                      <span className="font-mono">{c.radicado}</span>
-                      {c.despacho && <><Building2 className="w-3 h-3 shrink-0" /> {c.despacho}</>}
-                    </p>
-                  </div>
-                  <EstadoBadge estado={c.cola_estado} />
-                  {c.asignado_a ? (
-                    <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground max-w-[120px] truncate">
-                      <UserCheck className="w-3 h-3 shrink-0" /> {nombreUsuario(c.asignado_a)}
-                    </span>
-                  ) : (
-                    <span className="text-[10px] text-muted-foreground/50 italic">Sin asignar</span>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => iniciar(c)}
-                    disabled={c.cola_estado === "completado"}
-                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-primary text-primary text-xs font-semibold hover:bg-primary hover:text-primary-foreground transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+          <div className="overflow-auto max-h-[calc(100vh-360px)] min-h-[200px]">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 z-10">
+                <tr className="border-b border-border bg-muted [&>th]:bg-muted">
+                  <th className="w-10 px-4 py-3">
+                    <input type="checkbox" checked={todosSeleccionados} onChange={toggleTodos}
+                      title={`Seleccionar ${busqueda ? "filtrados" : "todos"}`}
+                      className="w-4 h-4 rounded border-input accent-[color:var(--primary)] cursor-pointer align-middle" />
+                  </th>
+                  <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Demandante</th>
+                  <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Radicado</th>
+                  <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Despacho</th>
+                  <th className="text-left px-3 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Estado</th>
+                  <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Asignado</th>
+                  <th className="text-right px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                {casosFiltrados.map((c) => (
+                  <tr key={c.id}
+                    className={cn("border-b border-border last:border-0 transition-colors",
+                      seleccion.has(c.id) ? "bg-primary/5" : "hover:bg-muted/30")}
                   >
-                    <Play className="w-3 h-3" /> {c.cola_estado === "completado" ? "Hecho" : "Iniciar"}
-                  </button>
-                </div>
-              ))}
-            </div>
+                    {/* Selección + riel de color por estado */}
+                    <td className="px-4 py-3 border-l-[3px]" style={{ borderLeftColor: ACENTO[c.cola_estado] ?? "#94a3b8" }}>
+                      <input type="checkbox" checked={seleccion.has(c.id)} onChange={() => toggleUno(c.id)}
+                        className="w-4 h-4 rounded border-input accent-[color:var(--primary)] cursor-pointer align-middle" />
+                    </td>
+                    {/* Demandante (ancla) */}
+                    <td className="px-4 py-3">
+                      <p className="font-semibold text-foreground text-sm leading-tight">{aTitulo(c.nombre_demandante)}</p>
+                      {c.cedula_demandante && (
+                        <p className="text-xs text-muted-foreground tabular-nums mt-0.5">C.C. {c.cedula_demandante}</p>
+                      )}
+                    </td>
+                    {/* Radicado + bizagi */}
+                    <td className="px-4 py-3">
+                      <span className="font-mono text-xs text-foreground/70 tabular-nums">{c.radicado}</span>
+                      {c.radicado_bizagi && (
+                        <p className="font-mono text-[10px] text-muted-foreground mt-0.5 tabular-nums">{c.radicado_bizagi}</p>
+                      )}
+                    </td>
+                    {/* Despacho */}
+                    <td className="px-4 py-3 text-sm text-muted-foreground min-w-[220px]">{c.despacho ? aTitulo(c.despacho) : "—"}</td>
+                    {/* Estado */}
+                    <td className="px-3 py-3"><EstadoBadge estado={c.cola_estado} /></td>
+                    {/* Asignado */}
+                    <td className="px-4 py-3">
+                      {c.asignado_a ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground max-w-[140px] truncate">
+                          <UserCheck className="w-3 h-3 shrink-0" /> {nombreUsuario(c.asignado_a)}
+                        </span>
+                      ) : (
+                        <span className="text-[11px] text-muted-foreground/50 italic">Sin asignar</span>
+                      )}
+                    </td>
+                    {/* Acción */}
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="flex justify-end">
+                        <button type="button" onClick={() => iniciar(c)} disabled={c.cola_estado === "completado"}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-primary text-primary text-xs font-semibold hover:bg-primary hover:text-primary-foreground transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+                        >
+                          <Play className="w-3 h-3" /> {c.cola_estado === "completado" ? "Hecho" : "Iniciar"}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
