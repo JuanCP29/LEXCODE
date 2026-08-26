@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import {
-  Upload, Loader2, Play, CheckCircle2, Clock, RefreshCw,
+  Upload, Loader2, ChevronDown, CheckCircle2, Clock, RefreshCw,
   ListChecks, AlertCircle, UserCheck, Search, X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -88,7 +87,6 @@ function aTitulo(t: string | null | undefined): string {
 }
 
 export function ColaCasos() {
-  const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [casos, setCasos] = useState<CasoCola[]>([]);
   const [resumen, setResumen] = useState<Resumen>({ total: 0, completados: 0, enProceso: 0, pendientes: 0, progreso: 0 });
@@ -203,13 +201,24 @@ export function ColaCasos() {
     }
   }
 
-  async function iniciar(caso: CasoCola) {
-    await fetch(`/api/cola/${caso.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ cola_estado: "en_proceso" }),
-    });
-    router.push(`/generador/${caso.id}/params`);
+  // Asignación individual (opción alterna al lote): asigna un solo caso.
+  async function asignarUno(casoId: string, userId: string) {
+    if (!userId) return;
+    setError(null);
+    setMsg(null);
+    try {
+      const res = await fetch("/api/cola/asignar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ caso_ids: [casoId], asignado_a: userId }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error ?? "Error al asignar");
+      setCasos((prev) => prev.map((c) => (c.id === casoId ? { ...c, asignado_a: userId } : c)));
+      setMsg(`Caso asignado a ${nombreUsuario(userId)}.`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al asignar");
+    }
   }
 
   const nombreUsuario = (id: string | null) => {
@@ -416,14 +425,24 @@ export function ColaCasos() {
                         <span className="text-[11px] text-muted-foreground/50 italic">Sin asignar</span>
                       )}
                     </td>
-                    {/* Acción */}
+                    {/* Acción — asignación individual (alterna al lote) */}
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex justify-end">
-                        <button type="button" onClick={() => iniciar(c)} disabled={c.cola_estado === "completado"}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-primary text-primary text-xs font-semibold hover:bg-primary hover:text-primary-foreground transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
-                        >
-                          <Play className="w-3 h-3" /> {c.cola_estado === "completado" ? "Hecho" : "Iniciar"}
-                        </button>
+                        <div className="relative">
+                          <UserCheck className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                          <select
+                            value=""
+                            onChange={(e) => { if (e.target.value) asignarUno(c.id, e.target.value); }}
+                            aria-label="Asignar caso"
+                            className="appearance-none text-xs font-semibold rounded-md border border-primary text-primary bg-card pl-7 pr-6 py-1.5 cursor-pointer hover:bg-primary/5 focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
+                          >
+                            <option value="">Asignar</option>
+                            {usuarios.map((u) => (
+                              <option key={u.id} value={u.id}>{u.esYo ? "Yo" : u.nombre}{u.rol ? ` · ${u.rol}` : ""}</option>
+                            ))}
+                          </select>
+                          <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-primary/70" />
+                        </div>
                       </div>
                     </td>
                   </tr>
