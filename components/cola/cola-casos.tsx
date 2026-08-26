@@ -210,7 +210,7 @@ export function ColaCasos() {
   };
 
   return (
-    <div className="space-y-5 max-w-5xl">
+    <div className="space-y-5 max-w-[1400px]">
       {/* Header + progreso */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>

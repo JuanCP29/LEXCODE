@@ -18,7 +18,7 @@ export default async function PendientesPage() {
   const activos   = pendientes.filter((p) => p.estado === "pendiente").length;
 
   return (
-    <div className="space-y-5 max-w-5xl">
+    <div className="space-y-5 max-w-[1400px]">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
