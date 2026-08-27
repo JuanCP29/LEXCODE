@@ -55,11 +55,11 @@ export default async function GeneradorParamsPage({
       {/* Encabezado */}
       <div className="flex items-center gap-3">
         <Link
-          href={`/casos/${caso.id}`}
+          href="/casos"
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Volver al caso
+          Volver a Reparto
         </Link>
       </div>
 
