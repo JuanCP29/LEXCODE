@@ -125,7 +125,20 @@ export async function POST(request: NextRequest) {
 
     const ficha = fichaRes.data as unknown as FichaParams;
 
-    // ── 2. Descargar demanda PDF ──────────────────────────────────────────
+    // ── 2. Texto del expediente ───────────────────────────────────────────
+    let textoDemanda = "";
+    let textoLineamientos = "";
+
+    // Fase 1: reutilizar el texto ya extraído y persistido en el caso (evita
+    // re-descargar y re-parsear los PDF). Cae a la descarga solo si no existe.
+    const { data: casoTx } = await supabase
+      .from("casos")
+      .select("texto_expediente")
+      .eq("id", caso_id)
+      .single();
+    const persistido = (casoTx?.texto_expediente ?? "").trim();
+    if (persistido.length >= 200) textoDemanda = persistido;
+
     const { data: archivos } = await supabase
       .from("archivos_proceso")
       .select("storage_path, tipo")
@@ -134,10 +147,7 @@ export async function POST(request: NextRequest) {
     const archivoPDF = archivos?.find((a) => a.tipo === "demanda_pdf");
     const archivoLineamientos = archivos?.find((a) => a.tipo === "lineamientos");
 
-    let textoDemanda = "";
-    let textoLineamientos = "";
-
-    if (archivoPDF) {
+    if (archivoPDF && !textoDemanda) {
       const { data: pdfData } = await supabase.storage
         .from("documentos-lexcode")
         .download(archivoPDF.storage_path);

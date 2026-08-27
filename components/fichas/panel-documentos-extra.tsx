@@ -163,7 +163,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
       const res = await fetch("/api/analizar-documentos-extra", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ paths, despacho: despacho ?? null }),
+        body: JSON.stringify({ paths, despacho: despacho ?? null, caso_id: casoId }),
       });
 
       const json = await res.json().catch(() => ({ error: `Error del servidor (HTTP ${res.status})` }));
@@ -199,6 +199,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
           despacho: despacho ?? null,
           pretension: sug?.pretension ?? null,
           textoDocs: json.texto_docs ?? null,
+          caso_id: casoId,
         }),
       })
         .then(async (r) => {

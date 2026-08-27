@@ -91,12 +91,23 @@ export async function POST(request: NextRequest) {
       despacho?: string | null;
       pretension?: string | null;
       textoDocs?: string | null; // texto ya extraído por el análisis principal (evita re-ingerir)
+      caso_id?: string | null;   // para leer el texto persistido del expediente (Fase 1)
     };
     const paths = body.paths ?? [];
 
     // Preferir el texto que ya extrajo el análisis principal (rápido; evita re-descargar
-    // y re-parsear). Solo se descarga y se usa visión como respaldo cuando NO hay texto útil.
-    const textoDocs = (body.textoDocs ?? "").trim();
+    // y re-parsear). Si no viene, se usa el texto persistido del caso. Solo se descarga y se
+    // usa visión como último respaldo cuando NO hay texto útil por ninguna vía.
+    let textoDocs = (body.textoDocs ?? "").trim();
+    if (soloUtil(textoDocs) < 200 && body.caso_id) {
+      const { data: caso } = await supabase
+        .from("casos")
+        .select("texto_expediente")
+        .eq("id", body.caso_id)
+        .single();
+      const persistido = (caso?.texto_expediente ?? "").trim();
+      if (soloUtil(persistido) >= 200) textoDocs = persistido;
+    }
     const tieneTextoUtil = soloUtil(textoDocs) >= 200;
 
     const pdfs: { nombre: string; buffer: Buffer }[] = [];
@@ -166,7 +177,7 @@ export async function POST(request: NextRequest) {
       if (!recorte) return NextResponse.json({ consideraciones: null });
       const msg = await anthropic.messages.create({
         model: "claude-sonnet-4-6",
-        max_tokens: 2400,
+        max_tokens: 3200,
         messages: [{
           role: "user",
           content: [
@@ -179,7 +190,7 @@ export async function POST(request: NextRequest) {
     } else {
       const msg = await anthropic.messages.create({
         model: "claude-sonnet-4-6",
-        max_tokens: 2400,
+        max_tokens: 3200,
         messages: [{
           role: "user",
           content: `${contexto}\n\nDOCUMENTOS:\n${textoCompleto.slice(0, 30000)}${bloqueRepo}\n\n${REGLAS_CONSIDERACIONES}`,

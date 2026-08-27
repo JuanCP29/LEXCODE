@@ -245,11 +245,13 @@ export async function POST(request: NextRequest) {
     const pdfs: { nombre: string; buffer: Buffer }[] = [];
     let rutasTmp: string[] = [];
     let despachoHint: string | null = null;
+    let casoId: string | null = null;
 
     if (contentType.includes("application/json")) {
-      const body = await request.json() as { paths: { path: string; nombre: string }[]; despacho?: string | null };
+      const body = await request.json() as { paths: { path: string; nombre: string }[]; despacho?: string | null; caso_id?: string | null };
       const { paths } = body;
       despachoHint = body.despacho?.trim() || null;
+      casoId = body.caso_id ?? null;
       if (!paths || paths.length === 0) {
         return NextResponse.json({ error: "No se recibieron archivos" }, { status: 400 });
       }
@@ -307,6 +309,17 @@ export async function POST(request: NextRequest) {
         .replace(/\s+/g, " ")
         .trim().length;
     const caracteresExtraidos = soloUtil(textoCompleto);
+
+    // Fase 1 — persistir el texto del expediente en el caso, para que las demás
+    // secciones (consideraciones, regenerar-seccion) lo reutilicen sin re-ingerir.
+    if (casoId && caracteresExtraidos >= 200) {
+      const { error: persistErr } = await supabase
+        .from("casos")
+        .update({ texto_expediente: textoCompleto.slice(0, 60000) })
+        .eq("id", casoId);
+      if (persistErr) console.error("persistir texto_expediente:", persistErr.message);
+    }
+
     // Texto útil del TRASLADO específicamente (documento principal para las secciones 1-4 + problema).
     const trasladoIdx = pdfs.findIndex((p) => /traslad/i.test(p.nombre));
     const idxPrincipal = trasladoIdx >= 0 ? trasladoIdx : 0;
