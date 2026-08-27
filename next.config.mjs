@@ -17,6 +17,7 @@ const nextConfig = {
       "/api/regenerar-seccion": pdfRuntimeFiles,
       "/api/directrices": pdfRuntimeFiles,
       "/api/analizar-documentos-extra": pdfRuntimeFiles,
+      "/api/analizar-consideraciones": pdfRuntimeFiles,
     },
   },
 };

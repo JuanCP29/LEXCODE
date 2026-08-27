@@ -176,8 +176,27 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
       setEscaneado(!!json.escaneado);
       setEstado("listo");
 
-      // Sección 9 (Jurisprudencia): request aparte para no exceder el tiempo de la
-      // función. Best-effort: si falla, la sección queda para diligenciar manual.
+      // Secciones pesadas en requests APARTE (para no exceder los 60s de Vercel Hobby):
+      // Consideraciones (sec. 11) y Jurisprudencia (sec. 9) se generan en paralelo y se
+      // fusionan al llegar. Acumulador compartido para no pisar una sugerencia con otra.
+      let acumulado: Sugerencias = { ...(sug ?? {}) };
+      const aplicar = (patch: Partial<Sugerencias>) => {
+        acumulado = { ...acumulado, ...patch };
+        setSugerencias(acumulado);
+        onSugerencias?.(acumulado);
+      };
+
+      // Consideraciones (sec. 11): a partir de las resoluciones/oficios de Colpensiones.
+      fetch("/api/analizar-consideraciones", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paths, despacho: despacho ?? null, pretension: sug?.pretension ?? null }),
+      })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((j) => { if (j?.consideraciones) aplicar({ consideraciones: j.consideraciones }); })
+        .catch(() => {});
+
+      // Jurisprudencia (sec. 9): sentencia mas relevante de la sec. 4 + repositorio.
       if (sug?.normas && /jurisprudencia\s*:/i.test(sug.normas)) {
         fetch("/api/sugerir-jurisprudencia", {
           method: "POST",
@@ -185,13 +204,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
           body: JSON.stringify({ pretension: sug.pretension ?? null, normasText: sug.normas }),
         })
           .then((r) => (r.ok ? r.json() : null))
-          .then((j) => {
-            if (j?.jurisprudencia) {
-              const merged: Sugerencias = { ...sug, jurisprudencia: j.jurisprudencia };
-              setSugerencias(merged);
-              onSugerencias?.(merged);
-            }
-          })
+          .then((j) => { if (j?.jurisprudencia) aplicar({ jurisprudencia: j.jurisprudencia }); })
           .catch(() => {});
       }
 

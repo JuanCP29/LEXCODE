@@ -3,7 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { extraerTextoPDF } from "@/lib/ia/extraer-pdf";
-import { PDFDocument } from "pdf-lib";
+import { combinarPDFsBase64 } from "@/lib/ia/combinar-pdfs";
 import { CATALOGO_PRETENSIONES } from "@/lib/data/catalogo-pretensiones";
 
 export const maxDuration = 120;
@@ -32,54 +32,7 @@ const REGLA_CAUSANTE = `Identifica al CAUSANTE o AFILIADO: la persona cuya vida 
 - En pensiones de SOBREVIVIENTES (o sustitucion pensional) el causante es la persona FALLECIDA, DISTINTA del demandante (que es el beneficiario/conyuge/hijo que reclama): devuelve los datos del fallecido.
 - Solo pon "causante_nombre" y "causante_cedula" en null si no logras identificar al afiliado en los documentos.`;
 
-// Recorta un PDF a sus primeras N páginas y lo devuelve en base64 (para leer escaneados con visión).
-async function recortarPaginasBase64(buffer: Buffer, maxPaginas = 30): Promise<{ base64: string; paginas: number } | null> {
-  try {
-    const src = await PDFDocument.load(buffer, { ignoreEncryption: true });
-    const total = src.getPageCount();
-    const n = Math.min(maxPaginas, total);
-    const out = await PDFDocument.create();
-    const indices = Array.from({ length: n }, (_, i) => i);
-    const paginas = await out.copyPages(src, indices);
-    paginas.forEach((p) => out.addPage(p));
-    const bytes = await out.save();
-    return { base64: Buffer.from(bytes).toString("base64"), paginas: n };
-  } catch (e) {
-    console.error("recortarPaginasBase64:", e);
-    return null;
-  }
-}
-
-// Combina VARIOS PDFs en uno solo (traslado primero, luego las resoluciones/actuaciones),
-// con presupuesto de paginas para no exceder los limites de la API.
-async function combinarPDFsBase64(
-  pdfs: { nombre: string; buffer: Buffer }[],
-  opts: { trasladoMax?: number; otrosMax?: number; totalMax?: number } = {}
-): Promise<{ base64: string; paginas: number } | null> {
-  const { trasladoMax = 25, otrosMax = 12, totalMax = 50 } = opts;
-  try {
-    const traslado = pdfs.find((p) => /traslad/i.test(p.nombre)) ?? pdfs[0];
-    const otros = pdfs.filter((p) => p !== traslado);
-    const ordenados = [traslado, ...otros];
-    const out = await PDFDocument.create();
-    let total = 0;
-    for (let i = 0; i < ordenados.length; i++) {
-      if (total >= totalMax) break;
-      const src = await PDFDocument.load(ordenados[i].buffer, { ignoreEncryption: true });
-      const max = i === 0 ? trasladoMax : otrosMax;
-      const n = Math.min(max, src.getPageCount(), totalMax - total);
-      if (n <= 0) continue;
-      const pages = await out.copyPages(src, Array.from({ length: n }, (_, k) => k));
-      pages.forEach((p) => out.addPage(p));
-      total += n;
-    }
-    if (total === 0) return null;
-    return { base64: Buffer.from(await out.save()).toString("base64"), paginas: total };
-  } catch (e) {
-    console.error("combinarPDFsBase64:", e);
-    return null;
-  }
-}
+// combinarPDFsBase64 vive en lib/ia/combinar-pdfs.ts (compartido con /api/analizar-consideraciones).
 
 // Reglas de redaccion comunes a HECHOS y PRETENSIONES (secciones 1 y 2 de la ficha).
 const REGLAS_REDACCION = `- La demanda puede enumerar sus puntos con NUMEROS ("1.", "1)", "1-") o con ORDINALES EN PALABRA ("Primero.", "Segundo.", "Tercero." ... "Septimo.", "Octavo.", "Noveno.", "Decimo.", "Decimo primero.", "Undecimo.", "Duodecimo.", "Decimo tercero.", etc.). DETECTA AMBOS formatos. Recorre la seccion desde el PRIMER punto hasta el ULTIMO, que es el que aparece justo antes de que empiece la siguiente seccion (p. ej. los HECHOS terminan donde comienza "PRETENSIONES").
@@ -130,7 +83,8 @@ async function analizarTrasladoVision(
   const vacio: SeccionesTraslado = { sintesis_hechos: null, pretensiones: null, cuantia: null, normas: null, problema_juridico: null, consideraciones: null, pretension: null, clase_pretension: null, causante_nombre: null, causante_cedula: null };
   if (pdfs.length === 0) return vacio;
   // Combina el traslado (demanda) con las demas actuaciones/resoluciones cargadas.
-  const recorte = await combinarPDFsBase64(pdfs);
+  // Presupuesto de páginas reducido para caber en el límite de 60s de Vercel Hobby.
+  const recorte = await combinarPDFsBase64(pdfs, { trasladoMax: 15, otrosMax: 10, totalMax: 25 });
   if (!recorte) return vacio;
 
   // La jurisdicción se determina por el despacho (autoritativo cuando se conoce).
@@ -145,7 +99,7 @@ async function analizarTrasladoVision(
 RESOLUCIONES u OFICIOS de COLPENSIONES (las "ultimas actuaciones relacionadas": numeros que empiezan por SUB, DPE, GNR, VPB,
 DIR, HL o BZ), que son la respuesta previa de la entidad a la reclamacion del ciudadano. Puede estar escaneado (imagenes).
 ${jurisdiccionDirectiva}
-De la DEMANDA (traslado) extrae las secciones A) a E). De las RESOLUCIONES/OFICIOS de Colpensiones elabora la seccion F).
+De la DEMANDA (traslado) extrae las secciones A) a E). La seccion F) (consideraciones) NO se elabora aqui: devuelve null.
 
 A) HECHOS -> campo "sintesis_hechos". Seccion titulada "HECHOS" (o "HECHOS DE LA DEMANDA", "III. HECHOS").
 B) PRETENSIONES -> campo "pretensiones". Seccion titulada "PRETENSIONES" (o "PETICIONES").
@@ -205,43 +159,7 @@ E) PROBLEMA JURIDICO -> campo "problema_juridico". Redacta el PLANTEAMIENTO DEL 
    NULIDAD/reincorporacion si se discute traslado de regimen). NO menciones costas procesales ni agencias en derecho.
    Tercera persona, formal, COLPENSIONES como demandada. Si no puedes determinar la controversia, pon null.
 
-F) CONSIDERACIONES -> campo "consideraciones". Es la seccion MAS IMPORTANTE. Analiza LAS RESOLUCIONES u OFICIOS de COLPENSIONES
-   presentes en el paquete (SUB, DPE, GNR, VPB, DIR, HL, BZ) —la respuesta previa de la entidad, negativa o parcialmente
-   positiva— frente a lo que hoy se reclama. Redactala siguiendo esta ESTRUCTURA, en TERCERA PERSONA, formal y tecnico, extensa
-   (varios parrafos). Cuando el analisis lo amerite, USA SUBTITULOS breves (p. ej. "MARCO NORMATIVO", "CALCULO DE SEMANAS Y TASA
-   DE REEMPLAZO", "ANALISIS DEL CASO", "CONCLUSION Y POSTURA"). Usa UNICAMENTE lo que conste; no inventes cifras ni normas.
-   FUENTE EXCLUSIVA: construye TODA esta seccion —incluidas las normas, la jurisprudencia y los lineamientos— UNICAMENTE con lo
-   que digan las RESOLUCIONES/OFICIOS de Colpensiones. NO incorpores ni relaciones informacion del TRASLADO/demanda: ni sus
-   hechos, pretensiones, normas ni jurisprudencia. Solo se citan normas y sentencias que aparezcan en dichas resoluciones/oficios.
-
-   (1) ENCUADRE + RAZONES: enmarca brevemente la controversia e identifica con precision LAS RAZONES por las que Colpensiones
-       nego o reconocio parcialmente (motivacion, normas y calculos usados: IBL, tasa de reemplazo, semanas, fechas de
-       causacion y efectividad), citando los numeros de resolucion y fechas que consten.
-
-   (2) MARCO NORMATIVO ADAPTADO AL TIPO DE PRESTACION: trae las normas que LAS RESOLUCIONES/OFICIOS de Colpensiones citan o
-       aplican (NO las que invoque la demanda), TRANSCRIBIENDO ENTRE COMILLAS los articulos clave y APLICANDOLOS a las cifras del
-       expediente. Usa el siguiente marco por prestacion como referencia de QUE BUSCAR, citando solo lo que conste en las
-       resoluciones/oficios:
-       - VEJEZ / RELIQUIDACION: Ley 100 de 1993 arts. 21 (IBL), 33 (semanas) y 34 (monto), con la modificacion de la Ley 797 de
-         2003; incluye y aplica la formula "r = 65,50 - 0,50 s" y el incremento de 1,5% por cada 50 semanas adicionales.
-       - SOBREVIVIENTES: Ley 100 arts. 46 y 47 (mod. arts. 12 y 13 de la Ley 797); principio de la norma vigente al momento del
-         fallecimiento y la condicion mas beneficiosa (Acuerdo 049 de 1990 cuando aplique).
-       - INDEMNIZACION SUSTITUTIVA: Ley 100 art. 37 y Decreto 1730 de 2001; incluye y aplica la formula "I = SBC x SC x PPC".
-       - REGIMEN DE TRANSICION: Ley 100 art. 36 y art. 48 de la Constitucion.
-       - INEFICACIA DE TRASLADO: deber de informacion, ineficacia del traslado y reincorporacion al Regimen de Prima Media.
-
-   (3) MARCO JURISPRUDENCIAL E INSTITUCIONAL: cita precedentes con su radicado (Corte Constitucional SU/C/T, Corte Suprema Sala
-       Laboral SL, Consejo de Estado) y lineamientos, directrices o circulares de Colpensiones UNICAMENTE si se MENCIONAN en las
-       RESOLUCIONES/OFICIOS de Colpensiones. NO tomes precedentes ni normatividad del TRASLADO/demanda.
-
-   (4) CONCLUSION Y POSTURA (OBLIGATORIA AL FINAL): fija expresamente la postura de Colpensiones y una RECOMENDACION clara:
-       si la actuacion de la entidad se ajusto a derecho, concluye que es "juridicamente viable continuar ejerciendo la defensa
-       judicial y NO acceder a formula conciliatoria"; si hay aspectos favorables al demandante o incertidumbre, senala los
-       puntos susceptibles de revisar o conciliar. Cierra siempre con esta postura/recomendacion.
-
-   Si en el paquete NO hay resoluciones/oficios de Colpensiones, NO construyas el marco normativo ni jurisprudencial con la
-   demanda: limita la seccion al encuadre y la postura con lo que conste en actuaciones de la entidad; si no hay base suficiente,
-   pon null.
+F) CONSIDERACIONES -> campo "consideraciones": devuelve null SIEMPRE. Esta seccion se genera en una solicitud APARTE; no la elabores aqui.
 
 G) CLASIFICACION -> campos "pretension" y "clase_pretension".
 ${REGLA_CLASIFICACION}
@@ -254,7 +172,7 @@ TRANSCRIBIR articulos, sentencias o textos, usa SIEMPRE comillas angulares « »
 no invalidar el JSON. Usa \\n para los saltos de linea.
 
 Devuelve UNICAMENTE un JSON con esta forma exacta:
-{ "sintesis_hechos": "1) ...\\n\\n2) ...", "pretensiones": "1) ...\\n\\n2) ...", "cuantia": "La cuantia fue estimada...", "normas": "• Ley ...\\n• Decreto ...", "problema_juridico": "Determinar si ...", "consideraciones": "...", "pretension": "VEJEZ", "clase_pretension": "LEY 100 DE 1993", "causante_nombre": "NOMBRE COMPLETO DEL AFILIADO", "causante_cedula": "12345678" }`;
+{ "sintesis_hechos": "1) ...\\n\\n2) ...", "pretensiones": "1) ...\\n\\n2) ...", "cuantia": "La cuantia fue estimada...", "normas": "• Ley ...\\n• Decreto ...", "problema_juridico": "Determinar si ...", "consideraciones": null, "pretension": "VEJEZ", "clase_pretension": "LEY 100 DE 1993", "causante_nombre": "NOMBRE COMPLETO DEL AFILIADO", "causante_cedula": "12345678" }`;
 
   try {
     const message = await anthropic.messages.create({
@@ -460,7 +378,7 @@ Devuelve UNICAMENTE un objeto JSON valido con esta forma exacta (sin texto adici
     "cuantia": "busca la seccion 'CUANTIA', 'COMPETENCIA Y CUANTIA' o 'ESTIMACION DE LA CUANTIA'. Devuelve EXACTAMENTE la frase 'La cuantia fue estimada por la parte actora, en <VALOR>.' donde <VALOR> es el monto en FORMATO MONEDA con simbolo '$', miles con punto y decimales con coma (ej '$275.353.309,53'), SIN escribir 'COP' ni 'pesos'; si esta en salarios minimos dejalo como '20 SMLMV'. Si no hay valor, null.",
     "normas": "busca la seccion 'FUNDAMENTOS Y RAZONES DE DERECHO', 'NORMAS VIOLADAS' o 'CONCEPTO DE VIOLACION'. Relaciona la normatividad CONSOLIDANDO por norma: cada ley/decreto/codigo/Constitucion aparece UNA SOLA VEZ listando TODOS sus articulos juntos, separados por coma y ordenados. UNA norma por linea, y cada linea DEBE EMPEZAR con una vineta '• ' (ej '• Ley 100 de 1993, articulos 9, 10, 34, 141'). Sin repetir. No inventes. Devuelve el texto o null.",
     "problema_juridico": "PLANTEAMIENTO DEL PROBLEMA JURIDICO en UN SOLO PARRAFO, como planteamiento de la controversia (NO en forma de pregunta, sin signos '¿ ?'). SEGUN LA JURISDICCION: si es CONTENCIOSO ADMINISTRATIVA (Juzgado o Tribunal Administrativo, o medio de control de nulidad y restablecimiento del derecho), INICIA por la procedencia de la nulidad: 'Determinar si se debe declarar la nulidad [total/parcial] de la Resolucion No <numero> del <fecha> mediante la cual COLPENSIONES <reconocio/nego...>, y si, como consecuencia, hay lugar a <accion principal> con retroactivo e intereses o indexacion'; si es ORDINARIA LABORAL, usa 'Determinar si <controversia>, y si, como consecuencia, hay lugar a <accion principal> con retroactivo e intereses o indexacion'. ATERRIZA a UNA SOLA ACCION (reliquidacion si ya goza de pension; reconocimiento si no; nulidad/reincorporacion si traslado). NO menciones costas procesales. Tercera persona, COLPENSIONES demandada. Si no se puede determinar, null.",
-    "consideraciones": "SECCION MAS IMPORTANTE. Analiza las RESOLUCIONES/OFICIOS de COLPENSIONES (SUB, DPE, GNR, VPB, DIR, HL, BZ) que consten (su respuesta previa a lo reclamado). FUENTE EXCLUSIVA: construye TODA la seccion —normas, jurisprudencia y lineamientos incluidos— UNICAMENTE con lo que digan esas resoluciones/oficios; NO incorpores ni relaciones informacion del TRASLADO/demanda (ni sus hechos, pretensiones, normas o jurisprudencia). Estructura, en tercera persona, formal y extensa (con SUBTITULOS breves cuando ayude): (1) ENCUADRE + RAZONES por las que Colpensiones nego/reconocio parcialmente (motivacion, IBL, tasa de reemplazo, semanas, fechas, numeros de resolucion); (2) MARCO NORMATIVO: trae las normas que LAS RESOLUCIONES/OFICIOS citan o aplican (NO las de la demanda), TRANSCRIBIENDO ENTRE COMILLAS los articulos clave y APLICANDOLOS a las cifras; usa como referencia de QUE BUSCAR segun la prestacion, citando solo lo que conste en las resoluciones: VEJEZ/RELIQUIDACION -> Ley 100 arts. 21, 33, 34 (mod. Ley 797) y formula 'r = 65,50 - 0,50 s' + 1,5% por 50 semanas; SOBREVIVIENTES -> arts. 46, 47 (mod. 12, 13 Ley 797), norma vigente al fallecimiento y condicion mas beneficiosa (Acuerdo 049/1990); INDEMNIZACION SUSTITUTIVA -> art. 37 y Decreto 1730/2001, formula 'I = SBC x SC x PPC'; TRANSICION -> art. 36 y art. 48 CN; INEFICACIA DE TRASLADO -> deber de informacion y reincorporacion a RPM; (3) MARCO JURISPRUDENCIAL E INSTITUCIONAL: precedentes con radicado (SU/C/T, SL, Consejo de Estado) y lineamientos/directrices/circulares de Colpensiones SOLO si se mencionan en las resoluciones/oficios (NO los de la demanda); (4) CONCLUSION Y POSTURA OBLIGATORIA al final con recomendacion clara de conciliar o no ('viable continuar la defensa y NO acceder a formula conciliatoria', o los aspectos a revisar). Solo lo que conste. Si NO hay resoluciones/oficios de Colpensiones, no construyas el marco normativo ni jurisprudencial con la demanda; limita al encuadre y la postura con lo que conste y, si no hay base, null.",
+    "consideraciones": "devuelve null SIEMPRE. Esta seccion se genera en una solicitud APARTE; no la elabores aqui.",
     "evaluacion_riesgo": "evaluacion del riesgo procesal segun lo que consta, o null",
     "recomendacion": "recomendacion de conciliacion fundamentada en las fuentes, o null",
     "pretension": "CLASIFICACION del tipo de prestacion. ${REGLA_CLASIFICACION.replace(/\n/g, " ")} Devuelve la pretension (VEJEZ, SOBREVIVIENTES, INVALIDEZ o ADMINISTRADORA) o null.",
