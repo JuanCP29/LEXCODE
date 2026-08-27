@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import Anthropic from "@anthropic-ai/sdk";
 import { extraerTextoPDF } from "@/lib/ia/extraer-pdf";
 import { SECCIONES } from "@/lib/ia/secciones";
+import { MATRIZ_SECCIONES } from "@/lib/ficha/matriz-secciones";
 
 function createSupabaseServer() {
   const cookieStore = cookies();
@@ -32,10 +33,6 @@ const MAPA_KEY_A_JSON: Record<string, string> = {
   sec_16_consideraciones: "sec_16",
   sec_18_recomendacion:   "sec_18",
 };
-
-const MAPA_JSON_A_KEY: Record<string, string> = Object.fromEntries(
-  Object.entries(MAPA_KEY_A_JSON).map(([k, v]) => [v, k])
-);
 
 export async function POST(request: NextRequest) {
   try {
@@ -78,6 +75,11 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Instrucción específica de la sección (misma que usa el pipeline v2)
+    const instruccionEspecifica = MATRIZ_SECCIONES.find(
+      (m) => m.dbColumn === seccion_key
+    )?.instruccionIA;
 
     // ── 1. Cargar caso ────────────────────────────────────────────────────
     const { data: caso, error: casoError } = await supabase
@@ -163,7 +165,7 @@ export async function POST(request: NextRequest) {
 
     const prompt = `Eres un abogado experto en seguridad social colombiana.
 Analiza la siguiente demanda y regenera ÚNICAMENTE la sección ${claveJson.replace("sec_", "")} (${seccion.label}) de la Ficha de Conciliación Judicial formato GDJ-GPO-FMT-005.
-
+${instruccionEspecifica ? `\nINSTRUCCIÓN ESPECÍFICA DE LA SECCIÓN:\n${instruccionEspecifica}\n` : ""}
 PARÁMETROS DEL CASO:
 - Radicado: ${caso.radicado}
 - Demandante: ${caso.nombre_demandante}
