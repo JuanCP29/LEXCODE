@@ -163,14 +163,25 @@ C) CUANTIA -> campo "cuantia". Busca la seccion titulada "CUANTIA", "COMPETENCIA
    NO escribas "COP" ni "pesos". Si el valor esta expresado en salarios minimos, dejalo como "20 SMLMV".
    Si no encuentras el valor de la cuantia, pon null.
 
-D) NORMAS -> campo "normas". Busca la seccion titulada "FUNDAMENTOS Y RAZONES DE DERECHO", "NORMAS VIOLADAS" o
-   "CONCEPTO DE VIOLACION". Relaciona la normatividad citada CONSOLIDANDO por norma: cada ley, decreto, codigo o la
-   Constitucion debe aparecer UNA SOLA VEZ, listando TODOS sus articulos juntos, separados por coma y en orden ascendente.
-   UNA norma por linea, y cada linea DEBE EMPEZAR con una vineta "• " (bullet + espacio). Ejemplos de formato:
+D) NORMAS Y JURISPRUDENCIA -> campo "normas". Revisa el TRASLADO: la seccion "FUNDAMENTOS Y RAZONES DE DERECHO",
+   "NORMAS VIOLADAS" o "CONCEPTO DE VIOLACION" (para las normas) y TODO el texto de la demanda (para la jurisprudencia).
+   Devuelve DOS bloques:
+   (1) NORMAS citadas, CONSOLIDANDO por norma: cada ley, decreto, codigo o la Constitucion debe aparecer UNA SOLA VEZ,
+   listando TODOS sus articulos juntos, separados por coma y en orden ascendente. UNA norma por linea, cada linea DEBE
+   EMPEZAR con una vineta "• " (bullet + espacio). Ejemplos de formato (NO los copies si no constan):
    "• Ley 100 de 1993, articulos 9, 10, 14, 22, 34, 141"
    "• Constitucion Politica, articulos 48, 53"
-   "• Decreto 692 de 1994"
-   NO repitas la misma norma en varias lineas. No inventes normas que no consten. Si no encuentras la seccion, pon null.
+   NO repitas la misma norma en varias lineas.
+   (2) JURISPRUDENCIA de altas cortes que la demanda cite —Corte Suprema de Justicia Sala Laboral (sentencias "SL"),
+   Corte Constitucional (sentencias "C-", "T-", "SU-") y Consejo de Estado—. Si hay al menos una, antecede el bloque con
+   una linea que diga EXACTAMENTE "Jurisprudencia:" (sin vineta) y lista UNA sentencia por linea empezando con "• ",
+   indicando corporacion y numero de sentencia/radicado tal como aparezcan. Ejemplo de formato:
+   "Jurisprudencia:"
+   "• Corte Suprema de Justicia, Sala Laboral, sentencia SL3501-2022, radicacion 92207 (17/08/2022)"
+   REGLAS CRITICAS: incluye UNICAMENTE normas y sentencias que aparezcan TEXTUALMENTE en el TRASLADO. NUNCA inventes ni
+   agregues normas o sentencias de conocimiento general NI las que figuran como ejemplos en estas instrucciones (p. ej.
+   Decreto 1730 de 2001, Acuerdo 049 de 1990, formulas u otras) si no constan en la demanda. Si la demanda no cita
+   jurisprudencia, omite el bloque "Jurisprudencia:". Si no encuentras normas, pon null.
 
 E) PROBLEMA JURIDICO -> campo "problema_juridico". Redacta el PLANTEAMIENTO DEL PROBLEMA JURIDICO en UN SOLO PARRAFO,
    como PLANTEAMIENTO DE LA CONTROVERSIA (NO en forma de pregunta: no uses signos "¿ ?" ni termines con "?").

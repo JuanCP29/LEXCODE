@@ -1386,7 +1386,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
             onChange={setNormasTexto}
             sugerencia={normasSugerida}
             minHeight={140}
-            placeholder="Se relacionan las leyes, decretos, artículos y normatividad citada en el título «FUNDAMENTOS Y RAZONES DE DERECHO» / «NORMAS VIOLADAS» / «CONCEPTO DE VIOLACIÓN» del traslado (una por línea)."
+            placeholder="Se relacionan las leyes, decretos, artículos y normatividad citada en el título «FUNDAMENTOS Y RAZONES DE DERECHO» / «NORMAS VIOLADAS» / «CONCEPTO DE VIOLACIÓN» del traslado (una por línea) y, si la demanda la cita, la jurisprudencia de altas cortes (CSJ, Corte Constitucional, Consejo de Estado)."
           />
         </Campo>
         <p className="text-[11px] text-muted-foreground flex items-start gap-1">
