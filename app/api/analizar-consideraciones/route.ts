@@ -81,6 +81,7 @@ Incluye, con SUBTITULOS breves:
     los articulos clave y APLICANDOLOS a las cifras del expediente (formulas segun prestacion: VEJEZ r=65,50-0,50s +1,5%/50sem;
     INDEMNIZACION I=SBC x SC x PPC; etc.). Cita solo lo que conste.
 NO incluyas jurisprudencia ni conclusion/postura: eso va en otra parte. Termina justo despues del marco normativo.
+No uses formato Markdown (nada de ** ni #); para resaltar usa MAYUSCULAS en los subtitulos.
 Comillas angulares « ». Responde SOLO el texto, sin JSON ni encabezados. Si no hay resoluciones/oficios, responde: null`;
 
 const REGLAS_PARTE2 = `Redacta la SEGUNDA PARTE de la seccion CONSIDERACIONES de la Ficha de Conciliacion. Ya se redactaron el encuadre y el
@@ -94,6 +95,9 @@ TRASLADO/demanda. Incluye, con SUBTITULOS breves:
     OAL mencionado en las resoluciones, APOYATE en su contenido y CITALO entre parentesis (p. ej. «(Repositorio: Memorando OAL 016)»).
 (4) CONCLUSION Y POSTURA (OBLIGATORIA AL FINAL): postura de Colpensiones + recomendacion clara (si la actuacion se ajusto a derecho,
     "viable continuar la defensa judicial y NO acceder a formula conciliatoria"; si hay dudas, los puntos a revisar o conciliar).
+En (3) se CONCISO (resume la ratio de cada sentencia en 1-2 frases; no transcribas en exceso) para RESERVAR espacio: la (4)
+CONCLUSION Y POSTURA es obligatoria y debe quedar COMPLETA, nunca cortada. No uses formato Markdown (nada de ** para negritas ni #);
+para resaltar, usa MAYUSCULAS en los subtitulos.
 Empieza directamente con el subtitulo del marco jurisprudencial. Comillas angulares « ». Responde SOLO el texto, sin JSON ni
 encabezados. Si no hay base, responde: null`;
 
@@ -201,7 +205,9 @@ export async function POST(request: NextRequest) {
     }
 
     const reglas = parte === 1 ? REGLAS_PARTE1 : parte === 2 ? REGLAS_PARTE2 : REGLAS_CONSIDERACIONES;
-    const maxTok = parte === 0 ? 2400 : 2600;
+    // La parte 2 (jurisprudencia + repo + conclusion) es la mas larga: un poco mas de tope,
+    // aun dentro de los ~60s ya comprobados. La parte 1 y la completa mantienen su valor.
+    const maxTok = parte === 2 ? 2800 : parte === 1 ? 2600 : 2400;
 
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
