@@ -171,7 +171,7 @@ ${contexto.directriz.texto.slice(0, 25000)}`);
         .join(" y ");
       return `- "sec_${m.sectionNumber}" — ${m.title}:
   Fuentes AUTORIZADAS: ${fuentes}. Usa EXCLUSIVAMENTE esas fuentes.
-  Si la información necesaria no aparece en esas fuentes, escribe "N/A" — NO uses conocimiento general ni otras fuentes del contexto.`;
+  Si la información necesaria no aparece en esas fuentes, escribe "N/A" — NO uses conocimiento general ni otras fuentes del contexto.${m.instruccionIA ? `\n  Instrucción específica: ${m.instruccionIA}` : ""}`;
     })
     .join("\n");
 

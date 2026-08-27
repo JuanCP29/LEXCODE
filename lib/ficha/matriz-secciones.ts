@@ -39,6 +39,12 @@ export type FichaSectionMapping = {
   canBeNA: boolean;
   /** Insumos que deben existir para generar la sección */
   requiredInputs: string[];
+  /**
+   * Instrucción específica para la IA (opcional). Se añade a la instrucción
+   * genérica de la sección en el prompt v2. Solo debe pedir información que
+   * exista en las fuentes autorizadas — nunca conocimiento externo.
+   */
+  instruccionIA?: string;
 };
 
 export const MATRIZ_SECCIONES: FichaSectionMapping[] = [
@@ -93,6 +99,12 @@ export const MATRIZ_SECCIONES: FichaSectionMapping[] = [
     criticalReview: false,
     canBeNA: false,
     requiredInputs: ["documento:traslado_demanda"],
+    instruccionIA:
+      "Extrae del apartado \"Fundamento y razones de derecho\" (o equivalente: fundamentos de derecho, marco normativo) del TRASLADO DE LA DEMANDA DOS grupos y relaciónalos por separado: " +
+      "(1) NORMAS invocadas — Constitución, leyes, decretos, actos administrativos, convenios; y " +
+      "(2) JURISPRUDENCIA de las altas cortes citada en la demanda — Corte Suprema de Justicia, Corte Constitucional y Consejo de Estado —, indicando corporación y número de sentencia/radicado tal como aparezcan. " +
+      "Incluye ÚNICAMENTE normas y sentencias que aparezcan textualmente en el TRASLADO DE LA DEMANDA; no agregues jurisprudencia ni normas de conocimiento general. " +
+      "Si la demanda no cita jurisprudencia, omite ese grupo (no lo inventes).",
   },
   {
     sectionNumber: 5,

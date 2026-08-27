@@ -19,7 +19,7 @@ export const SECCIONES: DefSeccion[] = [
   { numero: 1,  key: "sec_1_hechos",           label: "Síntesis de hechos",          tipo: "AUTO",    descripcion: "IA genera síntesis de los hechos de la demanda." },
   { numero: 2,  key: "sec_2_pretensiones",     label: "Pretensiones",                tipo: "AUTO",    descripcion: "IA extrae y lista las pretensiones." },
   { numero: 3,  key: "sec_3_cuantia",          label: "Cuantía",                     tipo: "AUTO",    descripcion: "IA calcula o describe la cuantía según los parámetros." },
-  { numero: 4,  key: "sec_4_normas",           label: "Normas violadas",             tipo: "AUTO",    descripcion: "IA identifica las normas invocadas en la demanda." },
+  { numero: 4,  key: "sec_4_normas",           label: "Normas violadas",             tipo: "AUTO",    descripcion: "IA identifica las normas y la jurisprudencia de altas cortes invocadas en la demanda." },
   { numero: 5,  key: "sec_6_sentencia",        label: "Sentencia",                   tipo: "DEFAULT", descripcion: "Estandarizada: No aplica.", oculta: true, textoFijo: "No aplica", centrado: true },
   { numero: 6,  key: "sec_5_apelacion",        label: "Arg. de apelación",           tipo: "DEFAULT", descripcion: "Estandarizada: No aplica.", oculta: true, textoFijo: "No aplica", centrado: true },
   { numero: 7,  key: "sec_8_problema",         label: "Problema jurídico",           tipo: "AUTO",    descripcion: "IA plantea el problema jurídico central." },
