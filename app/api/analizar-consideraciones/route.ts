@@ -205,9 +205,9 @@ export async function POST(request: NextRequest) {
     }
 
     const reglas = parte === 1 ? REGLAS_PARTE1 : parte === 2 ? REGLAS_PARTE2 : REGLAS_CONSIDERACIONES;
-    // La parte 2 (jurisprudencia + repo + conclusion) es la mas larga: un poco mas de tope,
-    // aun dentro de los ~60s ya comprobados. La parte 1 y la completa mantienen su valor.
-    const maxTok = parte === 2 ? 2800 : parte === 1 ? 2600 : 2400;
+    // Topes por parte, calibrados para caber en ~60s con margen (Hobby). La parte 1
+    // (encuadre + normativo) es mas corta que la 2 (jurisprudencia + repo + conclusion).
+    const maxTok = parte === 2 ? 2800 : parte === 1 ? 2200 : 2400;
 
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 

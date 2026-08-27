@@ -196,30 +196,48 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
       const doneP = [false, false];
       const esUtil = (x: string | null): x is string => !!x && x.trim() !== "" && x.trim().toLowerCase() !== "null";
       const ensamblar = () => {
-        const texto = cPartes.filter(esUtil).join("\n\n");
+        const partesOk = cPartes.filter(esUtil);
+        const texto = partesOk.join("\n\n");
         if (texto) aplicar({ consideraciones: texto });
-        if (doneP[0] && doneP[1]) setEstadoConsid(texto ? null : "Consideraciones: sin contenido (la IA devolvió vacío)");
+        if (doneP[0] && doneP[1]) {
+          if (partesOk.length === 2) setEstadoConsid(null);
+          else if (partesOk.length === 1) setEstadoConsid("Consideraciones: se generó una parte; la otra no respondió — vuelve a pulsar «Analizar con IA» para completarla");
+          else setEstadoConsid("Consideraciones: sin contenido");
+        }
       };
-      const pedirParte = (parte: 1 | 2) =>
-        fetch("/api/analizar-consideraciones", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            paths,
-            despacho: despacho ?? null,
-            pretension: sug?.pretension ?? null,
-            textoDocs: json.texto_docs ?? null,
-            caso_id: casoId,
-            parte,
-          }),
-        })
-          .then(async (r) => {
-            if (!r.ok) { setEstadoConsid(`Consideraciones: error HTTP ${r.status} (parte ${parte})`); return null; }
-            return r.json();
-          })
-          .then((j) => { if (j && typeof j.consideraciones === "string") cPartes[parte - 1] = j.consideraciones; })
-          .catch((e) => setEstadoConsid(`Consideraciones: fallo de red (${e instanceof Error ? e.message : "desconocido"})`))
-          .finally(() => { doneP[parte - 1] = true; ensamblar(); });
+      // Reintento una vez si una parte falla/tarda (la latencia en Hobby es variable).
+      const pedirParte = async (parte: 1 | 2) => {
+        for (let intento = 1; intento <= 2; intento++) {
+          try {
+            const r = await fetch("/api/analizar-consideraciones", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                paths,
+                despacho: despacho ?? null,
+                pretension: sug?.pretension ?? null,
+                textoDocs: json.texto_docs ?? null,
+                caso_id: casoId,
+                parte,
+              }),
+            });
+            if (!r.ok) {
+              if (intento === 1) continue;
+              setEstadoConsid(`Consideraciones: error HTTP ${r.status} (parte ${parte})`);
+              break;
+            }
+            const j = await r.json();
+            if (j && typeof j.consideraciones === "string" && esUtil(j.consideraciones)) { cPartes[parte - 1] = j.consideraciones; break; }
+            if (intento === 1) continue; // respuesta vacía → reintenta
+            break;
+          } catch (e) {
+            if (intento === 1) continue;
+            setEstadoConsid(`Consideraciones: fallo de red (parte ${parte}: ${e instanceof Error ? e.message : "desconocido"})`);
+          }
+        }
+        doneP[parte - 1] = true;
+        ensamblar();
+      };
       pedirParte(1);
       pedirParte(2);
 
