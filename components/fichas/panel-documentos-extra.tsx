@@ -106,6 +106,8 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
   const [recienCargados, setRecienCargados] = useState<string[]>([]);
   const [sinTexto, setSinTexto] = useState(false);
   const [escaneado, setEscaneado] = useState(false);
+  // Diagnóstico temporal del paso de Consideraciones (request aparte, best-effort).
+  const [estadoConsid, setEstadoConsid] = useState<string | null>(null);
 
   async function copiarSugerencia(key: string, texto: string) {
     try {
@@ -188,6 +190,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
 
       // Consideraciones (sec. 11): a partir de las resoluciones/oficios de Colpensiones.
       // Reutiliza el texto ya extraído por el análisis principal (evita re-ingerir; cabe en 60s).
+      setEstadoConsid("Consideraciones: generando…");
       fetch("/api/analizar-consideraciones", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -198,9 +201,15 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
           textoDocs: json.texto_docs ?? null,
         }),
       })
-        .then((r) => (r.ok ? r.json() : null))
-        .then((j) => { if (j?.consideraciones) aplicar({ consideraciones: j.consideraciones }); })
-        .catch(() => {});
+        .then(async (r) => {
+          if (!r.ok) { setEstadoConsid(`Consideraciones: error HTTP ${r.status}`); return null; }
+          return r.json();
+        })
+        .then((j) => {
+          if (j?.consideraciones) { aplicar({ consideraciones: j.consideraciones }); setEstadoConsid(null); }
+          else if (j) setEstadoConsid("Consideraciones: sin contenido (la IA devolvió vacío)");
+        })
+        .catch((e) => setEstadoConsid(`Consideraciones: fallo de red (${e instanceof Error ? e.message : "desconocido"})`));
 
       // Jurisprudencia (sec. 9): sentencia mas relevante de la sec. 4 + repositorio.
       if (sug?.normas && /jurisprudencia\s*:/i.test(sug.normas)) {
@@ -439,6 +448,9 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
               <p className="text-[10px] text-muted-foreground/70 leading-snug">
                 Revisa antes de pegar. Generado por IA con base en los documentos; puede contener errores.
               </p>
+              {estadoConsid && (
+                <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1">{estadoConsid}</p>
+              )}
             </div>
           )}
 
