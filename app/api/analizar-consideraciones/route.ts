@@ -60,8 +60,10 @@ Usa el repositorio SOLO cuando coincida con algo mencionado en las resoluciones;
 Si NO hay resoluciones/oficios de Colpensiones en el paquete, NO construyas el marco con la demanda: limita la seccion al encuadre
 y la postura con lo que conste en actuaciones de la entidad; si no hay base suficiente, devuelve null.
 
-No uses comillas dobles rectas dentro del texto: usa comillas angulares « » (o simples '). Usa \\n para saltos de linea.
-Responde UNICAMENTE con un JSON valido: { "consideraciones": "<texto o null>" }`;
+Para transcribir articulos o textos usa comillas angulares « » (no comillas dobles rectas).
+Responde UNICAMENTE con el TEXTO de la seccion (varios parrafos, con sus subtitulos si aplican), SIN JSON, sin comillas
+envolventes y sin encabezados como "Consideraciones:". Si no hay base suficiente en actuaciones de la entidad, responde
+exactamente la palabra: null`;
 
 const soloUtil = (s: string) =>
   s.replace(/=== .*? ===/g, "")
@@ -167,15 +169,13 @@ export async function POST(request: NextRequest) {
       respuesta = msg.content[0]?.type === "text" ? msg.content[0].text : "";
     }
 
-    const m = respuesta.match(/\{[\s\S]*\}/);
-    let consideraciones: string | null = null;
-    if (m) {
-      try {
-        const parsed = JSON.parse(m[0]);
-        const val = parsed?.consideraciones;
-        consideraciones = val && String(val).trim() && String(val).trim().toLowerCase() !== "null" ? String(val).trim() : null;
-      } catch { /* JSON invalido -> null */ }
+    // Texto plano (robusto para texto largo). Limpia cercos de codigo y trata "null" como vacio.
+    let texto = respuesta.trim().replace(/^```[a-z]*\n?/i, "").replace(/```$/i, "").trim();
+    // Si por compatibilidad viniera un JSON { "consideraciones": "..." }, lo aceptamos.
+    if (texto.startsWith("{")) {
+      try { const p = JSON.parse(texto); if (p?.consideraciones) texto = String(p.consideraciones).trim(); } catch { /* se usa tal cual */ }
     }
+    const consideraciones = texto && texto.toLowerCase() !== "null" ? texto : null;
     return NextResponse.json({ consideraciones });
   } catch (e) {
     console.error("analizar-consideraciones:", e);
