@@ -69,6 +69,34 @@ Responde UNICAMENTE con el TEXTO de la seccion (varios parrafos, con sus subtitu
 envolventes y sin encabezados como "Consideraciones:". Si no hay base suficiente en actuaciones de la entidad, responde
 exactamente la palabra: null`;
 
+// En Vercel Hobby (60s) una sola llamada no alcanza a generar la seccion completa y detallada.
+// Se divide en dos partes que el cliente pide en paralelo y concatena.
+const REGLAS_PARTE1 = `Redacta la PRIMERA PARTE de la seccion CONSIDERACIONES de la Ficha de Conciliacion.
+Analiza LAS RESOLUCIONES/OFICIOS de COLPENSIONES presentes (SUB, DPE, GNR, VPB, DIR, HL, BZ) —la respuesta previa de la entidad—.
+Tercera persona, formal y tecnico. FUENTE EXCLUSIVA: solo las resoluciones/oficios; NO incorpores informacion del TRASLADO/demanda.
+Incluye, con SUBTITULOS breves:
+(1) ENCUADRE + RAZONES: por que Colpensiones nego o reconocio parcialmente (motivacion, IBL, tasa de reemplazo, semanas, fechas de
+    causacion/efectividad, numeros de resolucion que consten).
+(2) MARCO NORMATIVO: las normas que LAS RESOLUCIONES/OFICIOS citan o aplican (NO las de la demanda), TRANSCRIBIENDO ENTRE COMILLAS
+    los articulos clave y APLICANDOLOS a las cifras del expediente (formulas segun prestacion: VEJEZ r=65,50-0,50s +1,5%/50sem;
+    INDEMNIZACION I=SBC x SC x PPC; etc.). Cita solo lo que conste.
+NO incluyas jurisprudencia ni conclusion/postura: eso va en otra parte. Termina justo despues del marco normativo.
+Comillas angulares « ». Responde SOLO el texto, sin JSON ni encabezados. Si no hay resoluciones/oficios, responde: null`;
+
+const REGLAS_PARTE2 = `Redacta la SEGUNDA PARTE de la seccion CONSIDERACIONES de la Ficha de Conciliacion. Ya se redactaron el encuadre y el
+marco normativo; NO los repitas. Analiza LAS RESOLUCIONES/OFICIOS de COLPENSIONES (SUB, DPE, GNR, VPB, DIR, HL, BZ). Tercera
+persona, formal y tecnico. FUENTE EXCLUSIVA: solo resoluciones/oficios (y el repositorio institucional si coincide); NO el
+TRASLADO/demanda. Incluye, con SUBTITULOS breves:
+(3) MARCO JURISPRUDENCIAL E INSTITUCIONAL: precedentes con radicado (Corte Constitucional SU/C/T, CSJ Sala Laboral SL, Consejo de
+    Estado) y lineamientos, directrices, circulares, conceptos, memorandos u oficios de la OAL de Colpensiones, UNICAMENTE si se
+    MENCIONAN en las resoluciones/oficios.
+    ROBUSTECIMIENTO: si mas abajo se incluye un bloque "REPOSITORIO INSTITUCIONAL" que coincide con una sentencia/concepto/memorando/
+    OAL mencionado en las resoluciones, APOYATE en su contenido y CITALO entre parentesis (p. ej. «(Repositorio: Memorando OAL 016)»).
+(4) CONCLUSION Y POSTURA (OBLIGATORIA AL FINAL): postura de Colpensiones + recomendacion clara (si la actuacion se ajusto a derecho,
+    "viable continuar la defensa judicial y NO acceder a formula conciliatoria"; si hay dudas, los puntos a revisar o conciliar).
+Empieza directamente con el subtitulo del marco jurisprudencial. Comillas angulares « ». Responde SOLO el texto, sin JSON ni
+encabezados. Si no hay base, responde: null`;
+
 const soloUtil = (s: string) =>
   s.replace(/=== .*? ===/g, "")
     .replace(/--\s*\d+\s*of\s*\d+\s*--/gi, "")
@@ -92,8 +120,10 @@ export async function POST(request: NextRequest) {
       pretension?: string | null;
       textoDocs?: string | null; // texto ya extraído por el análisis principal (evita re-ingerir)
       caso_id?: string | null;   // para leer el texto persistido del expediente (Fase 1)
+      parte?: number;            // 1 = encuadre+normativo · 2 = jurisprudencia+conclusion · 0/omitido = completa
     };
     const paths = body.paths ?? [];
+    const parte = body.parte === 1 ? 1 : body.parte === 2 ? 2 : 0;
 
     // Preferir el texto que ya extrajo el análisis principal (rápido; evita re-descargar
     // y re-parsear). Si no viene, se usa el texto persistido del caso. Solo se descarga y se
@@ -135,37 +165,43 @@ export async function POST(request: NextRequest) {
     const contexto = `PRETENSION DEL CASO: ${body.pretension ?? "No especificada"}${body.despacho ? `\nDESPACHO: ${body.despacho}` : ""}`;
 
     // Repositorio institucional para robustecer: SOLO los documentos que COINCIDEN con algo
-    // citado en las resoluciones (por identificador de sentencia o codigo/nombre del doc).
-    // Filtrar evita inflar el prompt y salir del limite de 60s.
-    const TIPO_LABEL: Record<string, string> = {
-      directriz: "Directriz", memorando: "Memorando", lineamiento: "Lineamiento", otro: "Documento",
-    };
-    const { data: repoDocs } = await supabase
-      .from("directrices_conciliacion")
-      .select("nombre, codigo, tipo_documento, texto_extraido")
-      .eq("activo", true);
+    // citado en las resoluciones. Solo aplica a la parte 2 (o a la completa): la parte 1 no usa
+    // jurisprudencia, asi que evita ese input y va mas rapida.
+    let bloqueRepo = "";
+    if (parte !== 1) {
+      const TIPO_LABEL: Record<string, string> = {
+        directriz: "Directriz", memorando: "Memorando", lineamiento: "Lineamiento", otro: "Documento",
+      };
+      const { data: repoDocs } = await supabase
+        .from("directrices_conciliacion")
+        .select("nombre, codigo, tipo_documento, texto_extraido")
+        .eq("activo", true);
 
-    const henoDoc = soloAlnum(textoCompleto);
-    const idsEnResoluciones = extraerIdentificadoresSentencias(textoCompleto).map(soloAlnum);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const coincidencias = ((repoDocs ?? []) as any[]).filter((d) => {
-      const henoNombre = soloAlnum(`${d.nombre ?? ""} ${d.codigo ?? ""}`);
-      // (a) un identificador citado en las resoluciones aparece en el nombre/texto del doc, o
-      //     (b) un identificador del nombre/codigo del doc aparece en el texto de las resoluciones.
-      const idsDoc = [d.codigo ?? "", ...extraerIdentificadoresSentencias(`${d.nombre ?? ""}`)].map(soloAlnum);
-      const henoTextoDoc = soloAlnum(d.texto_extraido ?? "");
-      return (
-        idsEnResoluciones.some((id) => id.length >= 4 && (henoNombre.includes(id) || henoTextoDoc.includes(id))) ||
-        idsDoc.some((id) => id.length >= 4 && henoDoc.includes(id))
-      );
-    }).slice(0, 3);
+      const henoDoc = soloAlnum(textoCompleto);
+      const idsEnResoluciones = extraerIdentificadoresSentencias(textoCompleto).map(soloAlnum);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const coincidencias = ((repoDocs ?? []) as any[]).filter((d) => {
+        const henoNombre = soloAlnum(`${d.nombre ?? ""} ${d.codigo ?? ""}`);
+        // (a) un identificador citado en las resoluciones aparece en el nombre/texto del doc, o
+        //     (b) un identificador del nombre/codigo del doc aparece en el texto de las resoluciones.
+        const idsDoc = [d.codigo ?? "", ...extraerIdentificadoresSentencias(`${d.nombre ?? ""}`)].map(soloAlnum);
+        const henoTextoDoc = soloAlnum(d.texto_extraido ?? "");
+        return (
+          idsEnResoluciones.some((id) => id.length >= 4 && (henoNombre.includes(id) || henoTextoDoc.includes(id))) ||
+          idsDoc.some((id) => id.length >= 4 && henoDoc.includes(id))
+        );
+      }).slice(0, 3);
 
-    const fuentesRepo = coincidencias
-      .map((d) => `### ${TIPO_LABEL[d.tipo_documento ?? "directriz"] ?? "Documento"} (${d.codigo ? `${d.codigo} — ` : ""}${d.nombre})\n${(d.texto_extraido ?? "").slice(0, 8000)}`)
-      .join("\n\n");
-    const bloqueRepo = fuentesRepo
-      ? `\n\nREPOSITORIO INSTITUCIONAL (coincide con lo citado en las resoluciones; usalo para robustecer):\n${fuentesRepo}`
-      : "";
+      const fuentesRepo = coincidencias
+        .map((d) => `### ${TIPO_LABEL[d.tipo_documento ?? "directriz"] ?? "Documento"} (${d.codigo ? `${d.codigo} — ` : ""}${d.nombre})\n${(d.texto_extraido ?? "").slice(0, 8000)}`)
+        .join("\n\n");
+      bloqueRepo = fuentesRepo
+        ? `\n\nREPOSITORIO INSTITUCIONAL (coincide con lo citado en las resoluciones; usalo para robustecer):\n${fuentesRepo}`
+        : "";
+    }
+
+    const reglas = parte === 1 ? REGLAS_PARTE1 : parte === 2 ? REGLAS_PARTE2 : REGLAS_CONSIDERACIONES;
+    const maxTok = parte === 0 ? 2400 : 2600;
 
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
@@ -177,12 +213,12 @@ export async function POST(request: NextRequest) {
       if (!recorte) return NextResponse.json({ consideraciones: null });
       const msg = await anthropic.messages.create({
         model: "claude-sonnet-4-6",
-        max_tokens: 3200,
+        max_tokens: maxTok,
         messages: [{
           role: "user",
           content: [
             { type: "document", source: { type: "base64", media_type: "application/pdf", data: recorte.base64 } },
-            { type: "text", text: `${contexto}${bloqueRepo}\n\n${REGLAS_CONSIDERACIONES}` },
+            { type: "text", text: `${contexto}${bloqueRepo}\n\n${reglas}` },
           ],
         }],
       });
@@ -190,10 +226,10 @@ export async function POST(request: NextRequest) {
     } else {
       const msg = await anthropic.messages.create({
         model: "claude-sonnet-4-6",
-        max_tokens: 3200,
+        max_tokens: maxTok,
         messages: [{
           role: "user",
-          content: `${contexto}\n\nDOCUMENTOS:\n${textoCompleto.slice(0, 30000)}${bloqueRepo}\n\n${REGLAS_CONSIDERACIONES}`,
+          content: `${contexto}\n\nDOCUMENTOS:\n${textoCompleto.slice(0, 30000)}${bloqueRepo}\n\n${reglas}`,
         }],
       });
       respuesta = msg.content[0]?.type === "text" ? msg.content[0].text : "";

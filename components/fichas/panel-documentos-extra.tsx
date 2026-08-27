@@ -188,29 +188,40 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
         onSugerencias?.(acumulado);
       };
 
-      // Consideraciones (sec. 11): a partir de las resoluciones/oficios de Colpensiones.
-      // Reutiliza el texto ya extraído por el análisis principal (evita re-ingerir; cabe en 60s).
+      // Consideraciones (sec. 11): en Hobby (60s) una sola llamada no alcanza a generarla
+      // completa, asi que se pide en DOS partes en paralelo (encuadre+normativo / jurisprudencia+
+      // conclusion) y se ensamblan en orden. Reutiliza el texto ya extraído (no re-ingiere).
       setEstadoConsid("Consideraciones: generando…");
-      fetch("/api/analizar-consideraciones", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          paths,
-          despacho: despacho ?? null,
-          pretension: sug?.pretension ?? null,
-          textoDocs: json.texto_docs ?? null,
-          caso_id: casoId,
-        }),
-      })
-        .then(async (r) => {
-          if (!r.ok) { setEstadoConsid(`Consideraciones: error HTTP ${r.status}`); return null; }
-          return r.json();
+      const cPartes: (string | null)[] = [null, null]; // [parte1, parte2]
+      const doneP = [false, false];
+      const esUtil = (x: string | null): x is string => !!x && x.trim() !== "" && x.trim().toLowerCase() !== "null";
+      const ensamblar = () => {
+        const texto = cPartes.filter(esUtil).join("\n\n");
+        if (texto) aplicar({ consideraciones: texto });
+        if (doneP[0] && doneP[1]) setEstadoConsid(texto ? null : "Consideraciones: sin contenido (la IA devolvió vacío)");
+      };
+      const pedirParte = (parte: 1 | 2) =>
+        fetch("/api/analizar-consideraciones", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            paths,
+            despacho: despacho ?? null,
+            pretension: sug?.pretension ?? null,
+            textoDocs: json.texto_docs ?? null,
+            caso_id: casoId,
+            parte,
+          }),
         })
-        .then((j) => {
-          if (j?.consideraciones) { aplicar({ consideraciones: j.consideraciones }); setEstadoConsid(null); }
-          else if (j) setEstadoConsid("Consideraciones: sin contenido (la IA devolvió vacío)");
-        })
-        .catch((e) => setEstadoConsid(`Consideraciones: fallo de red (${e instanceof Error ? e.message : "desconocido"})`));
+          .then(async (r) => {
+            if (!r.ok) { setEstadoConsid(`Consideraciones: error HTTP ${r.status} (parte ${parte})`); return null; }
+            return r.json();
+          })
+          .then((j) => { if (j && typeof j.consideraciones === "string") cPartes[parte - 1] = j.consideraciones; })
+          .catch((e) => setEstadoConsid(`Consideraciones: fallo de red (${e instanceof Error ? e.message : "desconocido"})`))
+          .finally(() => { doneP[parte - 1] = true; ensamblar(); });
+      pedirParte(1);
+      pedirParte(2);
 
       // Jurisprudencia (sec. 9): sentencia mas relevante de la sec. 4 + repositorio.
       if (sug?.normas && /jurisprudencia\s*:/i.test(sug.normas)) {
