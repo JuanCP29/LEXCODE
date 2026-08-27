@@ -537,9 +537,17 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
   }, [normasSugerida, normasTexto]);
 
   // Traer el resumen de jurisprudencia (Sección 9) generado a partir de la Sección 4 + repositorio.
+  // Se aplica UNA vez por sugerencia y también reemplaza un "N/A" placeholder guardado
+  // de generaciones previas (no un texto real del abogado); no vuelve a pisar ediciones.
+  const jurisSugAplicadaRef = useRef<string | null>(null);
   useEffect(() => {
-    if (jurisprudenciaSugerida && !jurisprudenciaTexto.trim()) {
+    if (!jurisprudenciaSugerida) return;
+    if (jurisSugAplicadaRef.current === jurisprudenciaSugerida) return;
+    const actual = jurisprudenciaTexto.trim();
+    const vacioOPlaceholder = !actual || /^(n\.?\s*\/?\s*a\.?|no\s+aplica)$/i.test(actual);
+    if (vacioOPlaceholder) {
       setJurisprudenciaTexto(jurisprudenciaSugerida);
+      jurisSugAplicadaRef.current = jurisprudenciaSugerida;
     }
   }, [jurisprudenciaSugerida, jurisprudenciaTexto]);
 
