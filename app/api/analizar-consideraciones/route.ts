@@ -4,6 +4,9 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { extraerTextoPDF } from "@/lib/ia/extraer-pdf";
 import { combinarPDFsBase64 } from "@/lib/ia/combinar-pdfs";
+import { extraerIdentificadoresSentencias } from "@/lib/ia/sugerir-jurisprudencia";
+
+const soloAlnum = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
 
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
@@ -26,8 +29,9 @@ function createSupabaseServer() {
 const REGLAS_CONSIDERACIONES = `Redacta UNICAMENTE la seccion CONSIDERACIONES de la Ficha de Conciliacion (campo unico "consideraciones").
 Analiza LAS RESOLUCIONES u OFICIOS de COLPENSIONES presentes (numeros que empiezan por SUB, DPE, GNR, VPB, DIR, HL o BZ) —la
 respuesta previa de la entidad, negativa o parcialmente positiva— frente a lo que hoy se reclama. Tercera persona, formal y
-tecnico, extensa (varios parrafos), con SUBTITULOS breves cuando ayude (p. ej. "MARCO NORMATIVO", "CALCULO DE SEMANAS Y TASA DE
-REEMPLAZO", "ANALISIS DEL CASO", "CONCLUSION Y POSTURA"). Usa UNICAMENTE lo que conste; no inventes cifras ni normas.
+tecnico, de extension MODERADA y enfocada (aprox. 4 a 7 parrafos; se conciso, no divagues), con SUBTITULOS breves cuando ayude
+(p. ej. "MARCO NORMATIVO", "CALCULO DE SEMANAS Y TASA DE REEMPLAZO", "ANALISIS DEL CASO", "CONCLUSION Y POSTURA"). Usa UNICAMENTE
+lo que conste; no inventes cifras ni normas.
 
 FUENTE EXCLUSIVA: construye TODA la seccion —incluidas las normas, la jurisprudencia y los lineamientos— UNICAMENTE con lo que
 digan las RESOLUCIONES/OFICIOS de Colpensiones. NO incorpores ni relaciones informacion del TRASLADO/demanda: ni sus hechos,
@@ -119,22 +123,37 @@ export async function POST(request: NextRequest) {
     }
     const contexto = `PRETENSION DEL CASO: ${body.pretension ?? "No especificada"}${body.despacho ? `\nDESPACHO: ${body.despacho}` : ""}`;
 
-    // Repositorio institucional para robustecer (coincidencias con lo mencionado en las
-    // resoluciones/oficios). Se acota para no inflar el prompt ni el tiempo.
+    // Repositorio institucional para robustecer: SOLO los documentos que COINCIDEN con algo
+    // citado en las resoluciones (por identificador de sentencia o codigo/nombre del doc).
+    // Filtrar evita inflar el prompt y salir del limite de 60s.
     const TIPO_LABEL: Record<string, string> = {
       directriz: "Directriz", memorando: "Memorando", lineamiento: "Lineamiento", otro: "Documento",
     };
     const { data: repoDocs } = await supabase
       .from("directrices_conciliacion")
       .select("nombre, codigo, tipo_documento, texto_extraido")
-      .eq("activo", true)
-      .limit(6);
+      .eq("activo", true);
+
+    const henoDoc = soloAlnum(textoCompleto);
+    const idsEnResoluciones = extraerIdentificadoresSentencias(textoCompleto).map(soloAlnum);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const fuentesRepo = ((repoDocs ?? []) as any[])
+    const coincidencias = ((repoDocs ?? []) as any[]).filter((d) => {
+      const henoNombre = soloAlnum(`${d.nombre ?? ""} ${d.codigo ?? ""}`);
+      // (a) un identificador citado en las resoluciones aparece en el nombre/texto del doc, o
+      //     (b) un identificador del nombre/codigo del doc aparece en el texto de las resoluciones.
+      const idsDoc = [d.codigo ?? "", ...extraerIdentificadoresSentencias(`${d.nombre ?? ""}`)].map(soloAlnum);
+      const henoTextoDoc = soloAlnum(d.texto_extraido ?? "");
+      return (
+        idsEnResoluciones.some((id) => id.length >= 4 && (henoNombre.includes(id) || henoTextoDoc.includes(id))) ||
+        idsDoc.some((id) => id.length >= 4 && henoDoc.includes(id))
+      );
+    }).slice(0, 3);
+
+    const fuentesRepo = coincidencias
       .map((d) => `### ${TIPO_LABEL[d.tipo_documento ?? "directriz"] ?? "Documento"} (${d.codigo ? `${d.codigo} — ` : ""}${d.nombre})\n${(d.texto_extraido ?? "").slice(0, 8000)}`)
       .join("\n\n");
     const bloqueRepo = fuentesRepo
-      ? `\n\nREPOSITORIO INSTITUCIONAL (usalo SOLO si coincide con algo mencionado en las resoluciones/oficios):\n${fuentesRepo}`
+      ? `\n\nREPOSITORIO INSTITUCIONAL (coincide con lo citado en las resoluciones; usalo para robustecer):\n${fuentesRepo}`
       : "";
 
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
@@ -147,7 +166,7 @@ export async function POST(request: NextRequest) {
       if (!recorte) return NextResponse.json({ consideraciones: null });
       const msg = await anthropic.messages.create({
         model: "claude-sonnet-4-6",
-        max_tokens: 3000,
+        max_tokens: 2400,
         messages: [{
           role: "user",
           content: [
@@ -160,7 +179,7 @@ export async function POST(request: NextRequest) {
     } else {
       const msg = await anthropic.messages.create({
         model: "claude-sonnet-4-6",
-        max_tokens: 3000,
+        max_tokens: 2400,
         messages: [{
           role: "user",
           content: `${contexto}\n\nDOCUMENTOS:\n${textoCompleto.slice(0, 30000)}${bloqueRepo}\n\n${REGLAS_CONSIDERACIONES}`,
