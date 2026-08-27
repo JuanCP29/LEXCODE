@@ -31,13 +31,12 @@ export default async function DirectricesPage() {
     .order("nombre");
 
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="max-w-[1400px] space-y-5">
       <div>
         <h1 className="text-xl font-bold text-foreground">Repositorio de documentos</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Repositorio permanente de directrices, memorandos y lineamientos.
-          Se etiquetan por tipo, pretensión y tipología para poder ser
-          consultados y usados más adelante en el análisis de casos.
+          Directrices, memorandos y lineamientos disponibles para consulta
+          y análisis de casos.
         </p>
       </div>
       <DirectricesAdmin directrices={directrices ?? []} />
