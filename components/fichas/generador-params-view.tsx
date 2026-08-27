@@ -39,6 +39,7 @@ export function GeneradorParamsView({ casoId, casoData, documentos, fichaInicial
   const [pretensiones, setPretensiones] = useState<string | null>(null);
   const [cuantia, setCuantia] = useState<string | null>(null);
   const [normas, setNormas] = useState<string | null>(null);
+  const [jurisprudencia, setJurisprudencia] = useState<string | null>(null);
   const [problema, setProblema] = useState<string | null>(null);
   const [consideraciones, setConsideraciones] = useState<string | null>(null);
   const [pretensionDet, setPretensionDet] = useState<string | null>(null);
@@ -56,6 +57,7 @@ export function GeneradorParamsView({ casoId, casoData, documentos, fichaInicial
     setPretensiones(s?.pretensiones ?? null);
     setCuantia(s?.cuantia ?? null);
     setNormas(s?.normas ?? null);
+    setJurisprudencia(s?.jurisprudencia ?? null);
     setProblema(s?.problema_juridico ?? null);
     setConsideraciones(s?.consideraciones ?? null);
     setPretensionDet(s?.pretension ?? null);
@@ -76,6 +78,7 @@ export function GeneradorParamsView({ casoId, casoData, documentos, fichaInicial
           pretensionesSugerida={pretensiones}
           cuantiaSugerida={cuantia}
           normasSugerida={normas}
+          jurisprudenciaSugerida={jurisprudencia}
           problemaSugerido={problema}
           consideracionesSugerida={consideraciones}
           pretensionSugerida={pretensionDet}

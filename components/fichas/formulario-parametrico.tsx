@@ -220,6 +220,7 @@ interface FormularioParametricoProps {
   pretensionesSugerida?: string | null;
   cuantiaSugerida?: string | null;
   normasSugerida?: string | null;
+  jurisprudenciaSugerida?: string | null;
   problemaSugerido?: string | null;
   consideracionesSugerida?: string | null;
   pretensionSugerida?: string | null;   // pretensión BUPC detectada (VEJEZ, SOBREVIVIENTES, ...)
@@ -287,7 +288,7 @@ function limpiarNum(v: string | null | undefined): string {
   return s;
 }
 
-export function FormularioParametrico({ casoId, casoData, valoresPrellenados, sintesisHechosSugerida, pretensionesSugerida, cuantiaSugerida, normasSugerida, problemaSugerido, consideracionesSugerida, pretensionSugerida, claseSugerida, causanteNombreSugerido, causanteCedulaSugerida, fichaInicial }: FormularioParametricoProps) {
+export function FormularioParametrico({ casoId, casoData, valoresPrellenados, sintesisHechosSugerida, pretensionesSugerida, cuantiaSugerida, normasSugerida, jurisprudenciaSugerida, problemaSugerido, consideracionesSugerida, pretensionSugerida, claseSugerida, causanteNombreSugerido, causanteCedulaSugerida, fichaInicial }: FormularioParametricoProps) {
   const [error, setError] = useState<string | null>(null);
   const [generandoPoder, setGenerandoPoder] = useState(false);
   const [poderGenerado, setPoderGenerado] = useState(false);
@@ -534,6 +535,13 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
       setNormasTexto(normasSugerida);
     }
   }, [normasSugerida, normasTexto]);
+
+  // Traer el resumen de jurisprudencia (Sección 9) generado a partir de la Sección 4 + repositorio.
+  useEffect(() => {
+    if (jurisprudenciaSugerida && !jurisprudenciaTexto.trim()) {
+      setJurisprudenciaTexto(jurisprudenciaSugerida);
+    }
+  }, [jurisprudenciaSugerida, jurisprudenciaTexto]);
 
   // Traer el planteamiento del problema jurídico generado al cuadro de texto (Sección 7).
   useEffect(() => {
@@ -1418,10 +1426,17 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
           <ModuloTexto
             value={jurisprudenciaTexto}
             onChange={setJurisprudenciaTexto}
+            sugerencia={jurisprudenciaSugerida}
             minHeight={130}
             placeholder="Cita la jurisprudencia aplicable (corporación, número de sentencia/radicado y ratio decidendi). Si lo dejas vacío, se generará automáticamente."
           />
         </Campo>
+        {jurisprudenciaSugerida && (
+          <p className="text-[11px] text-muted-foreground flex items-start gap-1">
+            <AlertCircle className="w-3 h-3 shrink-0 mt-0.5" />
+            Resumen de la sentencia más relevante de la Sección 4, contrastada con el repositorio. Revísalo antes de continuar.
+          </p>
+        )}
       </Bloque>
 
       <Bloque icono={<FileText className="w-4 h-4" />} titulo="Consideraciones">
