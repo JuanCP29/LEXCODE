@@ -45,8 +45,14 @@ ESTRUCTURA:
     formula "I = SBC x SC x PPC"; TRANSICION -> art. 36 y art. 48 CN; INEFICACIA DE TRASLADO -> deber de informacion y
     reincorporacion a RPM.
 (3) MARCO JURISPRUDENCIAL E INSTITUCIONAL: precedentes con radicado (Corte Constitucional SU/C/T, CSJ Sala Laboral SL, Consejo de
-    Estado) y lineamientos/directrices/circulares de Colpensiones UNICAMENTE si se MENCIONAN en las resoluciones/oficios. NO tomes
-    precedentes ni normatividad del traslado/demanda.
+    Estado) y lineamientos, directrices, circulares, conceptos, memorandos u oficios de la Oficina Asesora de lo Legal (OAL) de
+    Colpensiones, UNICAMENTE si se MENCIONAN en las resoluciones/oficios. NO tomes precedentes ni normatividad del traslado/demanda.
+
+ROBUSTECIMIENTO CON EL REPOSITORIO INSTITUCIONAL: mas abajo puede incluirse un bloque "REPOSITORIO INSTITUCIONAL" con documentos
+(directrices, memorandos, lineamientos, conceptos, OAL). Si alguna sentencia, concepto, memorando, OAL, circular, directriz o
+lineamiento MENCIONADO en las resoluciones/oficios COINCIDE con un documento del repositorio, APOYATE en su contenido para
+ROBUSTECER el analisis (transcribe/parafrasea lo pertinente) y CITALO entre parentesis (p. ej. «(Repositorio: Memorando OAL 016)»).
+Usa el repositorio SOLO cuando coincida con algo mencionado en las resoluciones; no lo uses para introducir temas ajenos al caso.
 (4) CONCLUSION Y POSTURA (OBLIGATORIA AL FINAL): fija la postura de Colpensiones y una RECOMENDACION clara: si la actuacion de la
     entidad se ajusto a derecho, concluye que es "juridicamente viable continuar ejerciendo la defensa judicial y NO acceder a
     formula conciliatoria"; si hay aspectos favorables al demandante o incertidumbre, senala los puntos a revisar o conciliar.
@@ -103,6 +109,24 @@ export async function POST(request: NextRequest) {
     const textoCompleto = textos.join("\n\n");
     const contexto = `PRETENSION DEL CASO: ${body.pretension ?? "No especificada"}${body.despacho ? `\nDESPACHO: ${body.despacho}` : ""}`;
 
+    // Repositorio institucional para robustecer (coincidencias con lo mencionado en las
+    // resoluciones/oficios). Se acota para no inflar el prompt ni el tiempo.
+    const TIPO_LABEL: Record<string, string> = {
+      directriz: "Directriz", memorando: "Memorando", lineamiento: "Lineamiento", otro: "Documento",
+    };
+    const { data: repoDocs } = await supabase
+      .from("directrices_conciliacion")
+      .select("nombre, codigo, tipo_documento, texto_extraido")
+      .eq("activo", true)
+      .limit(6);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fuentesRepo = ((repoDocs ?? []) as any[])
+      .map((d) => `### ${TIPO_LABEL[d.tipo_documento ?? "directriz"] ?? "Documento"} (${d.codigo ? `${d.codigo} — ` : ""}${d.nombre})\n${(d.texto_extraido ?? "").slice(0, 8000)}`)
+      .join("\n\n");
+    const bloqueRepo = fuentesRepo
+      ? `\n\nREPOSITORIO INSTITUCIONAL (usalo SOLO si coincide con algo mencionado en las resoluciones/oficios):\n${fuentesRepo}`
+      : "";
+
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
     // Escaneado (poco texto util) -> VISION; con texto -> camino de texto.
@@ -118,7 +142,7 @@ export async function POST(request: NextRequest) {
           role: "user",
           content: [
             { type: "document", source: { type: "base64", media_type: "application/pdf", data: recorte.base64 } },
-            { type: "text", text: `${contexto}\n\n${REGLAS_CONSIDERACIONES}` },
+            { type: "text", text: `${contexto}${bloqueRepo}\n\n${REGLAS_CONSIDERACIONES}` },
           ],
         }],
       });
@@ -129,7 +153,7 @@ export async function POST(request: NextRequest) {
         max_tokens: 3000,
         messages: [{
           role: "user",
-          content: `${contexto}\n\nDOCUMENTOS:\n${textoCompleto.slice(0, 30000)}\n\n${REGLAS_CONSIDERACIONES}`,
+          content: `${contexto}\n\nDOCUMENTOS:\n${textoCompleto.slice(0, 30000)}${bloqueRepo}\n\n${REGLAS_CONSIDERACIONES}`,
         }],
       });
       respuesta = msg.content[0]?.type === "text" ? msg.content[0].text : "";
