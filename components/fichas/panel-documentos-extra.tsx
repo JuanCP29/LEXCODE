@@ -11,6 +11,7 @@ type Sugerencias = {
   pretensiones?: string | null;
   cuantia?: string | null;
   normas?: string | null;
+  jurisprudencia?: string | null;
   problema_juridico?: string | null;
   consideraciones?: string | null;
   evaluacion_riesgo?: string | null;
@@ -29,6 +30,7 @@ const LABEL_SUGERENCIA: Record<string, string> = {
   pretensiones:      "Pretensiones (sec. 2)",
   cuantia:           "Cuantía (sec. 3)",
   normas:            "Normas violadas (sec. 4)",
+  jurisprudencia:    "Jurisprudencia (sec. 9)",
   problema_juridico: "Problema jurídico (sec. 7)",
   consideraciones:   "Consideraciones (sec. 16)",
   evaluacion_riesgo: "Evaluación del riesgo (sec. 17)",
@@ -167,11 +169,31 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
 
       const campos: CamposExtraidos = json.campos;
       setCamposExtraidos(campos);
-      setSugerencias(json.suggestions ?? null);
-      onSugerencias?.(json.suggestions ?? null);
+      const sug: Sugerencias | null = json.suggestions ?? null;
+      setSugerencias(sug);
+      onSugerencias?.(sug);
       setSinTexto((json.caracteres_extraidos ?? 0) < 200);
       setEscaneado(!!json.escaneado);
       setEstado("listo");
+
+      // Sección 9 (Jurisprudencia): request aparte para no exceder el tiempo de la
+      // función. Best-effort: si falla, la sección queda para diligenciar manual.
+      if (sug?.normas && /jurisprudencia\s*:/i.test(sug.normas)) {
+        fetch("/api/sugerir-jurisprudencia", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pretension: sug.pretension ?? null, normasText: sug.normas }),
+        })
+          .then((r) => (r.ok ? r.json() : null))
+          .then((j) => {
+            if (j?.jurisprudencia) {
+              const merged: Sugerencias = { ...sug, jurisprudencia: j.jurisprudencia };
+              setSugerencias(merged);
+              onSugerencias?.(merged);
+            }
+          })
+          .catch(() => {});
+      }
 
       // Filtrar nulos antes de pasar al formulario
       const camposLimpios = Object.fromEntries(
