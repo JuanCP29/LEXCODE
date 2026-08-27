@@ -338,6 +338,7 @@ export async function POST(request: NextRequest) {
         caracteres_extraidos: encontrados.length > 0 ? 999 : caracteresExtraidos,
         escaneado: true,
         archivos_procesados: textos.length,
+        texto_docs: textoCompleto.slice(0, 40000),
       });
     }
 
@@ -434,6 +435,7 @@ Devuelve UNICAMENTE un objeto JSON valido con esta forma exacta (sin texto adici
         caracteres_extraidos: encontrados.length > 0 ? 999 : caracteresExtraidos,
         escaneado: true,
         archivos_procesados: textos.length,
+        texto_docs: textoCompleto.slice(0, 40000),
       });
     }
     // Compatibilidad: si la IA devolvió el formato plano antiguo, tratarlo como data.

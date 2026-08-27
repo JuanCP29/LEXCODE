@@ -187,10 +187,16 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
       };
 
       // Consideraciones (sec. 11): a partir de las resoluciones/oficios de Colpensiones.
+      // Reutiliza el texto ya extraído por el análisis principal (evita re-ingerir; cabe en 60s).
       fetch("/api/analizar-consideraciones", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ paths, despacho: despacho ?? null, pretension: sug?.pretension ?? null }),
+        body: JSON.stringify({
+          paths,
+          despacho: despacho ?? null,
+          pretension: sug?.pretension ?? null,
+          textoDocs: json.texto_docs ?? null,
+        }),
       })
         .then((r) => (r.ok ? r.json() : null))
         .then((j) => { if (j?.consideraciones) aplicar({ consideraciones: j.consideraciones }); })

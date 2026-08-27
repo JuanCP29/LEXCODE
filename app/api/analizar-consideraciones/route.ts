@@ -84,29 +84,37 @@ export async function POST(request: NextRequest) {
       paths?: { path: string; nombre: string }[];
       despacho?: string | null;
       pretension?: string | null;
+      textoDocs?: string | null; // texto ya extraído por el análisis principal (evita re-ingerir)
     };
     const paths = body.paths ?? [];
-    if (paths.length === 0) return NextResponse.json({ consideraciones: null });
 
-    // Ingesta: descarga los PDFs del usuario y extrae texto.
-    const textos: string[] = [];
+    // Preferir el texto que ya extrajo el análisis principal (rápido; evita re-descargar
+    // y re-parsear). Solo se descarga y se usa visión como respaldo cuando NO hay texto útil.
+    const textoDocs = (body.textoDocs ?? "").trim();
+    const tieneTextoUtil = soloUtil(textoDocs) >= 200;
+
     const pdfs: { nombre: string; buffer: Buffer }[] = [];
-    for (const { path, nombre } of paths) {
-      if (!path.startsWith(`${user.id}/`)) continue;
-      try {
-        const { data, error } = await supabase.storage.from("documentos-lexcode").download(path);
-        if (error || !data) throw new Error(error?.message);
-        const buffer = Buffer.from(await data.arrayBuffer());
-        pdfs.push({ nombre, buffer });
-        textos.push(`=== ${nombre} ===\n${await extraerTextoPDF(buffer)}`);
-      } catch (e) {
-        console.error(`extraccion ${nombre}:`, e);
-        textos.push(`=== ${nombre} ===\n[No se pudo extraer el texto]`);
-      }
-    }
-    if (pdfs.length === 0) return NextResponse.json({ consideraciones: null });
+    let textoCompleto = textoDocs;
 
-    const textoCompleto = textos.join("\n\n");
+    if (!tieneTextoUtil) {
+      if (paths.length === 0) return NextResponse.json({ consideraciones: null });
+      const textos: string[] = [];
+      for (const { path, nombre } of paths) {
+        if (!path.startsWith(`${user.id}/`)) continue;
+        try {
+          const { data, error } = await supabase.storage.from("documentos-lexcode").download(path);
+          if (error || !data) throw new Error(error?.message);
+          const buffer = Buffer.from(await data.arrayBuffer());
+          pdfs.push({ nombre, buffer });
+          textos.push(`=== ${nombre} ===\n${await extraerTextoPDF(buffer)}`);
+        } catch (e) {
+          console.error(`extraccion ${nombre}:`, e);
+          textos.push(`=== ${nombre} ===\n[No se pudo extraer el texto]`);
+        }
+      }
+      if (pdfs.length === 0) return NextResponse.json({ consideraciones: null });
+      textoCompleto = textos.join("\n\n");
+    }
     const contexto = `PRETENSION DEL CASO: ${body.pretension ?? "No especificada"}${body.despacho ? `\nDESPACHO: ${body.despacho}` : ""}`;
 
     // Repositorio institucional para robustecer (coincidencias con lo mencionado en las
