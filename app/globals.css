@@ -185,3 +185,20 @@
   .card-shadow  { box-shadow: 0 1px 2px rgba(16,24,40,.04), 0 8px 24px -10px rgba(16,24,40,.10); }
   .card-shadow-md { box-shadow: 0 1px 2px rgba(16,24,40,.05), 0 16px 36px -12px rgba(16,24,40,.14); }
 }
+
+/* ── Editor de texto enriquecido (TipTap) ── */
+.editor-rico-contenido { outline: none; }
+.editor-rico-contenido p { margin: 0 0 0.5rem; }
+.editor-rico-contenido p:last-child { margin-bottom: 0; }
+.editor-rico-contenido strong { font-weight: 600; }
+.editor-rico-contenido em { font-style: italic; }
+.editor-rico-contenido u { text-decoration: underline; }
+.editor-rico-contenido ul, .editor-rico-contenido ol { padding-left: 1.25rem; margin: 0 0 0.5rem; }
+.editor-rico-contenido ul { list-style: disc; }
+.editor-rico-contenido ol { list-style: decimal; }
+/* Placeholder cuando está vacío */
+.editor-rico-contenido p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--foreground-subtle);
+  float: left; height: 0; pointer-events: none;
+}

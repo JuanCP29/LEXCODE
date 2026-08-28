@@ -8,15 +8,14 @@ import {
   TableCell,
   WidthType,
   AlignmentType,
-  HeadingLevel,
   BorderStyle,
   ShadingType,
 } from "docx";
 import { SECCIONES } from "@/lib/ia/secciones";
+import { parrafosDocx } from "@/lib/docx/runs";
 
 // Colores institucionales
 const AZUL       = "185FA5";
-const AZUL_LIGHT = "E6F1FB";
 const GRIS_HEADER= "F1F5F9";
 const NEGRO      = "0F1117";
 
@@ -115,12 +114,6 @@ function tituloCampo(texto: string): Paragraph {
   });
 }
 
-function contenidoSeccion(texto: string): Paragraph {
-  return new Paragraph({
-    children: [new TextRun({ text: texto || "Pendiente de diligenciar.", size: 18, color: NEGRO })],
-    spacing: { after: 120 },
-  });
-}
 
 function separador(): Paragraph {
   return new Paragraph({
@@ -242,10 +235,12 @@ export async function generarFichaDocx(datos: DatosFicha): Promise<Buffer> {
               ],
               spacing: { before: 280, after: 80 },
             }),
-            new Paragraph({
-              children: [new TextRun({ text: contenido || "Pendiente de diligenciar.", size: 18, color: NEGRO })],
-              spacing: { after: 120 },
-              alignment: s.centrado ? AlignmentType.CENTER : undefined,
+            ...parrafosDocx(contenido, {
+              size: 18,
+              color: NEGRO,
+              align: s.centrado ? "center" : "left",
+              spacingAfter: 120,
+              vacio: "Pendiente de diligenciar.",
             }),
           ];
         }),

@@ -1,5 +1,6 @@
 import PDFDocument from "pdfkit";
 import { construirBloquesContestacion, type DatosContestacion } from "@/lib/contestacion/contenido";
+import { renderContenidoPdf } from "@/lib/pdf/runs";
 
 /** Contestación de la Demanda en PDF (texto corrido, estilo memorial jurídico). */
 export function generarContestacionPdf(datos: DatosContestacion): Promise<Buffer> {
@@ -29,6 +30,11 @@ export function generarContestacionPdf(datos: DatosContestacion): Promise<Buffer
           doc.font("Helvetica-Bold").fontSize(11).text(b.label, doc.page.margins.left, y, { continued: true });
           doc.font("Helvetica").text(`  ${b.valor}`);
           doc.moveDown(0.15);
+          continue;
+        }
+
+        if (b.t === "rich") {
+          renderContenidoPdf(doc, b.contenido, { size: 11, align: "justify", lineGap: 2 });
           continue;
         }
 

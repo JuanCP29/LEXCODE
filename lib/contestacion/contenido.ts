@@ -36,21 +36,14 @@ export type DatosContestacion = {
   sec_defensa: string | null;
 };
 
-// Bloque de documento: título centrado (h), párrafo (p) o líneas de referencia (ref).
+// Bloque de documento: título centrado (h), párrafo (p), líneas de referencia (ref)
+// o contenido enriquecido de sección (rich: HTML o texto plano, con formato).
 export type Bloque =
   | { t: "h"; texto: string }
   | { t: "p"; texto: string; bold?: boolean; center?: boolean }
   | { t: "ref"; label: string; valor: string }
+  | { t: "rich"; contenido: string | null }
   | { t: "sp" };
-
-function parrafos(texto: string | null): Bloque[] {
-  if (!texto || !texto.trim()) return [{ t: "p", texto: "—" }];
-  return texto
-    .split(/\n+/)
-    .map((l) => l.trim())
-    .filter(Boolean)
-    .map((l) => ({ t: "p", texto: l } as Bloque));
-}
 
 /** Construye el documento de contestación como una lista ordenada de bloques. */
 export function construirBloquesContestacion(d: DatosContestacion): Bloque[] {
@@ -76,13 +69,13 @@ export function construirBloquesContestacion(d: DatosContestacion): Bloque[] {
     { t: "p", texto: NATURALEZA },
     { t: "sp" },
     { t: "h", texto: "PRONUNCIAMIENTO EXPRESO FRENTE A LOS HECHOS DE LA DEMANDA" },
-    ...parrafos(d.sec_hechos),
+    { t: "rich", contenido: d.sec_hechos },
     { t: "sp" },
     { t: "h", texto: "PRONUNCIAMIENTO EXPRESO FRENTE A LAS PRETENSIONES" },
-    ...parrafos(d.sec_pretensiones),
+    { t: "rich", contenido: d.sec_pretensiones },
     { t: "sp" },
     { t: "h", texto: "HECHOS, FUNDAMENTOS Y RAZONES DE LA DEFENSA" },
-    ...parrafos(d.sec_defensa),
+    { t: "rich", contenido: d.sec_defensa },
     { t: "sp" },
     { t: "h", texto: "NOTIFICACIONES" },
     { t: "p", texto: NOTIFICACIONES },

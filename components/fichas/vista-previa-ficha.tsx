@@ -1,6 +1,7 @@
 "use client";
 
 import { SECCIONES } from "@/lib/ia/secciones";
+import { esHtml, textoPlanoAHtml } from "@/lib/richtext/html";
 import { X } from "lucide-react";
 
 interface VistaPreviaFichaProps {
@@ -87,9 +88,14 @@ export function VistaPreviaFicha({ abierto, onClose, secciones, encabezado }: Vi
                   <p className="text-[11px] font-bold text-gray-800 uppercase mb-1">
                     {s.numero}. {s.label}
                   </p>
-                  <p className={`text-[11px] leading-relaxed text-gray-800 whitespace-pre-wrap${s.centrado ? " text-center" : ""}`}>
-                    {contenido.trim() ? contenido : <span className="text-gray-400 italic">N/A</span>}
-                  </p>
+                  {contenido.trim() ? (
+                    <div
+                      className={`text-[11px] leading-relaxed text-gray-800 whitespace-pre-wrap [&_strong]:font-semibold [&_em]:italic [&_u]:underline [&_p]:m-0 [&_p]:mb-1${s.centrado ? " text-center" : ""}`}
+                      dangerouslySetInnerHTML={{ __html: esHtml(contenido) ? contenido : textoPlanoAHtml(contenido) }}
+                    />
+                  ) : (
+                    <p className="text-[11px] text-gray-400 italic">N/A</p>
+                  )}
                 </div>
               );
             })}

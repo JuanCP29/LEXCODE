@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import { Label } from "@/components/ui/label";
-import { Pencil, RotateCcw } from "lucide-react";
+import { EditorRico } from "@/components/fichas/editor-rico";
 
 /**
  * Bloques de UI compartidos por el generador de Ficha y el de Contestación:
@@ -38,14 +37,10 @@ export function Campo({ label, required, error, hint, children }: {
   );
 }
 
-export function contarPalabras(s: string): number {
-  const t = (s ?? "").trim();
-  return t ? t.split(/\s+/).length : 0;
-}
-
-// Módulo de texto con IA: autoexpansión, contador de palabras, marca "editado"
-// y botón para restaurar la sugerencia original de la IA.
-export function ModuloTexto({ value, onChange, sugerencia, placeholder, minHeight = 140, maxHeight = 340 }: {
+// Módulo de texto: ahora editor enriquecido (negrita/cursiva/subrayado + barra
+// flotante sobre la selección), con contador de palabras y restaurar sugerencia.
+// Mantiene la misma API; el valor entra/sale como HTML (acepta texto plano heredado).
+export function ModuloTexto({ value, onChange, sugerencia, placeholder, minHeight = 160 }: {
   value: string;
   onChange: (v: string) => void;
   sugerencia?: string | null;
@@ -53,46 +48,13 @@ export function ModuloTexto({ value, onChange, sugerencia, placeholder, minHeigh
   minHeight?: number;
   maxHeight?: number;
 }) {
-  const ref = useRef<HTMLTextAreaElement>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    el.style.height = "auto";
-    const alto = Math.min(Math.max(minHeight, el.scrollHeight), maxHeight);
-    el.style.height = `${alto}px`;
-    el.style.overflowY = el.scrollHeight > maxHeight ? "auto" : "hidden";
-  }, [value, minHeight, maxHeight]);
-
-  const editado = !!(sugerencia && sugerencia.trim() && value !== sugerencia);
-  const palabras = contarPalabras(value);
-
   return (
-    <div>
-      <textarea
-        ref={ref}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        style={{ minHeight, maxHeight }}
-        className="w-full rounded-xl border border-input bg-card px-3.5 py-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring/25 resize-none"
-      />
-      <div className="mt-2 flex items-center gap-3 text-[11px] text-muted-foreground">
-        <span className="tabular-nums">{palabras} palabra{palabras === 1 ? "" : "s"}</span>
-        {editado && value.trim() && (
-          <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
-            <Pencil className="w-3 h-3" /> editado
-          </span>
-        )}
-        {editado && (
-          <button
-            type="button"
-            onClick={() => onChange(sugerencia as string)}
-            className="ml-auto inline-flex items-center gap-1 font-semibold text-primary hover:underline"
-          >
-            <RotateCcw className="w-3 h-3" /> Restaurar sugerencia IA
-          </button>
-        )}
-      </div>
-    </div>
+    <EditorRico
+      value={value}
+      onChange={onChange}
+      sugerencia={sugerencia}
+      placeholder={placeholder}
+      minHeight={minHeight}
+    />
   );
 }

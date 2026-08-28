@@ -1,6 +1,7 @@
 import PDFDocument from "pdfkit";
 import fs from "fs";
 import path from "path";
+import { htmlATextoPlano } from "@/lib/richtext/html";
 
 // Logo institucional (si existe). Colócalo en public/plantillas/logo-colpensiones.png
 const LOGO_PATH = path.join(process.cwd(), "public", "plantillas", "logo-colpensiones.png");
@@ -202,7 +203,7 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
     for (const s of SECCIONES_PDF) {
       const est = ESTANDAR[s.key];
       const centrarEst = est?.centrado ?? false;
-      const contenido = est ? est.texto : ((datos[s.key] ?? "").toString().trim() || "N/A");
+      const contenido = est ? est.texto : (htmlATextoPlano((datos[s.key] ?? "").toString()) || "N/A");
       const tituloFull = `${s.n}. ${s.titulo}`;
 
       // Título de la sección
