@@ -2,14 +2,21 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Save, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { Bloque, Campo, ModuloTexto } from "@/components/fichas/bloques-ficha";
+import { Sparkles, Save, Loader2, CheckCircle2, AlertCircle, FileText } from "lucide-react";
 
 type Seccion = "hechos" | "pretensiones" | "defensa";
 
-const SECCIONES: { key: Seccion; col: "sec_hechos" | "sec_pretensiones" | "sec_defensa"; titulo: string; ayuda: string }[] = [
-  { key: "hechos",       col: "sec_hechos",       titulo: "Pronunciamiento frente a los hechos",       ayuda: "Responde a cada hecho de la demanda (ES CIERTO / NO ES CIERTO / NO ME CONSTA)." },
-  { key: "pretensiones", col: "sec_pretensiones", titulo: "Pronunciamiento frente a las pretensiones", ayuda: "Oposición a cada pretensión (ME OPONGO, a que…, toda vez que…)." },
-  { key: "defensa",      col: "sec_defensa",      titulo: "Hechos, fundamentos y razones de la defensa", ayuda: "Fundamentos de derecho de la defensa de Colpensiones." },
+const SECCIONES: {
+  key: Seccion;
+  col: "sec_hechos" | "sec_pretensiones" | "sec_defensa";
+  titulo: string;
+  label: string;
+  ayuda: string;
+}[] = [
+  { key: "hechos",       col: "sec_hechos",       titulo: "Pronunciamiento frente a los hechos",       label: "Pronunciamiento frente a los hechos de la demanda",       ayuda: "Responde a cada hecho (ES CIERTO / NO ES CIERTO / NO ME CONSTA)." },
+  { key: "pretensiones", col: "sec_pretensiones", titulo: "Pronunciamiento frente a las pretensiones", label: "Pronunciamiento frente a las pretensiones de la demanda", ayuda: "Oposición a cada pretensión («ME OPONGO, a que…, toda vez que…»)." },
+  { key: "defensa",      col: "sec_defensa",      titulo: "Hechos, fundamentos y razones de la defensa", label: "Hechos, fundamentos y razones de la defensa",            ayuda: "Fundamentos de derecho de la defensa de Colpensiones." },
 ];
 
 interface Props {
@@ -22,6 +29,10 @@ export function EditorContestacion({ casoId, inicial }: Props) {
     sec_hechos: inicial.sec_hechos,
     sec_pretensiones: inicial.sec_pretensiones,
     sec_defensa: inicial.sec_defensa,
+  });
+  // Última sugerencia IA por sección (para la marca "editado" y restaurar).
+  const [sugeridos, setSugeridos] = useState<Record<string, string | null>>({
+    sec_hechos: null, sec_pretensiones: null, sec_defensa: null,
   });
   const [generando, setGenerando] = useState<Record<Seccion, boolean>>({ hechos: false, pretensiones: false, defensa: false });
   const [guardando, setGuardando] = useState(false);
@@ -39,7 +50,10 @@ export function EditorContestacion({ casoId, inicial }: Props) {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Error al generar");
-      if (json.texto) setTexto((t) => ({ ...t, [col]: json.texto }));
+      if (json.texto) {
+        setTexto((t) => ({ ...t, [col]: json.texto }));
+        setSugeridos((s) => ({ ...s, [col]: json.texto }));
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al generar");
     } finally {
@@ -80,7 +94,7 @@ export function EditorContestacion({ casoId, inicial }: Props) {
   const algunoGenerando = Object.values(generando).some(Boolean);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Barra de acciones */}
       <div className="flex items-center gap-3 flex-wrap">
         <Button onClick={generarTodo} disabled={algunoGenerando}>
@@ -99,28 +113,25 @@ export function EditorContestacion({ casoId, inicial }: Props) {
         </div>
       )}
 
-      {/* Secciones */}
+      {/* Secciones (mismo estilo que la Ficha) */}
       {SECCIONES.map((s) => (
-        <div key={s.key} className="bg-card border border-border rounded-xl card-shadow overflow-hidden">
-          <div className="flex items-center justify-between gap-3 px-5 py-3.5 border-b border-border bg-muted/30">
-            <div>
-              <h2 className="text-sm font-semibold">{s.titulo}</h2>
-              <p className="text-[11px] text-muted-foreground mt-0.5">{s.ayuda}</p>
-            </div>
+        <Bloque key={s.key} icono={<FileText className="w-4 h-4" />} titulo={s.titulo}>
+          <div className="flex items-center justify-between gap-3 -mt-1">
+            <p className="text-[11px] text-muted-foreground">{s.ayuda}</p>
             <Button size="sm" variant="outline" onClick={() => generar(s.key, s.col)} disabled={generando[s.key]}>
               {generando[s.key] ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Generando…</> : <><Sparkles className="w-3.5 h-3.5" /> Generar</>}
             </Button>
           </div>
-          <div className="p-4">
-            <textarea
+          <Campo label={`${s.label} (Contestación)`}>
+            <ModuloTexto
               value={texto[s.col]}
-              onChange={(e) => setTexto((t) => ({ ...t, [s.col]: e.target.value }))}
-              rows={12}
+              onChange={(v) => setTexto((t) => ({ ...t, [s.col]: v }))}
+              sugerencia={sugeridos[s.col]}
+              minHeight={180}
               placeholder="Pulsa «Generar» para redactar esta sección con IA, o escríbela manualmente."
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-ring resize-y"
             />
-          </div>
-        </div>
+          </Campo>
+        </Bloque>
       ))}
     </div>
   );
