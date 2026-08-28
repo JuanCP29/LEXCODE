@@ -219,6 +219,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
                 textoDocs: json.texto_docs ?? null,
                 caso_id: casoId,
                 parte,
+                normasSec4: sug?.normas ?? null,
               }),
             });
             if (!r.ok) {

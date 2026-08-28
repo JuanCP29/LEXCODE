@@ -23,10 +23,18 @@ function createSupabaseServer() {
   );
 }
 
+// El analisis se centra en la RESOLUCION OBJETO DE ANALISIS, no en todos los oficios del paquete.
+const FOCO_RESOLUCION =
+  "El analisis se centra UNICAMENTE en LA RESOLUCION OBJETO DE ANALISIS: la resolucion/oficio de COLPENSIONES demandada, es decir, " +
+  "la que resolvio el ULTIMO recurso y agoto la via gubernativa (normalmente la actuacion MAS RECIENTE que decide de fondo la " +
+  "reclamacion; en el paquete suele ser un oficio o resolucion DPE, DIR, GNR o VPB). NO hagas un recuento de todas las " +
+  "resoluciones/oficios: usa las demas actuaciones (p. ej. la SUB inicial) SOLO como antecedente imprescindible y en la medida en " +
+  "que la resolucion objeto de analisis las cite.";
+
 // Reglas de la seccion CONSIDERACIONES (fuente exclusiva: resoluciones/oficios de Colpensiones).
 const REGLAS_CONSIDERACIONES = `Redacta UNICAMENTE la seccion CONSIDERACIONES de la Ficha de Conciliacion (campo unico "consideraciones").
-Analiza LAS RESOLUCIONES u OFICIOS de COLPENSIONES presentes (numeros que empiezan por SUB, DPE, GNR, VPB, DIR, HL o BZ) —la
-respuesta previa de la entidad, negativa o parcialmente positiva— frente a lo que hoy se reclama. Tercera persona, formal y
+${FOCO_RESOLUCION}
+Tercera persona, formal y
 tecnico, de extension MODERADA y enfocada (aprox. 4 a 7 parrafos; se conciso, no divagues), con SUBTITULOS breves cuando ayude
 (p. ej. "MARCO NORMATIVO", "CALCULO DE SEMANAS Y TASA DE REEMPLAZO", "ANALISIS DEL CASO", "CONCLUSION Y POSTURA"). Usa UNICAMENTE
 lo que conste; no inventes cifras ni normas.
@@ -48,7 +56,9 @@ ESTRUCTURA:
     reincorporacion a RPM.
 (3) MARCO JURISPRUDENCIAL E INSTITUCIONAL: precedentes con radicado (Corte Constitucional SU/C/T, CSJ Sala Laboral SL, Consejo de
     Estado) y lineamientos, directrices, circulares, conceptos, memorandos u oficios de la Oficina Asesora de lo Legal (OAL) de
-    Colpensiones, UNICAMENTE si se MENCIONAN en las resoluciones/oficios. NO tomes precedentes ni normatividad del traslado/demanda.
+    Colpensiones que MENCIONEN las resoluciones/oficios. ADEMAS, ten en cuenta LA SENTENCIA MAS RELEVANTE identificada en la
+    Seccion 4 (si abajo se incluye el bloque «JURISPRUDENCIA RELEVANTE IDENTIFICADA EN LA SECCION 4»): elige la de MAYOR relevancia
+    para la pretension, analiza su ratio decidendi y su INCIDENCIA en el riesgo del caso.
 
 ROBUSTECIMIENTO CON EL REPOSITORIO INSTITUCIONAL: mas abajo puede incluirse un bloque "REPOSITORIO INSTITUCIONAL" con documentos
 (directrices, memorandos, lineamientos, conceptos, OAL). Si alguna sentencia, concepto, memorando, OAL, circular, directriz o
@@ -70,7 +80,7 @@ exactamente la palabra: null`;
 // En Vercel Hobby (60s) una sola llamada no alcanza a generar la seccion completa y detallada.
 // Se divide en dos partes que el cliente pide en paralelo y concatena.
 const REGLAS_PARTE1 = `Redacta la PRIMERA PARTE de la seccion CONSIDERACIONES de la Ficha de Conciliacion.
-Analiza LAS RESOLUCIONES/OFICIOS de COLPENSIONES presentes (SUB, DPE, GNR, VPB, DIR, HL, BZ) —la respuesta previa de la entidad—.
+${FOCO_RESOLUCION}
 Tercera persona, formal y tecnico. FUENTE EXCLUSIVA: solo las resoluciones/oficios; NO incorpores informacion del TRASLADO/demanda.
 Incluye, con SUBTITULOS breves:
 (1) ENCUADRE + RAZONES: por que Colpensiones nego o reconocio parcialmente (motivacion, IBL, tasa de reemplazo, semanas, fechas de
@@ -83,14 +93,16 @@ No uses formato Markdown (nada de ** ni #); para resaltar usa MAYUSCULAS en los 
 Comillas angulares « ». Responde SOLO el texto, sin JSON ni encabezados. Si no hay resoluciones/oficios, responde: null`;
 
 const REGLAS_PARTE2 = `Redacta la SEGUNDA PARTE de la seccion CONSIDERACIONES de la Ficha de Conciliacion. Ya se redactaron el encuadre y el
-marco normativo; NO los repitas. Analiza LAS RESOLUCIONES/OFICIOS de COLPENSIONES (SUB, DPE, GNR, VPB, DIR, HL, BZ). Tercera
+marco normativo; NO los repitas. ${FOCO_RESOLUCION} Tercera
 persona, formal y tecnico. FUENTE EXCLUSIVA: solo resoluciones/oficios (y el repositorio institucional si coincide); NO el
 TRASLADO/demanda. Incluye, con SUBTITULOS breves:
 (3) MARCO JURISPRUDENCIAL E INSTITUCIONAL: precedentes con radicado (Corte Constitucional SU/C/T, CSJ Sala Laboral SL, Consejo de
-    Estado) y lineamientos, directrices, circulares, conceptos, memorandos u oficios de la OAL de Colpensiones, UNICAMENTE si se
-    MENCIONAN en las resoluciones/oficios.
-    ROBUSTECIMIENTO: si mas abajo se incluye un bloque "REPOSITORIO INSTITUCIONAL" que coincide con una sentencia/concepto/memorando/
-    OAL mencionado en las resoluciones, APOYATE en su contenido y CITALO entre parentesis (p. ej. «(Repositorio: Memorando OAL 016)»).
+    Estado) y lineamientos, directrices, circulares, conceptos, memorandos u oficios de la OAL de Colpensiones que MENCIONEN las
+    resoluciones/oficios. ADEMAS, ten en cuenta LA SENTENCIA MAS RELEVANTE identificada en la Seccion 4 (si abajo se incluye el
+    bloque «JURISPRUDENCIA RELEVANTE IDENTIFICADA EN LA SECCION 4»): elige la de MAYOR relevancia para la pretension, analiza su
+    ratio decidendi y su INCIDENCIA en el riesgo del caso.
+    ROBUSTECIMIENTO: si mas abajo se incluye un bloque "REPOSITORIO INSTITUCIONAL" que coincide con esa sentencia o con un concepto/
+    memorando/OAL, APOYATE en su contenido y CITALO entre parentesis (p. ej. «(Repositorio: Memorando OAL 016)»).
 (4) CONCLUSION Y POSTURA (OBLIGATORIA AL FINAL): postura de Colpensiones + recomendacion clara (si la actuacion se ajusto a derecho,
     "viable continuar la defensa judicial y NO acceder a formula conciliatoria"; si hay dudas, los puntos a revisar o conciliar).
 En (3) se CONCISO (resume la ratio de cada sentencia en 1-2 frases; no transcribas en exceso) para RESERVAR espacio: la (4)
@@ -123,9 +135,15 @@ export async function POST(request: NextRequest) {
       textoDocs?: string | null; // texto ya extraído por el análisis principal (evita re-ingerir)
       caso_id?: string | null;   // para leer el texto persistido del expediente (Fase 1)
       parte?: number;            // 1 = encuadre+normativo · 2 = jurisprudencia+conclusion · 0/omitido = completa
+      normasSec4?: string | null; // Normas+Jurisprudencia de la Sección 4 (para traer la sentencia más relevante)
     };
     const paths = body.paths ?? [];
     const parte = body.parte === 1 ? 1 : body.parte === 2 ? 2 : 0;
+
+    // Bloque de jurisprudencia identificada en la Sección 4 (solo lo posterior a "Jurisprudencia:").
+    const normasSec4 = (body.normasSec4 ?? "").trim();
+    const idxJ = normasSec4.search(/jurisprudencia\s*:/i);
+    const jurisSec4 = idxJ >= 0 ? normasSec4.slice(idxJ) : "";
 
     // Preferir el texto que ya extrajo el análisis principal (rápido; evita re-descargar
     // y re-parsear). Si no viene, se usa el texto persistido del caso. Solo se descarga y se
@@ -166,16 +184,19 @@ export async function POST(request: NextRequest) {
     }
     const contexto = `PRETENSION DEL CASO: ${body.pretension ?? "No especificada"}${body.despacho ? `\nDESPACHO: ${body.despacho}` : ""}`;
 
-    // Repositorio institucional para robustecer: SOLO los documentos que COINCIDEN con algo
-    // citado en las resoluciones. Solo aplica a la parte 2 (o a la completa): la parte 1 no usa
-    // jurisprudencia, asi que evita ese input y va mas rapida.
-    // La parte 1 no usa jurisprudencia/repositorio: se salta esta búsqueda y va más rápida.
+    // Repositorio institucional + sentencia relevante de la Sección 4. Solo aplica a la parte 2
+    // (o a la completa): la parte 1 no usa jurisprudencia, asi que evita ese input y va mas rapida.
     let bloqueRepo = "";
+    let bloqueSec4 = "";
     if (parte !== 1) {
-      const coincidencias = await buscarCoincidenciasRepositorio(supabase, textoCompleto);
+      // El emparejador cruza tanto las resoluciones como la sentencia identificada en la Sec. 4.
+      const coincidencias = await buscarCoincidenciasRepositorio(supabase, `${textoCompleto}\n${jurisSec4}`);
       const fuentesRepo = construirFuentesRepositorio(coincidencias, 8000);
       bloqueRepo = fuentesRepo
-        ? `\n\nREPOSITORIO INSTITUCIONAL (coincide con lo citado en las resoluciones; usalo para robustecer):\n${fuentesRepo}`
+        ? `\n\nREPOSITORIO INSTITUCIONAL (coincide con lo citado en el caso; usalo para robustecer):\n${fuentesRepo}`
+        : "";
+      bloqueSec4 = jurisSec4
+        ? `\n\nJURISPRUDENCIA RELEVANTE IDENTIFICADA EN LA SECCION 4 (tenla en cuenta; elige la MAS relevante para la pretension y valora su incidencia en el riesgo del caso):\n${jurisSec4.slice(0, 1500)}`
         : "";
     }
 
@@ -199,7 +220,7 @@ export async function POST(request: NextRequest) {
           role: "user",
           content: [
             { type: "document", source: { type: "base64", media_type: "application/pdf", data: recorte.base64 } },
-            { type: "text", text: `${contexto}${bloqueRepo}\n\n${reglas}` },
+            { type: "text", text: `${contexto}${bloqueRepo}${bloqueSec4}\n\n${reglas}` },
           ],
         }],
       });
@@ -210,7 +231,7 @@ export async function POST(request: NextRequest) {
         max_tokens: maxTok,
         messages: [{
           role: "user",
-          content: `${contexto}\n\nDOCUMENTOS:\n${textoCompleto.slice(0, 30000)}${bloqueRepo}\n\n${reglas}`,
+          content: `${contexto}\n\nDOCUMENTOS:\n${textoCompleto.slice(0, 30000)}${bloqueRepo}${bloqueSec4}\n\n${reglas}`,
         }],
       });
       respuesta = msg.content[0]?.type === "text" ? msg.content[0].text : "";
