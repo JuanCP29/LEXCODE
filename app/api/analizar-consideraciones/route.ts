@@ -54,17 +54,16 @@ ESTRUCTURA:
     fallecimiento y condicion mas beneficiosa (Acuerdo 049/1990); INDEMNIZACION SUSTITUTIVA -> art. 37 y Decreto 1730/2001,
     formula "I = SBC x SC x PPC"; TRANSICION -> art. 36 y art. 48 CN; INEFICACIA DE TRASLADO -> deber de informacion y
     reincorporacion a RPM.
-(3) MARCO JURISPRUDENCIAL E INSTITUCIONAL: precedentes con radicado (Corte Constitucional SU/C/T, CSJ Sala Laboral SL, Consejo de
-    Estado) y lineamientos, directrices, circulares, conceptos, memorandos u oficios de la Oficina Asesora de lo Legal (OAL) de
-    Colpensiones que MENCIONEN las resoluciones/oficios. ADEMAS, ten en cuenta LA SENTENCIA MAS RELEVANTE identificada en la
-    Seccion 4 (si abajo se incluye el bloque «JURISPRUDENCIA RELEVANTE IDENTIFICADA EN LA SECCION 4»): elige la de MAYOR relevancia
-    para la pretension, analiza su ratio decidendi y su INCIDENCIA en el riesgo del caso.
-
-ROBUSTECIMIENTO CON EL REPOSITORIO INSTITUCIONAL: mas abajo puede incluirse un bloque "REPOSITORIO INSTITUCIONAL" con documentos
-(directrices, memorandos, lineamientos, conceptos, OAL). Si alguna sentencia, concepto, memorando, OAL, circular, directriz o
-lineamiento MENCIONADO en las resoluciones/oficios COINCIDE con un documento del repositorio, APOYATE en su contenido para
-ROBUSTECER el analisis (transcribe/parafrasea lo pertinente) y CITALO entre parentesis (p. ej. «(Repositorio: Memorando OAL 016)»).
-Usa el repositorio SOLO cuando coincida con algo mencionado en las resoluciones; no lo uses para introducir temas ajenos al caso.
+(3) MARCO JURISPRUDENCIAL E INSTITUCIONAL, con esta PRIORIDAD:
+    (a) PRIMERO relaciona los precedentes con radicado (Corte Constitucional SU/C/T, CSJ Sala Laboral SL, Consejo de Estado) y los
+        lineamientos, directrices, circulares, conceptos, memorandos u oficios de la OAL de Colpensiones QUE MENCIONE LA RESOLUCION
+        OBJETO DE ANALISIS. Para cada uno, busca coincidencia en el bloque "REPOSITORIO INSTITUCIONAL" (abajo) y APOYATE en su
+        contenido para ROBUSTECER (transcribe/parafrasea lo pertinente), CITANDOLO entre parentesis (p. ej. «(Repositorio: Memorando OAL 016)»).
+    (b) SOLO SI la resolucion NO menciona ningun precedente ni marco institucional, acude a la JURISPRUDENCIA identificada en la
+        Seccion 4 (bloque «JURISPRUDENCIA RELEVANTE IDENTIFICADA EN LA SECCION 4», si se incluye): elige la de MAYOR relevancia para
+        la pretension, analiza su ratio decidendi e incidencia en el riesgo, y —si coincide con un documento del repositorio— acude
+        nuevamente a el para darle mayor fuerza argumentativa.
+    En ambos casos, usa el repositorio SOLO cuando coincida realmente; no lo uses para introducir temas ajenos al caso.
 (4) CONCLUSION Y POSTURA (OBLIGATORIA AL FINAL): fija la postura de Colpensiones y una RECOMENDACION clara: si la actuacion de la
     entidad se ajusto a derecho, concluye que es "juridicamente viable continuar ejerciendo la defensa judicial y NO acceder a
     formula conciliatoria"; si hay aspectos favorables al demandante o incertidumbre, senala los puntos a revisar o conciliar.
@@ -96,13 +95,15 @@ const REGLAS_PARTE2 = `Redacta la SEGUNDA PARTE de la seccion CONSIDERACIONES de
 marco normativo; NO los repitas. ${FOCO_RESOLUCION} Tercera
 persona, formal y tecnico. FUENTE EXCLUSIVA: solo resoluciones/oficios (y el repositorio institucional si coincide); NO el
 TRASLADO/demanda. Incluye, con SUBTITULOS breves:
-(3) MARCO JURISPRUDENCIAL E INSTITUCIONAL: precedentes con radicado (Corte Constitucional SU/C/T, CSJ Sala Laboral SL, Consejo de
-    Estado) y lineamientos, directrices, circulares, conceptos, memorandos u oficios de la OAL de Colpensiones que MENCIONEN las
-    resoluciones/oficios. ADEMAS, ten en cuenta LA SENTENCIA MAS RELEVANTE identificada en la Seccion 4 (si abajo se incluye el
-    bloque «JURISPRUDENCIA RELEVANTE IDENTIFICADA EN LA SECCION 4»): elige la de MAYOR relevancia para la pretension, analiza su
-    ratio decidendi y su INCIDENCIA en el riesgo del caso.
-    ROBUSTECIMIENTO: si mas abajo se incluye un bloque "REPOSITORIO INSTITUCIONAL" que coincide con esa sentencia o con un concepto/
-    memorando/OAL, APOYATE en su contenido y CITALO entre parentesis (p. ej. «(Repositorio: Memorando OAL 016)»).
+(3) MARCO JURISPRUDENCIAL E INSTITUCIONAL, con esta PRIORIDAD:
+    (a) PRIMERO relaciona los precedentes con radicado (Corte Constitucional SU/C/T, CSJ Sala Laboral SL, Consejo de Estado) y los
+        lineamientos, directrices, circulares, conceptos, memorandos u oficios de la OAL de Colpensiones QUE MENCIONE LA RESOLUCION
+        OBJETO DE ANALISIS. Para cada uno, busca coincidencia en el bloque "REPOSITORIO INSTITUCIONAL" (abajo) y APOYATE en su
+        contenido para robustecer, CITANDOLO entre parentesis (p. ej. «(Repositorio: Memorando OAL 016)»).
+    (b) SOLO SI la resolucion NO menciona ningun precedente ni marco institucional, acude a la JURISPRUDENCIA identificada en la
+        Seccion 4 (bloque «JURISPRUDENCIA RELEVANTE IDENTIFICADA EN LA SECCION 4», si se incluye): elige la de MAYOR relevancia para
+        la pretension, analiza su ratio decidendi e incidencia en el riesgo, y —si coincide con un documento del repositorio— apoyate
+        en el para darle mayor fuerza argumentativa.
 (4) CONCLUSION Y POSTURA (OBLIGATORIA AL FINAL): postura de Colpensiones + recomendacion clara (si la actuacion se ajusto a derecho,
     "viable continuar la defensa judicial y NO acceder a formula conciliatoria"; si hay dudas, los puntos a revisar o conciliar).
 En (3) se CONCISO (resume la ratio de cada sentencia en 1-2 frases; no transcribas en exceso) para RESERVAR espacio: la (4)
