@@ -12,6 +12,7 @@ type Sugerencias = {
   cuantia?: string | null;
   normas?: string | null;
   jurisprudencia?: string | null;
+  politicas?: string | null;
   problema_juridico?: string | null;
   consideraciones?: string | null;
   evaluacion_riesgo?: string | null;
@@ -31,6 +32,7 @@ const LABEL_SUGERENCIA: Record<string, string> = {
   cuantia:           "Cuantía (sec. 3)",
   normas:            "Normas violadas (sec. 4)",
   jurisprudencia:    "Jurisprudencia (sec. 9)",
+  politicas:         "Políticas / llamamientos (sec. 10)",
   problema_juridico: "Problema jurídico (sec. 7)",
   consideraciones:   "Consideraciones (sec. 16)",
   evaluacion_riesgo: "Evaluación del riesgo (sec. 17)",
@@ -253,6 +255,16 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
           .then((j) => { if (j?.jurisprudencia) aplicar({ jurisprudencia: j.jurisprudencia }); })
           .catch(() => {});
       }
+
+      // Políticas / llamamientos (sec. 10): documentos institucionales citados en las resoluciones.
+      fetch("/api/sugerir-politicas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ textoDocs: json.texto_docs ?? null, caso_id: casoId, pretension: sug?.pretension ?? null }),
+      })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((j) => { if (j?.politicas) aplicar({ politicas: j.politicas }); })
+        .catch(() => {});
 
       // Filtrar nulos antes de pasar al formulario
       const camposLimpios = Object.fromEntries(

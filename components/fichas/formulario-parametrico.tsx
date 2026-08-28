@@ -221,6 +221,7 @@ interface FormularioParametricoProps {
   cuantiaSugerida?: string | null;
   normasSugerida?: string | null;
   jurisprudenciaSugerida?: string | null;
+  politicasSugerida?: string | null;
   problemaSugerido?: string | null;
   consideracionesSugerida?: string | null;
   pretensionSugerida?: string | null;   // pretensión BUPC detectada (VEJEZ, SOBREVIVIENTES, ...)
@@ -288,7 +289,7 @@ function limpiarNum(v: string | null | undefined): string {
   return s;
 }
 
-export function FormularioParametrico({ casoId, casoData, valoresPrellenados, sintesisHechosSugerida, pretensionesSugerida, cuantiaSugerida, normasSugerida, jurisprudenciaSugerida, problemaSugerido, consideracionesSugerida, pretensionSugerida, claseSugerida, causanteNombreSugerido, causanteCedulaSugerida, fichaInicial }: FormularioParametricoProps) {
+export function FormularioParametrico({ casoId, casoData, valoresPrellenados, sintesisHechosSugerida, pretensionesSugerida, cuantiaSugerida, normasSugerida, jurisprudenciaSugerida, politicasSugerida, problemaSugerido, consideracionesSugerida, pretensionSugerida, claseSugerida, causanteNombreSugerido, causanteCedulaSugerida, fichaInicial }: FormularioParametricoProps) {
   const [error, setError] = useState<string | null>(null);
   const [generandoPoder, setGenerandoPoder] = useState(false);
   const [poderGenerado, setPoderGenerado] = useState(false);
@@ -535,6 +536,17 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
       setNormasTexto(normasSugerida);
     }
   }, [normasSugerida, normasTexto]);
+
+  // Traer las políticas/llamamientos (Sección 10) identificadas en las resoluciones + repositorio.
+  const politSugAplicadaRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!politicasSugerida) return;
+    if (politSugAplicadaRef.current === politicasSugerida) return;
+    if (!politicasTexto.trim()) {
+      setPoliticasTexto(politicasSugerida);
+      politSugAplicadaRef.current = politicasSugerida;
+    }
+  }, [politicasSugerida, politicasTexto]);
 
   // Traer el resumen de jurisprudencia (Sección 9) generado a partir de la Sección 4 + repositorio.
   // Se aplica UNA vez por sugerencia y también reemplaza un "N/A" placeholder guardado
@@ -1467,10 +1479,17 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
           <ModuloTexto
             value={politicasTexto}
             onChange={setPoliticasTexto}
+            sugerencia={politicasSugerida}
             minHeight={120}
             placeholder="Políticas institucionales y llamamientos aplicables. Si lo dejas vacío, se usará el texto por defecto."
           />
         </Campo>
+        {politicasSugerida && (
+          <p className="text-[11px] text-muted-foreground flex items-start gap-1">
+            <AlertCircle className="w-3 h-3 shrink-0 mt-0.5" />
+            Documentos institucionales (memorandos/OAL/conceptos) citados en las resoluciones, con reseña del repositorio. Revísalos antes de continuar.
+          </p>
+        )}
       </Bloque>
 
       <Bloque icono={<FileText className="w-4 h-4" />} titulo="Evaluación de riesgo">
