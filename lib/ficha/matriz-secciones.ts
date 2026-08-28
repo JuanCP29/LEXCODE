@@ -14,6 +14,8 @@
  * - Azul     → directrices Colpensiones (sección 15; alimenta también 16-18)
  */
 
+import { REGLA_NORMAS } from "@/lib/ia/reglas-secciones";
+
 export type FuenteTipo =
   | "excel_csv"
   | "traslado_demanda"
@@ -99,12 +101,8 @@ export const MATRIZ_SECCIONES: FichaSectionMapping[] = [
     criticalReview: false,
     canBeNA: false,
     requiredInputs: ["documento:traslado_demanda"],
-    instruccionIA:
-      "Devuelve DOS grupos claramente separados con subtítulos \"Normas:\" y \"Jurisprudencia:\". " +
-      "(1) NORMAS: extrae del apartado \"Fundamento y razones de derecho\" (o equivalente: fundamentos de derecho, marco normativo) del TRASLADO DE LA DEMANDA la Constitución, leyes, decretos, actos administrativos y convenios invocados, con sus artículos. " +
-      "(2) JURISPRUDENCIA: revisa TODO el texto del TRASLADO DE LA DEMANDA (no solo el apartado de fundamentos) y relaciona TODA sentencia de las altas cortes que la demanda cite — Corte Suprema de Justicia, Corte Constitucional (p. ej. C-XXX, T-XXX, SU-XXX) y Consejo de Estado —, indicando la corporación y el número de sentencia/radicado tal como aparezcan. " +
-      "Incluye ÚNICAMENTE normas y sentencias que aparezcan textualmente en el TRASLADO DE LA DEMANDA; no agregues jurisprudencia ni normas de conocimiento general. " +
-      "Si la demanda no cita ninguna sentencia, escribe bajo \"Jurisprudencia:\" el texto \"La demanda no cita jurisprudencia.\" — nunca la inventes.",
+    // Fuente única de la regla de esta sección (compartida con el análisis visión/texto).
+    instruccionIA: REGLA_NORMAS,
   },
   {
     sectionNumber: 5,
