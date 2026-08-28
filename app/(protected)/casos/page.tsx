@@ -7,7 +7,7 @@ export default async function CasosPage() {
 
   const { data: casos } = await supabase
     .from("casos")
-    .select("*, fichas_conciliacion(id, estado)")
+    .select("*, fichas_conciliacion(id, estado), contestaciones(sec_hechos, sec_pretensiones, sec_defensa)")
     .order("created_at", { ascending: false });
 
   const total = casos?.length ?? 0;

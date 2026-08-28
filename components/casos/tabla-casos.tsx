@@ -71,6 +71,7 @@ type CasoConFichas = {
   estado: string;
   created_at: string;
   fichas_conciliacion: FichaMin[] | null;
+  contestaciones?: { sec_hechos: string | null; sec_pretensiones: string | null; sec_defensa: string | null }[] | null;
 };
 
 interface TablaCasosProps {
@@ -171,6 +172,9 @@ export function TablaCasos({ casos }: TablaCasosProps) {
               const fichaLista = clave === "completado";
               const sinFicha = clave === "pendiente";
               const est = WORKFLOW_ESTADO[clave];
+              // Progreso de los 2 documentos: la contestación cuenta cuando tiene contenido.
+              const cont = Array.isArray(caso.contestaciones) ? caso.contestaciones[0] : caso.contestaciones ?? null;
+              const contestacionLista = !!cont && [cont.sec_hechos, cont.sec_pretensiones, cont.sec_defensa].some((v) => v && String(v).trim());
 
               return (
                 <tr key={caso.id} className="border-b border-border last:border-0 hover:bg-primary/5 transition-colors group">
@@ -200,6 +204,9 @@ export function TablaCasos({ casos }: TablaCasosProps) {
                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold whitespace-nowrap ${est.clase}`}>
                       <span className="w-1.5 h-1.5 rounded-full" style={{ background: ACENTO[clave] }} />
                       {est.label}
+                      {fichaLista && (
+                        <span className="tabular-nums opacity-80">· {contestacionLista ? "2/2" : "1/2"}</span>
+                      )}
                     </span>
                   </td>
 
