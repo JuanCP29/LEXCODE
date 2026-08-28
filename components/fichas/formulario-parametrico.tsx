@@ -1580,7 +1580,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
               <button
                 type="button"
                 onClick={() => router.push(`/demanda/${casoId}`)}
-                className="px-4 py-2.5 rounded-lg bg-[#7c3aed] text-white text-sm font-semibold hover:bg-[#6d28d9] transition-colors"
+                className="px-4 py-2.5 rounded-lg bg-brand-ink text-white text-sm font-semibold hover:brightness-110 transition-all"
               >
                 Sí, continuar
               </button>

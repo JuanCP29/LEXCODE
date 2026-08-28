@@ -215,7 +215,7 @@ export function TablaCasos({ casos }: TablaCasosProps) {
                       {fichaLista ? (
                         <Link
                           href={`/demanda/${caso.id}`}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all active:scale-[0.98] border-[#7c3aed] text-[#7c3aed] hover:bg-[#7c3aed] hover:text-white"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all active:scale-[0.98] border-brand text-brand-ink hover:bg-brand-ink hover:text-white"
                         >
                           Contestación Dda
                         </Link>
