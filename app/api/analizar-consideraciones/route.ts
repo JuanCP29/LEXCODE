@@ -4,9 +4,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { extraerTextoPDF } from "@/lib/ia/extraer-pdf";
 import { combinarPDFsBase64 } from "@/lib/ia/combinar-pdfs";
-import { extraerIdentificadoresSentencias } from "@/lib/ia/sugerir-jurisprudencia";
-
-const soloAlnum = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+import { buscarCoincidenciasRepositorio, construirFuentesRepositorio } from "@/lib/ia/repositorio-match";
 
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
@@ -171,34 +169,11 @@ export async function POST(request: NextRequest) {
     // Repositorio institucional para robustecer: SOLO los documentos que COINCIDEN con algo
     // citado en las resoluciones. Solo aplica a la parte 2 (o a la completa): la parte 1 no usa
     // jurisprudencia, asi que evita ese input y va mas rapida.
+    // La parte 1 no usa jurisprudencia/repositorio: se salta esta búsqueda y va más rápida.
     let bloqueRepo = "";
     if (parte !== 1) {
-      const TIPO_LABEL: Record<string, string> = {
-        directriz: "Directriz", memorando: "Memorando", lineamiento: "Lineamiento", otro: "Documento",
-      };
-      const { data: repoDocs } = await supabase
-        .from("directrices_conciliacion")
-        .select("nombre, codigo, tipo_documento, texto_extraido")
-        .eq("activo", true);
-
-      const henoDoc = soloAlnum(textoCompleto);
-      const idsEnResoluciones = extraerIdentificadoresSentencias(textoCompleto).map(soloAlnum);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const coincidencias = ((repoDocs ?? []) as any[]).filter((d) => {
-        const henoNombre = soloAlnum(`${d.nombre ?? ""} ${d.codigo ?? ""}`);
-        // (a) un identificador citado en las resoluciones aparece en el nombre/texto del doc, o
-        //     (b) un identificador del nombre/codigo del doc aparece en el texto de las resoluciones.
-        const idsDoc = [d.codigo ?? "", ...extraerIdentificadoresSentencias(`${d.nombre ?? ""}`)].map(soloAlnum);
-        const henoTextoDoc = soloAlnum(d.texto_extraido ?? "");
-        return (
-          idsEnResoluciones.some((id) => id.length >= 4 && (henoNombre.includes(id) || henoTextoDoc.includes(id))) ||
-          idsDoc.some((id) => id.length >= 4 && henoDoc.includes(id))
-        );
-      }).slice(0, 3);
-
-      const fuentesRepo = coincidencias
-        .map((d) => `### ${TIPO_LABEL[d.tipo_documento ?? "directriz"] ?? "Documento"} (${d.codigo ? `${d.codigo} — ` : ""}${d.nombre})\n${(d.texto_extraido ?? "").slice(0, 8000)}`)
-        .join("\n\n");
+      const coincidencias = await buscarCoincidenciasRepositorio(supabase, textoCompleto);
+      const fuentesRepo = construirFuentesRepositorio(coincidencias, 8000);
       bloqueRepo = fuentesRepo
         ? `\n\nREPOSITORIO INSTITUCIONAL (coincide con lo citado en las resoluciones; usalo para robustecer):\n${fuentesRepo}`
         : "";

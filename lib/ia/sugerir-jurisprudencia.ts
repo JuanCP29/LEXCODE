@@ -1,5 +1,10 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  extraerIdentificadoresSentencias,
+  buscarCoincidenciasRepositorio,
+  construirFuentesRepositorio,
+} from "@/lib/ia/repositorio-match";
 
 /**
  * Sección 9 (Jurisprudencia): a partir de las sentencias que la demanda cita
@@ -10,26 +15,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  * o en lo que la demanda transcriba; si no hay fuente, devuelve una nota conservadora.
  * Es defensivo: cualquier fallo devuelve null (no rompe el flujo).
  */
-export function extraerIdentificadoresSentencias(texto: string): string[] {
-  if (!texto) return [];
-  const ids = new Set<string>();
-  // Corte Suprema Sala Laboral: SL1234-2022, SL 1234 de 2022
-  Array.from(texto.matchAll(/\bSL\s?-?\s?(\d{2,5})\s?(?:-|de\s+)?\s?(\d{4})\b/gi)).forEach((m) => {
-    ids.add(`SL${m[1]}-${m[2]}`);
-  });
-  // Corte Constitucional: C-258/13, T-020/2015, SU-230 de 2015
-  Array.from(texto.matchAll(/\b(C|T|SU)\s?-\s?(\d{1,4})\s?(?:\/|de\s+)?\s?(\d{2,4})\b/gi)).forEach((m) => {
-    ids.add(`${m[1].toUpperCase()}-${m[2]}/${m[3]}`);
-  });
-  // Radicación numérica (Consejo de Estado / CSJ): "radicación No 92207"
-  Array.from(texto.matchAll(/radicaci[oó]n\s*(?:n[o°.]*\s*)?([\d][\d.\-]{3,})/gi)).forEach((m) => {
-    ids.add(m[1].replace(/[.\s]/g, ""));
-  });
-  return Array.from(ids).slice(0, 8);
-}
-
-const soloAlnum = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
-
 export async function sugerirJurisprudencia(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: SupabaseClient<any, "public", any>,
@@ -46,29 +31,9 @@ export async function sugerirJurisprudencia(
     const identificadores = extraerIdentificadoresSentencias(bloqueJuris);
     if (identificadores.length === 0) return null;
 
-    // 1) Buscar en el repositorio documentos activos que coincidan con alguna sentencia.
-    const { data: docs } = await supabase
-      .from("directrices_conciliacion")
-      .select("id, nombre, codigo, tipo_documento, texto_extraido")
-      .eq("activo", true);
-
-    const agujas = identificadores.map(soloAlnum);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const coincidencias = ((docs ?? []) as any[]).filter((d) => {
-      const heno = soloAlnum(`${d.nombre ?? ""} ${d.codigo ?? ""} ${d.texto_extraido ?? ""}`);
-      return agujas.some((a) => a.length >= 4 && heno.includes(a));
-    });
-
-    const TIPO_LABEL: Record<string, string> = {
-      directriz: "Directriz", memorando: "Memorando", lineamiento: "Lineamiento", otro: "Documento",
-    };
-    const fuentesRepo = coincidencias
-      .map((d) => {
-        const etiqueta = TIPO_LABEL[d.tipo_documento ?? "directriz"] ?? "Documento";
-        const cod = d.codigo ? `${d.codigo} — ` : "";
-        return `### ${etiqueta} del repositorio (${cod}${d.nombre})\n${(d.texto_extraido ?? "").slice(0, 12000)}`;
-      })
-      .join("\n\n");
+    // 1) Buscar en el repositorio documentos activos que coincidan (emparejador compartido).
+    const coincidencias = await buscarCoincidenciasRepositorio(supabase, bloqueJuris);
+    const fuentesRepo = construirFuentesRepositorio(coincidencias, 12000);
 
     // 2) Redactar el resumen (elige la más relevante + resume con fuente).
     const prompt = `Eres un abogado de COLPENSIONES que diligencia la Sección 9 (JURISPRUDENCIA O PRECEDENTE JUDICIAL)
