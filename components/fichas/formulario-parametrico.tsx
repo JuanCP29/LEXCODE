@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -336,6 +337,8 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
   const [generandoPreview, setGenerandoPreview] = useState(false);
   const [descargandoPdf, setDescargandoPdf] = useState(false);
   const [pdfDescargado, setPdfDescargado] = useState(false);
+  const [preguntaContestacion, setPreguntaContestacion] = useState(false);
+  const router = useRouter();
   const [nombreArchivo, setNombreArchivo] = useState(() => {
     const hoy = new Date();
     const f = `${hoy.getFullYear()}${String(hoy.getMonth() + 1).padStart(2, "0")}${String(hoy.getDate()).padStart(2, "0")}`;
@@ -847,8 +850,10 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
       a.download = `${nombreArchivo.trim() || "FICHA_CONCILIACION"}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
-      setPdfDescargado(true);
-      setTimeout(() => setPdfDescargado(false), 2500);
+      setPdfDescargado(true); // queda en verde (documento descargado)
+      // Cerrar la conciliación: deja la ficha en estado final -> habilita "Contestación Dda".
+      try { await fetch(`/api/fichas/${id}/cerrar`, { method: "POST" }); } catch { /* best-effort */ }
+      setPreguntaContestacion(true); // ¿continuamos con la contestación?
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al descargar el PDF");
     } finally {
@@ -1641,6 +1646,37 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
           </div>
         </div>
       </div>
+
+      {/* ── Pregunta: continuar con la contestación ── */}
+      {preguntaContestacion && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true">
+          <div className="w-full max-w-md rounded-2xl bg-card border border-border card-shadow-md p-6 animate-fade-up">
+            <div className="flex items-center gap-2.5 mb-2">
+              <CheckCircle2 className="w-5 h-5 text-green-600" />
+              <h3 className="text-base font-bold text-foreground">Ficha de conciliación descargada</h3>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              ¿Continuamos con la <strong className="text-foreground">contestación de la demanda</strong>?
+            </p>
+            <div className="mt-5 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => router.push("/casos")}
+                className="px-4 py-2.5 rounded-lg border border-border text-sm font-semibold text-foreground hover:bg-muted transition-colors"
+              >
+                No, volver a Reparto
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push(`/demanda/${casoId}`)}
+                className="px-4 py-2.5 rounded-lg bg-[#7c3aed] text-white text-sm font-semibold hover:bg-[#6d28d9] transition-colors"
+              >
+                Sí, continuar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </form>
   );
 }
