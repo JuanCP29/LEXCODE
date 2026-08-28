@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Bloque, Campo, ModuloTexto } from "@/components/fichas/bloques-ficha";
-import { Sparkles, Save, Loader2, CheckCircle2, AlertCircle, FileText } from "lucide-react";
+import { Sparkles, Save, Loader2, CheckCircle2, AlertCircle, FileText, FileDown } from "lucide-react";
 
 type Seccion = "hechos" | "pretensiones" | "defensa";
 
@@ -37,7 +37,43 @@ export function EditorContestacion({ casoId, inicial }: Props) {
   const [generando, setGenerando] = useState<Record<Seccion, boolean>>({ hechos: false, pretensiones: false, defensa: false });
   const [guardando, setGuardando] = useState(false);
   const [guardado, setGuardado] = useState(false);
+  const [exportando, setExportando] = useState<"docx" | "pdf" | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  async function persistir() {
+    const res = await fetch("/api/guardar-contestacion", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        caso_id: casoId,
+        sec_hechos: texto.sec_hechos.trim() || null,
+        sec_pretensiones: texto.sec_pretensiones.trim() || null,
+        sec_defensa: texto.sec_defensa.trim() || null,
+      }),
+    });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? "Error al guardar");
+  }
+
+  async function exportar(formato: "docx" | "pdf") {
+    setExportando(formato);
+    setError(null);
+    try {
+      await persistir(); // exporta el contenido actual
+      const url = formato === "docx" ? `/api/exportar-contestacion/${casoId}` : `/api/exportar-contestacion-pdf/${casoId}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("No se pudo exportar el documento");
+      const blob = await res.blob();
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `CONTESTACION_DDA.${formato}`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al exportar");
+    } finally {
+      setExportando(null);
+    }
+  }
 
   async function generar(seccion: Seccion, col: string) {
     setGenerando((g) => ({ ...g, [seccion]: true }));
@@ -70,18 +106,7 @@ export function EditorContestacion({ casoId, inicial }: Props) {
     setGuardado(false);
     setError(null);
     try {
-      const res = await fetch("/api/guardar-contestacion", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          caso_id: casoId,
-          sec_hechos: texto.sec_hechos.trim() || null,
-          sec_pretensiones: texto.sec_pretensiones.trim() || null,
-          sec_defensa: texto.sec_defensa.trim() || null,
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Error al guardar");
+      await persistir();
       setGuardado(true);
       setTimeout(() => setGuardado(false), 2500);
     } catch (e) {
@@ -104,7 +129,14 @@ export function EditorContestacion({ casoId, inicial }: Props) {
           {guardando ? <><Loader2 className="w-4 h-4 animate-spin" /> Guardando…</> : <><Save className="w-4 h-4" /> Guardar</>}
         </Button>
         {guardado && <span className="inline-flex items-center gap-1.5 text-sm text-emerald-600"><CheckCircle2 className="w-4 h-4" /> Guardado</span>}
-        <span className="ml-auto text-xs text-muted-foreground">La exportación a Word/PDF con el formato oficial se agrega en el siguiente paso.</span>
+        <div className="ml-auto flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => exportar("pdf")} disabled={exportando !== null}>
+            {exportando === "pdf" ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Generando…</> : <><FileDown className="w-3.5 h-3.5" /> Descargar PDF</>}
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => exportar("docx")} disabled={exportando !== null}>
+            {exportando === "docx" ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Generando…</> : <><FileText className="w-3.5 h-3.5" /> Descargar Word</>}
+          </Button>
+        </div>
       </div>
 
       {error && (
