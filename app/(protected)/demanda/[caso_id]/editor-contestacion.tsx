@@ -1,0 +1,127 @@
+"use client";
+
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Sparkles, Save, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+
+type Seccion = "hechos" | "pretensiones" | "defensa";
+
+const SECCIONES: { key: Seccion; col: "sec_hechos" | "sec_pretensiones" | "sec_defensa"; titulo: string; ayuda: string }[] = [
+  { key: "hechos",       col: "sec_hechos",       titulo: "Pronunciamiento frente a los hechos",       ayuda: "Responde a cada hecho de la demanda (ES CIERTO / NO ES CIERTO / NO ME CONSTA)." },
+  { key: "pretensiones", col: "sec_pretensiones", titulo: "Pronunciamiento frente a las pretensiones", ayuda: "Oposición a cada pretensión (ME OPONGO, a que…, toda vez que…)." },
+  { key: "defensa",      col: "sec_defensa",      titulo: "Hechos, fundamentos y razones de la defensa", ayuda: "Fundamentos de derecho de la defensa de Colpensiones." },
+];
+
+interface Props {
+  casoId: string;
+  inicial: { sec_hechos: string; sec_pretensiones: string; sec_defensa: string };
+}
+
+export function EditorContestacion({ casoId, inicial }: Props) {
+  const [texto, setTexto] = useState<Record<string, string>>({
+    sec_hechos: inicial.sec_hechos,
+    sec_pretensiones: inicial.sec_pretensiones,
+    sec_defensa: inicial.sec_defensa,
+  });
+  const [generando, setGenerando] = useState<Record<Seccion, boolean>>({ hechos: false, pretensiones: false, defensa: false });
+  const [guardando, setGuardando] = useState(false);
+  const [guardado, setGuardado] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function generar(seccion: Seccion, col: string) {
+    setGenerando((g) => ({ ...g, [seccion]: true }));
+    setError(null);
+    try {
+      const res = await fetch("/api/generar-contestacion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ caso_id: casoId, seccion }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Error al generar");
+      if (json.texto) setTexto((t) => ({ ...t, [col]: json.texto }));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al generar");
+    } finally {
+      setGenerando((g) => ({ ...g, [seccion]: false }));
+    }
+  }
+
+  async function generarTodo() {
+    await Promise.all(SECCIONES.map((s) => generar(s.key, s.col)));
+  }
+
+  async function guardar() {
+    setGuardando(true);
+    setGuardado(false);
+    setError(null);
+    try {
+      const res = await fetch("/api/guardar-contestacion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          caso_id: casoId,
+          sec_hechos: texto.sec_hechos.trim() || null,
+          sec_pretensiones: texto.sec_pretensiones.trim() || null,
+          sec_defensa: texto.sec_defensa.trim() || null,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Error al guardar");
+      setGuardado(true);
+      setTimeout(() => setGuardado(false), 2500);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al guardar");
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  const algunoGenerando = Object.values(generando).some(Boolean);
+
+  return (
+    <div className="space-y-5">
+      {/* Barra de acciones */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <Button onClick={generarTodo} disabled={algunoGenerando}>
+          {algunoGenerando ? <><Loader2 className="w-4 h-4 animate-spin" /> Generando…</> : <><Sparkles className="w-4 h-4" /> Generar todo con IA</>}
+        </Button>
+        <Button onClick={guardar} variant="outline" disabled={guardando}>
+          {guardando ? <><Loader2 className="w-4 h-4 animate-spin" /> Guardando…</> : <><Save className="w-4 h-4" /> Guardar</>}
+        </Button>
+        {guardado && <span className="inline-flex items-center gap-1.5 text-sm text-emerald-600"><CheckCircle2 className="w-4 h-4" /> Guardado</span>}
+        <span className="ml-auto text-xs text-muted-foreground">La exportación a Word/PDF con el formato oficial se agrega en el siguiente paso.</span>
+      </div>
+
+      {error && (
+        <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md px-3 py-2">
+          <AlertCircle className="w-4 h-4 shrink-0" /> {error}
+        </div>
+      )}
+
+      {/* Secciones */}
+      {SECCIONES.map((s) => (
+        <div key={s.key} className="bg-card border border-border rounded-xl card-shadow overflow-hidden">
+          <div className="flex items-center justify-between gap-3 px-5 py-3.5 border-b border-border bg-muted/30">
+            <div>
+              <h2 className="text-sm font-semibold">{s.titulo}</h2>
+              <p className="text-[11px] text-muted-foreground mt-0.5">{s.ayuda}</p>
+            </div>
+            <Button size="sm" variant="outline" onClick={() => generar(s.key, s.col)} disabled={generando[s.key]}>
+              {generando[s.key] ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Generando…</> : <><Sparkles className="w-3.5 h-3.5" /> Generar</>}
+            </Button>
+          </div>
+          <div className="p-4">
+            <textarea
+              value={texto[s.col]}
+              onChange={(e) => setTexto((t) => ({ ...t, [s.col]: e.target.value }))}
+              rows={12}
+              placeholder="Pulsa «Generar» para redactar esta sección con IA, o escríbela manualmente."
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-ring resize-y"
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
