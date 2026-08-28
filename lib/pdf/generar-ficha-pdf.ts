@@ -10,11 +10,17 @@ import { htmlATextoPlano, htmlAParrafos } from "@/lib/richtext/html";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function pintarRich(doc: any, raw: string, x: number, y: number, width: number, align: "center" | "justify" | "left", FONT: string, FONT_BOLD: string) {
   const pars = htmlAParrafos(raw);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // Flujo único (como el texto plano original): el salto entre párrafos "\n\n"
+  // va EMBEBIDO al final del último run de cada párrafo, para conservar el mismo
+  // espaciado; los runs solo cambian la tipografía (negrita) y el subrayado.
   const flat: { text: string; bold?: boolean; underline?: boolean }[] = [];
   pars.forEach((runs, pi) => {
-    if (pi > 0) flat.push({ text: "\n\n" });
-    (runs.length ? runs : [{ text: "" }]).forEach((r) => flat.push(r));
+    const rr = runs.length ? runs : [{ text: "" }];
+    rr.forEach((r, ri) => {
+      const finPar = ri === rr.length - 1;
+      const text = finPar && pi < pars.length - 1 ? `${r.text}\n\n` : r.text;
+      flat.push({ text, bold: r.bold, underline: r.underline });
+    });
   });
   if (!flat.length) flat.push({ text: "" });
   flat.forEach((r, i) => {
