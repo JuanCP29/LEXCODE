@@ -1,7 +1,29 @@
 import PDFDocument from "pdfkit";
 import fs from "fs";
 import path from "path";
-import { htmlATextoPlano } from "@/lib/richtext/html";
+import { htmlATextoPlano, htmlAParrafos } from "@/lib/richtext/html";
+
+// Renderiza contenido (HTML o plano) dentro de una caja del PDF de la ficha,
+// respetando negrita/subrayado con la tipografía registrada (FONT/FONT_BOLD).
+// Usa un único flujo "continued" con \n\n entre párrafos, para conservar la
+// sangría y el seguimiento de páginas de la caja.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function pintarRich(doc: any, raw: string, x: number, y: number, width: number, align: "center" | "justify" | "left", FONT: string, FONT_BOLD: string) {
+  const pars = htmlAParrafos(raw);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const flat: { text: string; bold?: boolean; underline?: boolean }[] = [];
+  pars.forEach((runs, pi) => {
+    if (pi > 0) flat.push({ text: "\n\n" });
+    (runs.length ? runs : [{ text: "" }]).forEach((r) => flat.push(r));
+  });
+  if (!flat.length) flat.push({ text: "" });
+  flat.forEach((r, i) => {
+    const primero = i === 0, ultimo = i === flat.length - 1;
+    doc.font(r.bold ? FONT_BOLD : FONT).fontSize(9).fillColor(NEGRO);
+    if (primero) doc.text(r.text, x, y, { width, align, lineGap: 2.5, underline: !!r.underline, continued: !ultimo });
+    else doc.text(r.text, { width, align, lineGap: 2.5, underline: !!r.underline, continued: !ultimo });
+  });
+}
 
 // Logo institucional (si existe). Colócalo en public/plantillas/logo-colpensiones.png
 const LOGO_PATH = path.join(process.cwd(), "public", "plantillas", "logo-colpensiones.png");
@@ -203,7 +225,8 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
     for (const s of SECCIONES_PDF) {
       const est = ESTANDAR[s.key];
       const centrarEst = est?.centrado ?? false;
-      const contenido = est ? est.texto : (htmlATextoPlano((datos[s.key] ?? "").toString()) || "N/A");
+      const contenidoRaw = est ? est.texto : ((datos[s.key] ?? "").toString().trim() || "N/A");
+      const contenido = htmlATextoPlano(contenidoRaw) || "N/A";
       const tituloFull = `${s.n}. ${s.titulo}`;
 
       // Título de la sección
@@ -240,11 +263,11 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
 
       // Caja de respuesta — el contenido largo se divide entre páginas y el borde
       // se dibuja por segmentos en cada página que ocupa.
-      const opts = { width: W - 12, align: (centrarEst ? "center" : esFirma ? "left" : "justify") as "center" | "justify" | "left", lineGap: 2.5 };
-      doc.font(esFirma ? FONT_BOLD : FONT).fontSize(9).fillColor(NEGRO);
+      const alignCaja = (centrarEst ? "center" : "justify") as "center" | "justify" | "left";
+      doc.font(FONT).fontSize(9).fillColor(NEGRO);
       const pIni = paginaActual;
       const yIni = doc.y;
-      doc.text(contenido, left + 6, yIni + 6, opts);
+      pintarRich(doc, contenidoRaw, left + 6, yIni + 6, W - 12, alignCaja, FONT, FONT_BOLD);
       const pFin = paginaActual;
       const yFin = doc.y + 6; // padding inferior
 
