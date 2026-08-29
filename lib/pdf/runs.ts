@@ -77,6 +77,7 @@ export function renderContenidoPdf(
       doc.moveDown(opts.espacioParrafo ?? 0.4);
       continue;
     }
+    if (b.tipo === "imagen") continue; // las imágenes solo se usan en la Ficha
     const runs = b.runs;
     runs.forEach((r, i) => {
       const ultimo = i === runs.length - 1;

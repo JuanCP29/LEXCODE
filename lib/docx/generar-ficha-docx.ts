@@ -13,6 +13,7 @@ import {
 } from "docx";
 import { SECCIONES } from "@/lib/ia/secciones";
 import { bloquesDocx } from "@/lib/docx/runs";
+import { precargarImagenes } from "@/lib/richtext/imagenes-servidor";
 
 // Colores institucionales
 const AZUL       = "185FA5";
@@ -128,6 +129,9 @@ export async function generarFichaDocx(datos: DatosFicha): Promise<Buffer> {
     ? new Date(datos.fecha_elaboracion).toLocaleDateString("es-CO")
     : new Date().toLocaleDateString("es-CO");
 
+  // Imágenes incrustadas (solo Consideraciones las admite): se descargan una vez.
+  const imagenes = await precargarImagenes([datos.sec_16_consideraciones]);
+
   const doc = new Document({
     creator: "FoQs — Collegia Abogados",
     title: `Ficha de Conciliación — ${datos.radicado}`,
@@ -241,6 +245,7 @@ export async function generarFichaDocx(datos: DatosFicha): Promise<Buffer> {
               align: s.centrado ? "center" : "left",
               spacingAfter: 120,
               vacio: "Pendiente de diligenciar.",
+              imagenes,
             }),
           ];
         }),

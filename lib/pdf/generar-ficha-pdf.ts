@@ -3,27 +3,51 @@ import fs from "fs";
 import path from "path";
 import { htmlATextoPlano, htmlABloques } from "@/lib/richtext/html";
 import { dibujarTablaPdf } from "@/lib/pdf/runs";
+import { precargarImagenes, type ImagenCargada } from "@/lib/richtext/imagenes-servidor";
+
+// Dibuja una imagen dentro de la caja, escalada al ancho disponible (y al alto de
+// página si hace falta), avanzando el cursor. Centrada.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function dibujarImagenPdf(doc: any, img: ImagenCargada, x: number, width: number, bottom: number, top: number) {
+  let drawW = Math.min(width, img.width);
+  let drawH = (img.height * drawW) / img.width;
+  const maxH = bottom - top - 12;
+  if (drawH > maxH) { const k = maxH / drawH; drawH = maxH; drawW = drawW * k; }
+  if (doc.y + drawH > bottom) { doc.addPage(); doc.y = top; }
+  const cx = x + (width - drawW) / 2;
+  try { doc.image(img.data, cx, doc.y, { width: drawW }); } catch { /* imagen inválida */ }
+  doc.y = doc.y + drawH;
+  doc.x = x;
+}
 
 // Renderiza contenido (HTML o plano) dentro de una caja del PDF de la ficha,
 // respetando negrita/subrayado con la tipografía registrada (FONT/FONT_BOLD) y
-// dibujando tablas como rejilla. Conserva el seguimiento de páginas de la caja.
+// dibujando tablas como rejilla e imágenes. Conserva el seguimiento de páginas.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function pintarRich(doc: any, raw: string, x: number, y: number, width: number, align: "center" | "justify" | "left", FONT: string, FONT_BOLD: string, bottom: number, top: number) {
+function pintarRich(doc: any, raw: string, x: number, y: number, width: number, align: "center" | "justify" | "left", FONT: string, FONT_BOLD: string, bottom: number, top: number, imagenes?: Map<string, ImagenCargada>) {
   const bloques = htmlABloques(raw);
   const hayTabla = bloques.some((b) => b.tipo === "tabla");
+  const hayImagen = bloques.some((b) => b.tipo === "imagen");
   const hayFormato = bloques.some((b) => b.tipo === "parrafo" && b.runs.some((r) => r.bold || r.underline));
-  // Sin tabla ni formato -> render idéntico al original (una sola llamada).
-  if (!hayTabla && !hayFormato) {
+  // Sin tabla, imagen ni formato -> render idéntico al original (una sola llamada).
+  if (!hayTabla && !hayImagen && !hayFormato) {
     const plano = bloques.map((b) => (b.tipo === "parrafo" ? b.runs.map((r) => r.text).join("") : "")).join("\n\n");
     doc.font(FONT).fontSize(9).fillColor(NEGRO).text(plano, x, y, { width, align, lineGap: 2.5 });
     return;
   }
-  // Con formato/tablas: cada párrafo se pinta como secuencia "continued" (para
-  // mezclar tipografías); las tablas se dibujan como rejilla con bordes.
+  // Con formato/tablas/imágenes: párrafos como secuencia "continued"; tablas como
+  // rejilla con bordes; imágenes escaladas y centradas.
   doc.x = x; doc.y = y;
   bloques.forEach((b, bi) => {
     if (b.tipo === "tabla") {
       dibujarTablaPdf(doc, b.filas, { x, width, size: 9, font: FONT, fontBold: FONT_BOLD, bottom, top });
+      if (bi < bloques.length - 1) doc.moveDown(0.5);
+      return;
+    }
+    if (b.tipo === "imagen") {
+      const img = imagenes?.get(b.src);
+      if (img) dibujarImagenPdf(doc, img, x, width, bottom, top);
+      else { doc.font(FONT).fontSize(9).fillColor(NEGRO).text("[imagen]", x, doc.y, { width }); }
       if (bi < bloques.length - 1) doc.moveDown(0.5);
       return;
     }
@@ -131,6 +155,8 @@ const BORDE = "#000000";
 const NEGRO = "#000000";
 
 export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
+  // Imágenes incrustadas (solo Consideraciones): se descargan antes de dibujar.
+  const imagenes = await precargarImagenes([datos.sec_16_consideraciones]);
   return new Promise<Buffer>((resolve, reject) => {
     const M = 40;
     const doc = new PDFDocument({ margin: M, size: "A4", bufferPages: true });
@@ -281,7 +307,7 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
       doc.font(FONT).fontSize(9).fillColor(NEGRO);
       const pIni = paginaActual;
       const yIni = doc.y;
-      pintarRich(doc, contenidoRaw, left + 6, yIni + 6, W - 12, alignCaja, FONT, FONT_BOLD, bottom, M);
+      pintarRich(doc, contenidoRaw, left + 6, yIni + 6, W - 12, alignCaja, FONT, FONT_BOLD, bottom, M, imagenes);
       const pFin = paginaActual;
       const yFin = doc.y + 6; // padding inferior
 

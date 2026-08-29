@@ -86,12 +86,18 @@ export function htmlAParrafos(html: string | null | undefined): Parrafo[] {
     .filter((runs) => runs.some((r) => r.text.replace(/\n/g, "").trim() !== ""));
 }
 
-// ── Bloques de documento (párrafos + tablas), en orden ──────────────────────
+// ── Bloques de documento (párrafos + tablas + imágenes), en orden ───────────
 export type BloqueDoc =
   | { tipo: "parrafo"; runs: Run[] }
-  | { tipo: "tabla"; filas: Run[][][] }; // filas -> celdas -> runs
+  | { tipo: "tabla"; filas: Run[][][] } // filas -> celdas -> runs
+  | { tipo: "imagen"; src: string; alt?: string };
 
-/** Descompone el contenido en bloques ordenados (párrafos y tablas) para exportar. */
+function srcDe(imgTag: string): string {
+  const m = imgTag.match(/src\s*=\s*["']([^"']+)["']/i);
+  return m ? decodificar(m[1]) : "";
+}
+
+/** Descompone el contenido en bloques ordenados (párrafos, tablas, imágenes) para exportar. */
 export function htmlABloques(html: string | null | undefined): BloqueDoc[] {
   const s = (html ?? "").trim();
   if (!s) return [];
@@ -99,12 +105,15 @@ export function htmlABloques(html: string | null | undefined): BloqueDoc[] {
     return s.split(/\n{2,}/).map((par) => ({ tipo: "parrafo", runs: parsearMarkdown(par.replace(/\n/g, " ").trim()) }));
   }
   const bloques: BloqueDoc[] = [];
-  const re = /<p\b[^>]*>([\s\S]*?)<\/p>|<table\b[^>]*>([\s\S]*?)<\/table>/gi;
+  const re = /<p\b[^>]*>([\s\S]*?)<\/p>|<table\b[^>]*>([\s\S]*?)<\/table>|(<img\b[^>]*>)/gi;
   let m: RegExpExecArray | null;
   while ((m = re.exec(s))) {
     if (m[1] != null) {
+      // Un párrafo puede contener una imagen inline (TipTap la deja dentro de <p>).
+      const img = m[1].match(/<img\b[^>]*>/i);
       const runs = parsearInline(m[1]);
       if (runs.some((r) => r.text.replace(/\n/g, "").trim() !== "")) bloques.push({ tipo: "parrafo", runs });
+      if (img) { const src = srcDe(img[0]); if (src) bloques.push({ tipo: "imagen", src }); }
     } else if (m[2] != null) {
       const filas: Run[][][] = [];
       const trs = Array.from(m[2].matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)).map((x) => x[1]);
@@ -113,10 +122,18 @@ export function htmlABloques(html: string | null | undefined): BloqueDoc[] {
         if (celdas.length) filas.push(celdas);
       }
       if (filas.length) bloques.push({ tipo: "tabla", filas });
+    } else if (m[3] != null) {
+      const src = srcDe(m[3]);
+      if (src) bloques.push({ tipo: "imagen", src });
     }
   }
   if (!bloques.length) bloques.push({ tipo: "parrafo", runs: parsearInline(s) });
   return bloques;
+}
+
+/** URLs de las imágenes incrustadas, en orden (para precargarlas antes de exportar). */
+export function extraerImagenes(html: string | null | undefined): string[] {
+  return htmlABloques(html).flatMap((b) => (b.tipo === "imagen" ? [b.src] : []));
 }
 
 /** Aplana a texto plano (para exports que aún no soportan formato, o comparaciones). */
@@ -124,7 +141,10 @@ export function htmlATextoPlano(html: string | null | undefined): string {
   return htmlABloques(html)
     .map((b) => b.tipo === "parrafo"
       ? b.runs.map((r) => r.text).join("")
-      : b.filas.map((fila) => fila.map((celda) => celda.map((r) => r.text).join("")).join("  |  ")).join("\n"))
+      : b.tipo === "tabla"
+      ? b.filas.map((fila) => fila.map((celda) => celda.map((r) => r.text).join("")).join("  |  ")).join("\n")
+      : "") // imagen -> sin texto
+    .filter((t) => t !== "")
     .join("\n\n")
     .trim();
 }

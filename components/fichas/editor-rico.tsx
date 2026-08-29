@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useEditor, EditorContent, BubbleMenu } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
@@ -9,7 +9,8 @@ import Table from "@tiptap/extension-table";
 import TableRow from "@tiptap/extension-table-row";
 import TableHeader from "@tiptap/extension-table-header";
 import TableCell from "@tiptap/extension-table-cell";
-import { Bold, Italic, Underline as UnderlineIcon, RotateCcw, Pencil, Table as TableIcon, Rows3, Columns3, Trash2 } from "lucide-react";
+import Image from "@tiptap/extension-image";
+import { Bold, Italic, Underline as UnderlineIcon, RotateCcw, Pencil, Table as TableIcon, Rows3, Columns3, Trash2, ImagePlus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { esHtml, textoPlanoAHtml, htmlATextoPlano } from "@/lib/richtext/html";
 
@@ -18,12 +19,28 @@ function contarPalabras(s: string): number {
   return t ? t.split(/\s+/).length : 0;
 }
 
+// Sube una imagen al bucket público y devuelve su URL (o null si falla).
+async function subirImagen(file: File, casoId?: string): Promise<string | null> {
+  try {
+    const fd = new FormData();
+    fd.append("file", file);
+    if (casoId) fd.append("caso_id", casoId);
+    const res = await fetch("/api/fichas/upload-imagen", { method: "POST", body: fd });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json?.error || "Error al subir la imagen");
+    return json.url as string;
+  } catch (e) {
+    console.error("subirImagen:", e);
+    return null;
+  }
+}
+
 /**
  * Editor de texto enriquecido (negrita, cursiva, subrayado) con barra flotante
  * sobre la selección (aparece solo al seleccionar texto, para no contaminar).
  * El valor entra/sale como HTML; también acepta texto plano heredado.
  */
-export function EditorRico({ value, onChange, sugerencia, placeholder, minHeight = 160, maxHeight = 360, tablas = false }: {
+export function EditorRico({ value, onChange, sugerencia, placeholder, minHeight = 160, maxHeight = 360, tablas = false, imagenes = false, casoId }: {
   value: string;
   onChange: (html: string) => void;
   sugerencia?: string | null;
@@ -31,7 +48,12 @@ export function EditorRico({ value, onChange, sugerencia, placeholder, minHeight
   minHeight?: number;
   maxHeight?: number;
   tablas?: boolean; // habilita insertar/editar tablas (solo donde se necesita)
+  imagenes?: boolean; // habilita pegar/insertar imágenes
+  casoId?: string; // carpeta de destino en Storage
 }) {
+  const [subiendo, setSubiendo] = useState(false);
+  const inputImagen = useRef<HTMLInputElement>(null);
+
   const editor = useEditor({
     immediatelyRender: false, // evita desajuste de hidratación en Next
     extensions: [
@@ -39,6 +61,7 @@ export function EditorRico({ value, onChange, sugerencia, placeholder, minHeight
       Underline,
       Placeholder.configure({ placeholder: placeholder ?? "" }),
       ...(tablas ? [Table.configure({ resizable: true }), TableRow, TableHeader, TableCell] : []),
+      ...(imagenes ? [Image.configure({ inline: false, allowBase64: false })] : []),
     ],
     content: esHtml(value) ? value : textoPlanoAHtml(value),
     editorProps: {
@@ -46,9 +69,42 @@ export function EditorRico({ value, onChange, sugerencia, placeholder, minHeight
         class: "editor-rico-contenido focus:outline-none",
         style: `min-height:${minHeight}px`,
       },
+      // Pegar / soltar imágenes → subir a Storage e insertar la URL
+      handlePaste: imagenes
+        ? (_view, event) => {
+            const files = Array.from(event.clipboardData?.files ?? []).filter((f) => f.type.startsWith("image/"));
+            if (!files.length) return false;
+            event.preventDefault();
+            void insertarImagenes(files);
+            return true;
+          }
+        : undefined,
+      handleDrop: imagenes
+        ? (_view, event) => {
+            const files = Array.from((event as DragEvent).dataTransfer?.files ?? []).filter((f) => f.type.startsWith("image/"));
+            if (!files.length) return false;
+            event.preventDefault();
+            void insertarImagenes(files);
+            return true;
+          }
+        : undefined,
     },
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
   });
+
+  // Sube una o varias imágenes y las inserta en la posición actual.
+  async function insertarImagenes(files: File[]) {
+    if (!editor) return;
+    setSubiendo(true);
+    try {
+      for (const file of files) {
+        const url = await subirImagen(file, casoId);
+        if (url) editor.chain().focus().setImage({ src: url }).run();
+      }
+    } finally {
+      setSubiendo(false);
+    }
+  }
 
   // Sincroniza cuando el valor cambia desde afuera (sugerencia IA, carga inicial).
   useEffect(() => {
@@ -88,18 +144,46 @@ export function EditorRico({ value, onChange, sugerencia, placeholder, minHeight
         </BubbleMenu>
       )}
 
-      {/* Barra de tabla (insertar / editar) — solo donde se habilitan tablas */}
-      {editor && tablas && (
+      {/* Barra de medios (tablas / imágenes) — solo donde se habilitan */}
+      {editor && (tablas || imagenes) && (
         <div className="flex flex-wrap items-center gap-1 mb-1.5">
-          <button
-            type="button"
-            title="Insertar tabla"
-            onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
-            className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-          >
-            <TableIcon className="w-3.5 h-3.5" /> Tabla
-          </button>
-          {editor.isActive("table") && (
+          {tablas && (
+            <button
+              type="button"
+              title="Insertar tabla"
+              onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            >
+              <TableIcon className="w-3.5 h-3.5" /> Tabla
+            </button>
+          )}
+          {imagenes && (
+            <button
+              type="button"
+              title="Insertar imagen"
+              disabled={subiendo}
+              onClick={() => inputImagen.current?.click()}
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+            >
+              {subiendo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ImagePlus className="w-3.5 h-3.5" />}
+              {subiendo ? "Subiendo…" : "Imagen"}
+            </button>
+          )}
+          {imagenes && (
+            <input
+              ref={inputImagen}
+              type="file"
+              accept="image/png,image/jpeg,image/gif,image/webp"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                const files = Array.from(e.target.files ?? []);
+                if (files.length) void insertarImagenes(files);
+                e.target.value = "";
+              }}
+            />
+          )}
+          {tablas && editor.isActive("table") && (
             <>
               <span className="w-px h-4 bg-border mx-0.5" />
               <button type="button" title="Agregar fila" onClick={() => editor.chain().focus().addRowAfter().run()} className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"><Rows3 className="w-3.5 h-3.5" />+ fila</button>

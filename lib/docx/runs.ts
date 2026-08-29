@@ -1,5 +1,6 @@
-import { Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle } from "docx";
+import { Paragraph, TextRun, ImageRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle } from "docx";
 import { htmlAParrafos, htmlABloques, type Run } from "@/lib/richtext/html";
+import type { ImagenCargada } from "@/lib/richtext/imagenes-servidor";
 
 type Opts = {
   size?: number;
@@ -9,7 +10,33 @@ type Opts = {
   spacingAfter?: number;
   line?: number;
   vacio?: string; // texto si el contenido está vacío
+  imagenes?: Map<string, ImagenCargada>; // buffers precargados por URL
+  anchoMaxImg?: number; // ancho máximo de imagen en px (default 480)
 };
+
+// docx exige declarar el tipo de imagen; mapeamos lo que devuelve image-size.
+function tipoImagenDocx(t: string): "jpg" | "png" | "gif" | "bmp" {
+  if (t === "jpg" || t === "jpeg") return "jpg";
+  if (t === "gif") return "gif";
+  if (t === "bmp") return "bmp";
+  return "png";
+}
+
+function imagenParrafo(img: ImagenCargada, opts: Opts): Paragraph {
+  const maxW = opts.anchoMaxImg ?? 480;
+  const ratio = img.width > maxW ? maxW / img.width : 1;
+  return new Paragraph({
+    alignment: AlignmentType.CENTER,
+    spacing: { after: opts.spacingAfter ?? 120 },
+    children: [
+      new ImageRun({
+        data: img.data,
+        type: tipoImagenDocx(img.tipo),
+        transformation: { width: Math.round(img.width * ratio), height: Math.round(img.height * ratio) },
+      }),
+    ],
+  });
+}
 
 function runsDeParrafo(runs: Run[], opts: Opts): Paragraph {
   const align = opts.align === "center" ? AlignmentType.CENTER
@@ -57,6 +84,11 @@ export function bloquesDocx(contenido: string | null | undefined, opts: Opts = {
   const borde = { style: BorderStyle.SINGLE, size: 2, color: "9AA5B1" };
   return bloques.map((b) => {
     if (b.tipo === "parrafo") return runsDeParrafo(b.runs, opts);
+    if (b.tipo === "imagen") {
+      const img = opts.imagenes?.get(b.src);
+      // Sin buffer disponible -> marcador de texto para no romper el export.
+      return img ? imagenParrafo(img, opts) : runsDeParrafo([{ text: "[imagen]" }], opts);
+    }
     // Tabla
     const filas = b.filas.map((fila, ri) => new TableRow({
       children: fila.map((celda) => new TableCell({
