@@ -1,28 +1,33 @@
 import PDFDocument from "pdfkit";
 import fs from "fs";
 import path from "path";
-import { htmlATextoPlano, htmlAParrafos } from "@/lib/richtext/html";
+import { htmlATextoPlano, htmlABloques } from "@/lib/richtext/html";
+import { dibujarTablaPdf } from "@/lib/pdf/runs";
 
 // Renderiza contenido (HTML o plano) dentro de una caja del PDF de la ficha,
-// respetando negrita/subrayado con la tipografía registrada (FONT/FONT_BOLD).
-// Usa un único flujo "continued" con \n\n entre párrafos, para conservar la
-// sangría y el seguimiento de páginas de la caja.
+// respetando negrita/subrayado con la tipografía registrada (FONT/FONT_BOLD) y
+// dibujando tablas como rejilla. Conserva el seguimiento de páginas de la caja.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function pintarRich(doc: any, raw: string, x: number, y: number, width: number, align: "center" | "justify" | "left", FONT: string, FONT_BOLD: string) {
-  const pars = htmlAParrafos(raw);
-  // Sin formato -> render idéntico al original (una sola llamada), mismo espaciado.
-  const tieneFormato = pars.some((runs) => runs.some((r) => r.bold || r.underline));
-  if (!tieneFormato) {
-    const plano = pars.map((runs) => runs.map((r) => r.text).join("")).join("\n\n");
+function pintarRich(doc: any, raw: string, x: number, y: number, width: number, align: "center" | "justify" | "left", FONT: string, FONT_BOLD: string, bottom: number, top: number) {
+  const bloques = htmlABloques(raw);
+  const hayTabla = bloques.some((b) => b.tipo === "tabla");
+  const hayFormato = bloques.some((b) => b.tipo === "parrafo" && b.runs.some((r) => r.bold || r.underline));
+  // Sin tabla ni formato -> render idéntico al original (una sola llamada).
+  if (!hayTabla && !hayFormato) {
+    const plano = bloques.map((b) => (b.tipo === "parrafo" ? b.runs.map((r) => r.text).join("") : "")).join("\n\n");
     doc.font(FONT).fontSize(9).fillColor(NEGRO).text(plano, x, y, { width, align, lineGap: 2.5 });
     return;
   }
-  // Con formato: cada párrafo se pinta como una secuencia "continued" (para
-  // mezclar tipografías) y entre párrafos se deja un espacio explícito, igual de
-  // amplio que una línea en blanco, para conservar el espaciado organizado.
+  // Con formato/tablas: cada párrafo se pinta como secuencia "continued" (para
+  // mezclar tipografías); las tablas se dibujan como rejilla con bordes.
   doc.x = x; doc.y = y;
-  pars.forEach((runs, pi) => {
-    const rr = runs.length ? runs : [{ text: "" }];
+  bloques.forEach((b, bi) => {
+    if (b.tipo === "tabla") {
+      dibujarTablaPdf(doc, b.filas, { x, width, size: 9, font: FONT, fontBold: FONT_BOLD, bottom, top });
+      if (bi < bloques.length - 1) doc.moveDown(0.5);
+      return;
+    }
+    const rr = b.runs.length ? b.runs : [{ text: "" }];
     rr.forEach((r, ri) => {
       const primero = ri === 0, ultimo = ri === rr.length - 1;
       doc.font(r.bold ? FONT_BOLD : FONT).fontSize(9).fillColor(NEGRO);
@@ -30,7 +35,7 @@ function pintarRich(doc: any, raw: string, x: number, y: number, width: number, 
       if (primero) doc.text(r.text, x, doc.y, opciones);
       else doc.text(r.text, opciones);
     });
-    if (pi < pars.length - 1) doc.moveDown(0.9); // separación entre párrafos
+    if (bi < bloques.length - 1) doc.moveDown(0.9); // separación entre párrafos
   });
 }
 
@@ -276,7 +281,7 @@ export async function generarFichaPdf(datos: DatosFichaPdf): Promise<Buffer> {
       doc.font(FONT).fontSize(9).fillColor(NEGRO);
       const pIni = paginaActual;
       const yIni = doc.y;
-      pintarRich(doc, contenidoRaw, left + 6, yIni + 6, W - 12, alignCaja, FONT, FONT_BOLD);
+      pintarRich(doc, contenidoRaw, left + 6, yIni + 6, W - 12, alignCaja, FONT, FONT_BOLD, bottom, M);
       const pFin = paginaActual;
       const yFin = doc.y + 6; // padding inferior
 
