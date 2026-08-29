@@ -23,13 +23,14 @@ function contarPalabras(s: string): number {
  * sobre la selección (aparece solo al seleccionar texto, para no contaminar).
  * El valor entra/sale como HTML; también acepta texto plano heredado.
  */
-export function EditorRico({ value, onChange, sugerencia, placeholder, minHeight = 160, maxHeight = 360 }: {
+export function EditorRico({ value, onChange, sugerencia, placeholder, minHeight = 160, maxHeight = 360, tablas = false }: {
   value: string;
   onChange: (html: string) => void;
   sugerencia?: string | null;
   placeholder?: string;
   minHeight?: number;
   maxHeight?: number;
+  tablas?: boolean; // habilita insertar/editar tablas (solo donde se necesita)
 }) {
   const editor = useEditor({
     immediatelyRender: false, // evita desajuste de hidratación en Next
@@ -37,10 +38,7 @@ export function EditorRico({ value, onChange, sugerencia, placeholder, minHeight
       StarterKit,
       Underline,
       Placeholder.configure({ placeholder: placeholder ?? "" }),
-      Table.configure({ resizable: true }),
-      TableRow,
-      TableHeader,
-      TableCell,
+      ...(tablas ? [Table.configure({ resizable: true }), TableRow, TableHeader, TableCell] : []),
     ],
     content: esHtml(value) ? value : textoPlanoAHtml(value),
     editorProps: {
@@ -90,8 +88,8 @@ export function EditorRico({ value, onChange, sugerencia, placeholder, minHeight
         </BubbleMenu>
       )}
 
-      {/* Barra de tabla (insertar / editar) */}
-      {editor && (
+      {/* Barra de tabla (insertar / editar) — solo donde se habilitan tablas */}
+      {editor && tablas && (
         <div className="flex flex-wrap items-center gap-1 mb-1.5">
           <button
             type="button"

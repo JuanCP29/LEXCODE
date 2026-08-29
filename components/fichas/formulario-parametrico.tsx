@@ -1382,6 +1382,7 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
             onChange={setConsideracionesTexto}
             sugerencia={consideracionesSugerida}
             minHeight={140}
+            tablas
             placeholder="Consideraciones jurídicas de fondo sobre la procedencia de la conciliación. Si lo dejas vacío, se generará automáticamente."
           />
         </Campo>

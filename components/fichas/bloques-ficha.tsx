@@ -40,13 +40,14 @@ export function Campo({ label, required, error, hint, children }: {
 // Módulo de texto: ahora editor enriquecido (negrita/cursiva/subrayado + barra
 // flotante sobre la selección), con contador de palabras y restaurar sugerencia.
 // Mantiene la misma API; el valor entra/sale como HTML (acepta texto plano heredado).
-export function ModuloTexto({ value, onChange, sugerencia, placeholder, minHeight = 160, maxHeight = 360 }: {
+export function ModuloTexto({ value, onChange, sugerencia, placeholder, minHeight = 160, maxHeight = 360, tablas = false }: {
   value: string;
   onChange: (v: string) => void;
   sugerencia?: string | null;
   placeholder?: string;
   minHeight?: number;
   maxHeight?: number;
+  tablas?: boolean;
 }) {
   return (
     <EditorRico
@@ -56,6 +57,7 @@ export function ModuloTexto({ value, onChange, sugerencia, placeholder, minHeigh
       placeholder={placeholder}
       minHeight={minHeight}
       maxHeight={maxHeight}
+      tablas={tablas}
     />
   );
 }
