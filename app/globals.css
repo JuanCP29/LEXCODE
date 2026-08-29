@@ -211,4 +211,12 @@
 .editor-rico-contenido .column-resize-handle { position: absolute; right: -2px; top: 0; bottom: 0; width: 4px; background: var(--brand); cursor: col-resize; }
 /* Imágenes dentro del editor */
 .editor-rico-contenido img { max-width: 100%; height: auto; border-radius: 6px; margin: 0.4rem 0; display: block; }
-.editor-rico-contenido img.ProseMirror-selectednode { outline: 2px solid var(--brand); outline-offset: 2px; }
+.editor-rico-contenido .img-nodo { margin: 0.4rem 0; }
+.editor-rico-contenido .img-nodo.img-selected { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 6px; }
+.editor-rico-contenido .img-resize-handle {
+  position: absolute; right: -6px; bottom: -6px; width: 12px; height: 12px;
+  border-radius: 2px; background: var(--brand); border: 2px solid var(--card);
+  cursor: nwse-resize; opacity: 0; transition: opacity 0.12s;
+}
+.editor-rico-contenido .img-nodo:hover .img-resize-handle,
+.editor-rico-contenido .img-nodo.img-selected .img-resize-handle { opacity: 1; }

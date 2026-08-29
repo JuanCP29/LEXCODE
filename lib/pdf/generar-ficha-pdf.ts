@@ -5,16 +5,18 @@ import { htmlATextoPlano, htmlABloques } from "@/lib/richtext/html";
 import { dibujarTablaPdf } from "@/lib/pdf/runs";
 import { precargarImagenes, type ImagenCargada } from "@/lib/richtext/imagenes-servidor";
 
-// Dibuja una imagen dentro de la caja, escalada al ancho disponible (y al alto de
-// página si hace falta), avanzando el cursor. Centrada.
+// Dibuja una imagen dentro de la caja, escalada al ancho elegido (o al disponible)
+// y al alto de página si hace falta, con la alineación indicada; avanza el cursor.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function dibujarImagenPdf(doc: any, img: ImagenCargada, x: number, width: number, bottom: number, top: number) {
-  let drawW = Math.min(width, img.width);
+function dibujarImagenPdf(doc: any, img: ImagenCargada, x: number, width: number, bottom: number, top: number, meta?: { width?: number; align?: "left" | "center" | "right" }) {
+  let drawW = Math.min(meta?.width || img.width, width);
   let drawH = (img.height * drawW) / img.width;
   const maxH = bottom - top - 12;
   if (drawH > maxH) { const k = maxH / drawH; drawH = maxH; drawW = drawW * k; }
   if (doc.y + drawH > bottom) { doc.addPage(); doc.y = top; }
-  const cx = x + (width - drawW) / 2;
+  const cx = meta?.align === "left" ? x
+    : meta?.align === "right" ? x + (width - drawW)
+    : x + (width - drawW) / 2;
   try { doc.image(img.data, cx, doc.y, { width: drawW }); } catch { /* imagen inválida */ }
   doc.y = doc.y + drawH;
   doc.x = x;
@@ -46,7 +48,7 @@ function pintarRich(doc: any, raw: string, x: number, y: number, width: number, 
     }
     if (b.tipo === "imagen") {
       const img = imagenes?.get(b.src);
-      if (img) dibujarImagenPdf(doc, img, x, width, bottom, top);
+      if (img) dibujarImagenPdf(doc, img, x, width, bottom, top, { width: b.width, align: b.align });
       else { doc.font(FONT).fontSize(9).fillColor(NEGRO).text("[imagen]", x, doc.y, { width }); }
       if (bi < bloques.length - 1) doc.moveDown(0.5);
       return;

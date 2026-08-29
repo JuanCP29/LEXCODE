@@ -9,14 +9,25 @@ import Table from "@tiptap/extension-table";
 import TableRow from "@tiptap/extension-table-row";
 import TableHeader from "@tiptap/extension-table-header";
 import TableCell from "@tiptap/extension-table-cell";
-import Image from "@tiptap/extension-image";
-import { Bold, Italic, Underline as UnderlineIcon, RotateCcw, Pencil, Table as TableIcon, Rows3, Columns3, Trash2, ImagePlus, Loader2 } from "lucide-react";
+import { ImagenRedimensionable } from "@/components/fichas/extension-imagen";
+import { Bold, Italic, Underline as UnderlineIcon, RotateCcw, Pencil, Table as TableIcon, Rows3, Columns3, Trash2, ImagePlus, Loader2, AlignLeft, AlignCenter, AlignRight, Minus, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { esHtml, textoPlanoAHtml, htmlATextoPlano } from "@/lib/richtext/html";
 
 function contarPalabras(s: string): number {
   const t = (s ?? "").trim();
   return t ? t.split(/\s+/).length : 0;
+}
+
+// Ancho inicial de la imagen: su ancho natural, con tope de 480px.
+function anchoInicial(file: File): Promise<number> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const im = new window.Image();
+    im.onload = () => { URL.revokeObjectURL(url); resolve(Math.min(480, im.naturalWidth || 480)); };
+    im.onerror = () => { URL.revokeObjectURL(url); resolve(480); };
+    im.src = url;
+  });
 }
 
 // Sube una imagen al bucket público y devuelve su URL (o null si falla).
@@ -61,7 +72,7 @@ export function EditorRico({ value, onChange, sugerencia, placeholder, minHeight
       Underline,
       Placeholder.configure({ placeholder: placeholder ?? "" }),
       ...(tablas ? [Table.configure({ resizable: true }), TableRow, TableHeader, TableCell] : []),
-      ...(imagenes ? [Image.configure({ inline: false, allowBase64: false })] : []),
+      ...(imagenes ? [ImagenRedimensionable.configure({ inline: false, allowBase64: false })] : []),
     ],
     content: esHtml(value) ? value : textoPlanoAHtml(value),
     editorProps: {
@@ -92,14 +103,16 @@ export function EditorRico({ value, onChange, sugerencia, placeholder, minHeight
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
   });
 
-  // Sube una o varias imágenes y las inserta en la posición actual.
+  // Sube una o varias imágenes y las inserta con un ancho inicial razonable.
   async function insertarImagenes(files: File[]) {
     if (!editor) return;
     setSubiendo(true);
     try {
       for (const file of files) {
         const url = await subirImagen(file, casoId);
-        if (url) editor.chain().focus().setImage({ src: url }).run();
+        if (!url) continue;
+        const width = await anchoInicial(file);
+        editor.chain().focus().setImage({ src: url, width } as { src: string; width?: number }).run();
       }
     } finally {
       setSubiendo(false);
@@ -122,7 +135,13 @@ export function EditorRico({ value, onChange, sugerencia, placeholder, minHeight
   return (
     <div>
       {editor && (
-        <BubbleMenu editor={editor} tippyOptions={{ duration: 120 }} className="flex items-center gap-0.5 rounded-lg border border-border bg-popover shadow-lg p-1">
+        <BubbleMenu
+          editor={editor}
+          pluginKey="menuTexto"
+          tippyOptions={{ duration: 120 }}
+          shouldShow={({ editor, state }) => !state.selection.empty && !editor.isActive("image")}
+          className="flex items-center gap-0.5 rounded-lg border border-border bg-popover shadow-lg p-1"
+        >
           {([
             { cmd: () => editor.chain().focus().toggleBold().run(), activo: editor.isActive("bold"), Icon: Bold, titulo: "Negrita" },
             { cmd: () => editor.chain().focus().toggleItalic().run(), activo: editor.isActive("italic"), Icon: Italic, titulo: "Cursiva" },
@@ -141,6 +160,53 @@ export function EditorRico({ value, onChange, sugerencia, placeholder, minHeight
               <Icon className="w-3.5 h-3.5" />
             </button>
           ))}
+        </BubbleMenu>
+      )}
+
+      {/* Barra flotante de imagen: alinear + ampliar/reducir (solo sobre la imagen) */}
+      {editor && imagenes && (
+        <BubbleMenu
+          editor={editor}
+          pluginKey="menuImagen"
+          tippyOptions={{ duration: 120 }}
+          shouldShow={({ editor }) => editor.isActive("image")}
+          className="flex items-center gap-0.5 rounded-lg border border-border bg-popover shadow-lg p-1"
+        >
+          {([
+            { align: "left" as const, Icon: AlignLeft, titulo: "Izquierda" },
+            { align: "center" as const, Icon: AlignCenter, titulo: "Centrar" },
+            { align: "right" as const, Icon: AlignRight, titulo: "Derecha" },
+          ]).map(({ align, Icon, titulo }) => (
+            <button
+              key={align}
+              type="button"
+              title={titulo}
+              onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().updateAttributes("image", { align }).run(); }}
+              className={cn(
+                "w-7 h-7 rounded-md flex items-center justify-center transition-colors",
+                editor.getAttributes("image").align === align ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted"
+              )}
+            >
+              <Icon className="w-3.5 h-3.5" />
+            </button>
+          ))}
+          <span className="w-px h-5 bg-border mx-0.5" />
+          <button
+            type="button"
+            title="Reducir"
+            onMouseDown={(e) => { e.preventDefault(); const w = Number(editor.getAttributes("image").width) || 300; editor.chain().focus().updateAttributes("image", { width: Math.max(60, Math.round(w * 0.85)) }).run(); }}
+            className="w-7 h-7 rounded-md flex items-center justify-center text-foreground hover:bg-muted transition-colors"
+          >
+            <Minus className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            title="Ampliar"
+            onMouseDown={(e) => { e.preventDefault(); const w = Number(editor.getAttributes("image").width) || 300; editor.chain().focus().updateAttributes("image", { width: Math.round(w * 1.15) }).run(); }}
+            className="w-7 h-7 rounded-md flex items-center justify-center text-foreground hover:bg-muted transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
         </BubbleMenu>
       )}
 

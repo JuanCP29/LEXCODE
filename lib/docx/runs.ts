@@ -22,11 +22,16 @@ function tipoImagenDocx(t: string): "jpg" | "png" | "gif" | "bmp" {
   return "png";
 }
 
-function imagenParrafo(img: ImagenCargada, opts: Opts): Paragraph {
+function imagenParrafo(img: ImagenCargada, opts: Opts, meta?: { width?: number; align?: "left" | "center" | "right" }): Paragraph {
   const maxW = opts.anchoMaxImg ?? 480;
-  const ratio = img.width > maxW ? maxW / img.width : 1;
+  // Ancho objetivo: el elegido por el usuario (si hay), acotado al máximo de página.
+  const objetivo = Math.min(meta?.width || img.width, maxW);
+  const ratio = objetivo / img.width;
+  const alineacion = meta?.align === "left" ? AlignmentType.LEFT
+    : meta?.align === "right" ? AlignmentType.RIGHT
+    : AlignmentType.CENTER;
   return new Paragraph({
-    alignment: AlignmentType.CENTER,
+    alignment: alineacion,
     spacing: { after: opts.spacingAfter ?? 120 },
     children: [
       new ImageRun({
@@ -87,7 +92,7 @@ export function bloquesDocx(contenido: string | null | undefined, opts: Opts = {
     if (b.tipo === "imagen") {
       const img = opts.imagenes?.get(b.src);
       // Sin buffer disponible -> marcador de texto para no romper el export.
-      return img ? imagenParrafo(img, opts) : runsDeParrafo([{ text: "[imagen]" }], opts);
+      return img ? imagenParrafo(img, opts, { width: b.width, align: b.align }) : runsDeParrafo([{ text: "[imagen]" }], opts);
     }
     // Tabla
     const filas = b.filas.map((fila, ri) => new TableRow({

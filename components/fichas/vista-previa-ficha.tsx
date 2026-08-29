@@ -90,7 +90,7 @@ export function VistaPreviaFicha({ abierto, onClose, secciones, encabezado }: Vi
                   </p>
                   {contenido.trim() ? (
                     <div
-                      className={`text-[11px] leading-relaxed text-gray-800 whitespace-pre-wrap [&_strong]:font-semibold [&_em]:italic [&_u]:underline [&_p]:m-0 [&_p]:mb-1 [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded [&_img]:my-1 [&_table]:border-collapse [&_table]:w-full [&_td]:border [&_td]:border-gray-300 [&_td]:px-1 [&_th]:border [&_th]:border-gray-300 [&_th]:px-1 [&_th]:bg-gray-100${s.centrado ? " text-center" : ""}`}
+                      className={`text-[11px] leading-relaxed text-gray-800 whitespace-pre-wrap [&_strong]:font-semibold [&_em]:italic [&_u]:underline [&_p]:m-0 [&_p]:mb-1 [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded [&_img]:my-1 [&_img[data-align='center']]:mx-auto [&_img[data-align='right']]:ml-auto [&_table]:border-collapse [&_table]:w-full [&_td]:border [&_td]:border-gray-300 [&_td]:px-1 [&_th]:border [&_th]:border-gray-300 [&_th]:px-1 [&_th]:bg-gray-100${s.centrado ? " text-center" : ""}`}
                       dangerouslySetInnerHTML={{ __html: esHtml(contenido) ? contenido : textoPlanoAHtml(contenido) }}
                     />
                   ) : (

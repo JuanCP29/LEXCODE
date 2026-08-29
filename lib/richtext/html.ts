@@ -87,14 +87,25 @@ export function htmlAParrafos(html: string | null | undefined): Parrafo[] {
 }
 
 // ── Bloques de documento (párrafos + tablas + imágenes), en orden ───────────
+export type Alineacion = "left" | "center" | "right";
+export type BloqueImagen = { tipo: "imagen"; src: string; alt?: string; width?: number; align?: Alineacion };
 export type BloqueDoc =
   | { tipo: "parrafo"; runs: Run[] }
   | { tipo: "tabla"; filas: Run[][][] } // filas -> celdas -> runs
-  | { tipo: "imagen"; src: string; alt?: string };
+  | BloqueImagen;
 
-function srcDe(imgTag: string): string {
-  const m = imgTag.match(/src\s*=\s*["']([^"']+)["']/i);
-  return m ? decodificar(m[1]) : "";
+function atributosImagen(imgTag: string): BloqueImagen | null {
+  const src = imgTag.match(/src\s*=\s*["']([^"']+)["']/i);
+  if (!src) return null;
+  const w = imgTag.match(/width\s*=\s*["']?(\d+)/i) || imgTag.match(/width\s*:\s*(\d+)/i);
+  const a = imgTag.match(/data-align\s*=\s*["']([^"']+)["']/i);
+  const align = a ? (a[1] as Alineacion) : undefined;
+  return {
+    tipo: "imagen",
+    src: decodificar(src[1]),
+    width: w ? parseInt(w[1], 10) || undefined : undefined,
+    align: align === "center" || align === "right" || align === "left" ? align : undefined,
+  };
 }
 
 /** Descompone el contenido en bloques ordenados (párrafos, tablas, imágenes) para exportar. */
@@ -113,7 +124,7 @@ export function htmlABloques(html: string | null | undefined): BloqueDoc[] {
       const img = m[1].match(/<img\b[^>]*>/i);
       const runs = parsearInline(m[1]);
       if (runs.some((r) => r.text.replace(/\n/g, "").trim() !== "")) bloques.push({ tipo: "parrafo", runs });
-      if (img) { const src = srcDe(img[0]); if (src) bloques.push({ tipo: "imagen", src }); }
+      if (img) { const b = atributosImagen(img[0]); if (b) bloques.push(b); }
     } else if (m[2] != null) {
       const filas: Run[][][] = [];
       const trs = Array.from(m[2].matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)).map((x) => x[1]);
@@ -123,8 +134,8 @@ export function htmlABloques(html: string | null | undefined): BloqueDoc[] {
       }
       if (filas.length) bloques.push({ tipo: "tabla", filas });
     } else if (m[3] != null) {
-      const src = srcDe(m[3]);
-      if (src) bloques.push({ tipo: "imagen", src });
+      const b = atributosImagen(m[3]);
+      if (b) bloques.push(b);
     }
   }
   if (!bloques.length) bloques.push({ tipo: "parrafo", runs: parsearInline(s) });
