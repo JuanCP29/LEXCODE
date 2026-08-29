@@ -30,19 +30,19 @@ ES CIERTO / NO ES CIERTO / ES CIERTO PARCIALMENTE / NO ME CONSTA (usa NO ME CONS
 probarse por la parte interesada). Formato de cada linea: «AL PRIMERO: ES CIERTO, que <hecho reformulado en tercera persona>,
 conforme documental obrante en el expediente y sin aceptar lo pretendido.» Apoyate en las RESOLUCIONES/EXPEDIENTE para determinar
 la postura y las cifras (semanas, IBL, tasa, resoluciones, fechas). Solo lo que conste; no inventes. Tercera persona, formal.
-No uses Markdown. Responde SOLO el texto.`,
+Resalta EN NEGRITA con doble asterisco (**dato**) los datos clave (semanas, %, montos, resoluciones, fechas, nombres). Responde SOLO el texto.`,
   pretensiones: `Redacta el PRONUNCIAMIENTO EXPRESO FRENTE A LAS PRETENSIONES para la contestacion de COLPENSIONES.
 Para CADA pretension de la demanda, en su orden (A LA PRIMERA, A LA SEGUNDA, A LA TERCERA, ...), redacta la oposicion de la
 entidad. Formato: «A LA PRIMERA: ME OPONGO, a que <se declare/condene ... la pretension resumida>, toda vez que <razon de la
 defensa: la prestacion ya fue reconocida/liquidada conforme a derecho; la actuacion administrativa se ajusto a la ley; etc.>.»
 Fundamenta la oposicion en lo que conste en el expediente y en el analisis del caso. Solo lo que conste; no inventes. Tercera
-persona, formal. No uses Markdown. Responde SOLO el texto.`,
+persona, formal. Resalta EN NEGRITA con doble asterisco (**dato**) los datos clave (semanas, %, montos, resoluciones, fechas, nombres). Responde SOLO el texto.`,
   defensa: `Redacta los HECHOS, FUNDAMENTOS Y RAZONES DE LA DEFENSA (fundamentos de derecho de la defensa) de COLPENSIONES.
 Narra por que la actuacion de la entidad se ajusto a derecho: las resoluciones expedidas (numeros y fechas), el reconocimiento/
 reliquidacion de la prestacion, el IBL, la tasa de reemplazo, las semanas cotizadas y las normas aplicadas (Ley 100 de 1993 y su
 modificacion por la Ley 797 de 2003, etc.), con la argumentacion juridica de la defensa. Apoyate en el ANALISIS DEL CASO
 (consideraciones) y en el expediente que se incluyen abajo. Formal, tercera persona, extenso y bien estructurado. Solo lo que
-conste; no inventes cifras ni normas. No uses Markdown. Responde SOLO el texto.`,
+conste; no inventes cifras ni normas. Resalta EN NEGRITA con doble asterisco (**dato**) los datos clave (semanas, %, montos, resoluciones, fechas, nombres). Responde SOLO el texto.`,
 };
 
 export async function POST(request: NextRequest) {

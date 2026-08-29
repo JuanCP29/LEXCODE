@@ -13,14 +13,26 @@ export function escaparHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-/** Convierte texto plano (con saltos) a HTML de párrafos (para cargar en el editor). */
+/** Convierte texto plano (con saltos y **negrita** Markdown) a HTML de párrafos. */
 export function textoPlanoAHtml(s: string | null | undefined): string {
   const t = (s ?? "").trim();
   if (!t) return "<p></p>";
   return t
     .split(/\n{2,}/)
-    .map((par) => `<p>${escaparHtml(par).replace(/\n/g, "<br>")}</p>`)
+    .map((par) => {
+      const esc = escaparHtml(par).replace(/\n/g, "<br>");
+      const conNegrita = esc.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+      return `<p>${conNegrita}</p>`;
+    })
     .join("");
+}
+
+// Convierte texto con **negrita** Markdown en runs (para exports de contenido no editado).
+function parsearMarkdown(texto: string): Run[] {
+  const partes = texto.split(/\*\*/);
+  const runs: Run[] = [];
+  partes.forEach((p, i) => { if (p) runs.push({ text: p, bold: i % 2 === 1 || undefined }); });
+  return runs.length ? runs : [{ text: "" }];
 }
 
 export type Run = { text: string; bold?: boolean; italic?: boolean; underline?: boolean };
@@ -64,7 +76,8 @@ export function htmlAParrafos(html: string | null | undefined): Parrafo[] {
   const s = (html ?? "").trim();
   if (!s) return [];
   if (!esHtml(s)) {
-    return s.split(/\n{2,}/).map((par) => [{ text: par.replace(/\n/g, " ").trim() }]);
+    // Texto plano (posiblemente con **negrita** Markdown).
+    return s.split(/\n{2,}/).map((par) => parsearMarkdown(par.replace(/\n/g, " ").trim()));
   }
   const bloques = Array.from(s.matchAll(/<p\b[^>]*>([\s\S]*?)<\/p>/gi)).map((m) => m[1]);
   const fuentes = bloques.length ? bloques : [s];

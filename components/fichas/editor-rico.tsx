@@ -51,7 +51,7 @@ export function EditorRico({ value, onChange, sugerencia, placeholder, minHeight
   }, [value, editor]);
 
   const palabras = editor ? contarPalabras(editor.getText()) : 0;
-  const editado = !!(sugerencia && sugerencia.trim() && htmlATextoPlano(value).trim() !== sugerencia.trim());
+  const editado = !!(sugerencia && sugerencia.trim() && htmlATextoPlano(value).trim() !== htmlATextoPlano(sugerencia).trim());
 
   return (
     <div>

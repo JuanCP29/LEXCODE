@@ -58,6 +58,7 @@ REGLAS ESTRICTAS:
 - Si no hay documento del repositorio que coincida NI la demanda transcribe el contenido de la sentencia (solo la nombra), NO inventes su holding: responde exactamente "La demanda cita <identificador>; no se encontró en el repositorio ni transcripción en la demanda para resumirla. Requiere diligenciamiento manual." (reemplazando <identificador> por la sentencia más relevante).
 - No uses comillas dobles rectas: usa comillas angulares « ».
 
+Resalta EN NEGRITA con doble asterisco (**dato**) el número de sentencia/radicado, la corporación y los datos clave (semanas, %, montos).
 Responde ÚNICAMENTE con el texto de la sección, sin JSON ni encabezados.`;
 
     const message = await anthropic.messages.create({

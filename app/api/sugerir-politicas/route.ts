@@ -33,8 +33,8 @@ Si abajo se incluye un bloque "REPOSITORIO INSTITUCIONAL" que coincide con algun
 reseña; cita la fuente entre parentesis si aporta (p. ej. «(Repositorio)»).
 Incluye UNICAMENTE los documentos que se MENCIONEN en las resoluciones/oficios; NO inventes ni tomes del TRASLADO/demanda.
 Si en las resoluciones no se menciona ningun documento institucional, responde exactamente la palabra: null.
-No uses Markdown (nada de ** ni #). Para transcribir usa comillas angulares « ». Responde SOLO el texto (o null), sin JSON ni
-encabezados.`;
+Resalta EN NEGRITA con doble asterisco (**nombre**) el NOMBRE de cada documento institucional. Para transcribir usa comillas
+angulares « ». Responde SOLO el texto (o null), sin JSON ni encabezados.`;
 
 /**
  * Sección 10 (Políticas / llamamientos). Endpoint ligero disparado por el cliente

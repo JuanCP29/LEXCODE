@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 import { extraerTextoPDF } from "@/lib/ia/extraer-pdf";
 import { combinarPDFsBase64 } from "@/lib/ia/combinar-pdfs";
 import { CATALOGO_PRETENSIONES } from "@/lib/data/catalogo-pretensiones";
-import { REGLA_CUANTIA, REGLA_NORMAS, REGLA_PROBLEMA_JURIDICO } from "@/lib/ia/reglas-secciones";
+import { REGLA_CUANTIA, REGLA_NORMAS, REGLA_PROBLEMA_JURIDICO, RESALTAR_NEGRITA } from "@/lib/ia/reglas-secciones";
 
 export const maxDuration = 120;
 export const dynamic = "force-dynamic";
@@ -125,6 +125,8 @@ ${REGLA_CLASIFICACION}
 
 H) CAUSANTE / AFILIADO -> campos "causante_nombre" y "causante_cedula".
 ${REGLA_CAUSANTE}
+
+${RESALTAR_NEGRITA}
 
 REGLA DE FORMATO JSON (CRITICA): dentro de los valores de texto NUNCA uses comillas dobles rectas ("). Para citar o
 TRANSCRIBIR articulos, sentencias o textos, usa SIEMPRE comillas angulares « » (o comillas simples '). Esto es obligatorio para
@@ -327,6 +329,7 @@ REGLAS ESTRICTAS:
   cifras, normas ni jurisprudencia que no consten en las fuentes.
 - FORMATO JSON (CRITICO): dentro de los valores de texto NUNCA uses comillas dobles rectas ("). Para citar o TRANSCRIBIR
   articulos, sentencias o textos usa SIEMPRE comillas angulares « » (o comillas simples '), para no invalidar el JSON.
+- ${RESALTAR_NEGRITA}
 
 DOCUMENTOS:
 ${textoCompleto.slice(0, 30000)}

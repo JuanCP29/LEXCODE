@@ -72,6 +72,7 @@ Si NO hay resoluciones/oficios de Colpensiones en el paquete, NO construyas el m
 y la postura con lo que conste en actuaciones de la entidad; si no hay base suficiente, devuelve null.
 
 Para transcribir articulos o textos usa comillas angulares « » (no comillas dobles rectas).
+RESALTA EN NEGRITA con doble asterisco (**dato**) los SUBTITULOS y los datos clave (semanas, %, montos, resoluciones, fechas, nombres).
 Responde UNICAMENTE con el TEXTO de la seccion (varios parrafos, con sus subtitulos si aplican), SIN JSON, sin comillas
 envolventes y sin encabezados como "Consideraciones:". Si no hay base suficiente en actuaciones de la entidad, responde
 exactamente la palabra: null`;
@@ -88,7 +89,7 @@ Incluye, con SUBTITULOS breves:
     los articulos clave y APLICANDOLOS a las cifras del expediente (formulas segun prestacion: VEJEZ r=65,50-0,50s +1,5%/50sem;
     INDEMNIZACION I=SBC x SC x PPC; etc.). Cita solo lo que conste.
 NO incluyas jurisprudencia ni conclusion/postura: eso va en otra parte. Termina justo despues del marco normativo.
-No uses formato Markdown (nada de ** ni #); para resaltar usa MAYUSCULAS en los subtitulos.
+RESALTA EN NEGRITA con doble asterisco (**dato**) los SUBTITULOS y los datos clave (semanas, %, montos, resoluciones, fechas, nombres).
 Comillas angulares « ». Responde SOLO el texto, sin JSON ni encabezados. Si no hay resoluciones/oficios, responde: null`;
 
 const REGLAS_PARTE2 = `Redacta la SEGUNDA PARTE de la seccion CONSIDERACIONES de la Ficha de Conciliacion. Ya se redactaron el encuadre y el
@@ -107,8 +108,8 @@ TRASLADO/demanda. Incluye, con SUBTITULOS breves:
 (4) CONCLUSION Y POSTURA (OBLIGATORIA AL FINAL): postura de Colpensiones + recomendacion clara (si la actuacion se ajusto a derecho,
     "viable continuar la defensa judicial y NO acceder a formula conciliatoria"; si hay dudas, los puntos a revisar o conciliar).
 En (3) se CONCISO (resume la ratio de cada sentencia en 1-2 frases; no transcribas en exceso) para RESERVAR espacio: la (4)
-CONCLUSION Y POSTURA es obligatoria y debe quedar COMPLETA, nunca cortada. No uses formato Markdown (nada de ** para negritas ni #);
-para resaltar, usa MAYUSCULAS en los subtitulos.
+CONCLUSION Y POSTURA es obligatoria y debe quedar COMPLETA, nunca cortada. RESALTA EN NEGRITA con doble asterisco (**dato**) los
+SUBTITULOS y los datos clave (semanas, %, montos, resoluciones, fechas, nombres).
 Empieza directamente con el subtitulo del marco jurisprudencial. Comillas angulares « ». Responde SOLO el texto, sin JSON ni
 encabezados. Si no hay base, responde: null`;
 

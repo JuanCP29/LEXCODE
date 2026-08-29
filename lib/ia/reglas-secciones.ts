@@ -10,6 +10,13 @@
  * (visión) como dentro de un ejemplo JSON en el prompt (texto) sin romperlo.
  */
 
+// Instrucción compartida: resaltar en negrita (Markdown **) los datos clave.
+// El editor y los exports interpretan **texto** como negrita.
+export const RESALTAR_NEGRITA =
+  "FORMATO: resalta en NEGRITA usando doble asterisco (**dato**) los datos CLAVE —numero de semanas, porcentajes (tasa de " +
+  "reemplazo, IBL %), montos en pesos, numeros de resolucion/oficio, fechas relevantes, nombres propios de personas— y los " +
+  "SUBTITULOS. Usa la negrita con mesura, solo en lo importante; no marques frases enteras.";
+
 export const REGLA_CUANTIA =
   "Busca la seccion 'CUANTIA', 'COMPETENCIA Y CUANTIA' o 'ESTIMACION DE LA CUANTIA'. Devuelve EXACTAMENTE la frase " +
   "'La cuantia fue estimada por la parte actora, en <VALOR>.' donde <VALOR> es el monto en FORMATO MONEDA con simbolo '$', " +
