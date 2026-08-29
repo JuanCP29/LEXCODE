@@ -10,24 +10,27 @@ import { htmlATextoPlano, htmlAParrafos } from "@/lib/richtext/html";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function pintarRich(doc: any, raw: string, x: number, y: number, width: number, align: "center" | "justify" | "left", FONT: string, FONT_BOLD: string) {
   const pars = htmlAParrafos(raw);
-  // Flujo único (como el texto plano original): el salto entre párrafos "\n\n"
-  // va EMBEBIDO al final del último run de cada párrafo, para conservar el mismo
-  // espaciado; los runs solo cambian la tipografía (negrita) y el subrayado.
-  const flat: { text: string; bold?: boolean; underline?: boolean }[] = [];
+  // Sin formato -> render idéntico al original (una sola llamada), mismo espaciado.
+  const tieneFormato = pars.some((runs) => runs.some((r) => r.bold || r.underline));
+  if (!tieneFormato) {
+    const plano = pars.map((runs) => runs.map((r) => r.text).join("")).join("\n\n");
+    doc.font(FONT).fontSize(9).fillColor(NEGRO).text(plano, x, y, { width, align, lineGap: 2.5 });
+    return;
+  }
+  // Con formato: cada párrafo se pinta como una secuencia "continued" (para
+  // mezclar tipografías) y entre párrafos se deja un espacio explícito, igual de
+  // amplio que una línea en blanco, para conservar el espaciado organizado.
+  doc.x = x; doc.y = y;
   pars.forEach((runs, pi) => {
     const rr = runs.length ? runs : [{ text: "" }];
     rr.forEach((r, ri) => {
-      const finPar = ri === rr.length - 1;
-      const text = finPar && pi < pars.length - 1 ? `${r.text}\n\n` : r.text;
-      flat.push({ text, bold: r.bold, underline: r.underline });
+      const primero = ri === 0, ultimo = ri === rr.length - 1;
+      doc.font(r.bold ? FONT_BOLD : FONT).fontSize(9).fillColor(NEGRO);
+      const opciones = { width, align, lineGap: 2.5, underline: !!r.underline, continued: !ultimo };
+      if (primero) doc.text(r.text, x, doc.y, opciones);
+      else doc.text(r.text, opciones);
     });
-  });
-  if (!flat.length) flat.push({ text: "" });
-  flat.forEach((r, i) => {
-    const primero = i === 0, ultimo = i === flat.length - 1;
-    doc.font(r.bold ? FONT_BOLD : FONT).fontSize(9).fillColor(NEGRO);
-    if (primero) doc.text(r.text, x, y, { width, align, lineGap: 2.5, underline: !!r.underline, continued: !ultimo });
-    else doc.text(r.text, { width, align, lineGap: 2.5, underline: !!r.underline, continued: !ultimo });
+    if (pi < pars.length - 1) doc.moveDown(0.9); // separación entre párrafos
   });
 }
 

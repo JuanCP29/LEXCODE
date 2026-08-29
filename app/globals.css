@@ -188,7 +188,7 @@
 
 /* ── Editor de texto enriquecido (TipTap) ── */
 .editor-rico-contenido { outline: none; }
-.editor-rico-contenido p { margin: 0 0 0.5rem; }
+.editor-rico-contenido p { margin: 0 0 0.9rem; }
 .editor-rico-contenido p:last-child { margin-bottom: 0; }
 .editor-rico-contenido strong { font-weight: 600; }
 .editor-rico-contenido em { font-style: italic; }

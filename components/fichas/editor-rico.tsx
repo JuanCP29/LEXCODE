@@ -19,12 +19,13 @@ function contarPalabras(s: string): number {
  * sobre la selección (aparece solo al seleccionar texto, para no contaminar).
  * El valor entra/sale como HTML; también acepta texto plano heredado.
  */
-export function EditorRico({ value, onChange, sugerencia, placeholder, minHeight = 160 }: {
+export function EditorRico({ value, onChange, sugerencia, placeholder, minHeight = 160, maxHeight = 360 }: {
   value: string;
   onChange: (html: string) => void;
   sugerencia?: string | null;
   placeholder?: string;
   minHeight?: number;
+  maxHeight?: number;
 }) {
   const editor = useEditor({
     immediatelyRender: false, // evita desajuste de hidratación en Next
@@ -77,7 +78,10 @@ export function EditorRico({ value, onChange, sugerencia, placeholder, minHeight
         </BubbleMenu>
       )}
 
-      <div className="rounded-xl border border-input bg-card px-3.5 py-3 focus-within:ring-2 focus-within:ring-ring/25">
+      <div
+        className="rounded-xl border border-input bg-card px-3.5 py-3 focus-within:ring-2 focus-within:ring-ring/25 overflow-y-auto"
+        style={{ maxHeight }}
+      >
         <EditorContent editor={editor} className="text-sm leading-relaxed" />
       </div>
 
