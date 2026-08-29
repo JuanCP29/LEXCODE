@@ -1,17 +1,17 @@
-import { Document, Packer, Paragraph, TextRun, AlignmentType } from "docx";
+import { Document, Packer, Paragraph, Table, TextRun, AlignmentType } from "docx";
 import { construirBloquesContestacion, type DatosContestacion } from "@/lib/contestacion/contenido";
-import { parrafosDocx } from "@/lib/docx/runs";
+import { bloquesDocx } from "@/lib/docx/runs";
 
 const FUENTE = "Arial";
 
 export async function generarContestacionDocx(datos: DatosContestacion): Promise<Buffer> {
   const bloques = construirBloquesContestacion(datos);
 
-  const parrafos: Paragraph[] = bloques.flatMap((b) => {
+  const parrafos: (Paragraph | Table)[] = bloques.flatMap((b) => {
     if (b.t === "sp") return [new Paragraph({ children: [], spacing: { after: 120 } })];
 
     if (b.t === "rich") {
-      return parrafosDocx(b.contenido, { size: 22, font: FUENTE, align: "justify", line: 300, vacio: "—" });
+      return bloquesDocx(b.contenido, { size: 22, font: FUENTE, align: "justify", line: 300, vacio: "—" });
     }
 
     if (b.t === "h") {

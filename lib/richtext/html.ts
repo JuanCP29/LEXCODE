@@ -86,7 +86,45 @@ export function htmlAParrafos(html: string | null | undefined): Parrafo[] {
     .filter((runs) => runs.some((r) => r.text.replace(/\n/g, "").trim() !== ""));
 }
 
+// ── Bloques de documento (párrafos + tablas), en orden ──────────────────────
+export type BloqueDoc =
+  | { tipo: "parrafo"; runs: Run[] }
+  | { tipo: "tabla"; filas: Run[][][] }; // filas -> celdas -> runs
+
+/** Descompone el contenido en bloques ordenados (párrafos y tablas) para exportar. */
+export function htmlABloques(html: string | null | undefined): BloqueDoc[] {
+  const s = (html ?? "").trim();
+  if (!s) return [];
+  if (!esHtml(s)) {
+    return s.split(/\n{2,}/).map((par) => ({ tipo: "parrafo", runs: parsearMarkdown(par.replace(/\n/g, " ").trim()) }));
+  }
+  const bloques: BloqueDoc[] = [];
+  const re = /<p\b[^>]*>([\s\S]*?)<\/p>|<table\b[^>]*>([\s\S]*?)<\/table>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(s))) {
+    if (m[1] != null) {
+      const runs = parsearInline(m[1]);
+      if (runs.some((r) => r.text.replace(/\n/g, "").trim() !== "")) bloques.push({ tipo: "parrafo", runs });
+    } else if (m[2] != null) {
+      const filas: Run[][][] = [];
+      const trs = Array.from(m[2].matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)).map((x) => x[1]);
+      for (const tr of trs) {
+        const celdas = Array.from(tr.matchAll(/<(?:td|th)\b[^>]*>([\s\S]*?)<\/(?:td|th)>/gi)).map((x) => parsearInline(x[1]));
+        if (celdas.length) filas.push(celdas);
+      }
+      if (filas.length) bloques.push({ tipo: "tabla", filas });
+    }
+  }
+  if (!bloques.length) bloques.push({ tipo: "parrafo", runs: parsearInline(s) });
+  return bloques;
+}
+
 /** Aplana a texto plano (para exports que aún no soportan formato, o comparaciones). */
 export function htmlATextoPlano(html: string | null | undefined): string {
-  return htmlAParrafos(html).map((p) => p.map((r) => r.text).join("")).join("\n\n").trim();
+  return htmlABloques(html)
+    .map((b) => b.tipo === "parrafo"
+      ? b.runs.map((r) => r.text).join("")
+      : b.filas.map((fila) => fila.map((celda) => celda.map((r) => r.text).join("")).join("  |  ")).join("\n"))
+    .join("\n\n")
+    .trim();
 }

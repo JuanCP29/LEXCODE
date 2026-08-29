@@ -1,5 +1,5 @@
 import type PDFDocument from "pdfkit";
-import { htmlAParrafos } from "@/lib/richtext/html";
+import { htmlABloques } from "@/lib/richtext/html";
 
 type Doc = InstanceType<typeof PDFDocument>;
 
@@ -19,13 +19,23 @@ export function renderContenidoPdf(
   contenido: string | null | undefined,
   opts: { size?: number; align?: "center" | "justify" | "left"; lineGap?: number; espacioParrafo?: number } = {}
 ): void {
-  const pars = htmlAParrafos(contenido);
+  const bloques = htmlABloques(contenido);
   const size = opts.size ?? 11;
   const align = (opts.align ?? "justify") as "center" | "justify" | "left";
 
-  if (pars.length === 0) { doc.moveDown(0.4); return; }
+  if (bloques.length === 0) { doc.moveDown(0.4); return; }
 
-  for (const runs of pars) {
+  for (const b of bloques) {
+    if (b.tipo === "tabla") {
+      // Por ahora la tabla se muestra como filas de texto (celdas separadas por " | ").
+      b.filas.forEach((fila, ri) => {
+        const linea = fila.map((celda) => celda.map((r) => r.text).join("")).join("   |   ");
+        doc.font(ri === 0 ? "Helvetica-Bold" : "Helvetica").fontSize(size).text(linea, { align: "left", lineGap: opts.lineGap ?? 2 });
+      });
+      doc.moveDown(opts.espacioParrafo ?? 0.4);
+      continue;
+    }
+    const runs = b.runs;
     runs.forEach((r, i) => {
       const ultimo = i === runs.length - 1;
       doc.font(fuente(r.bold, r.italic)).fontSize(size).text(r.text.replace(/\n/g, " "), {

@@ -12,7 +12,7 @@ import {
   ShadingType,
 } from "docx";
 import { SECCIONES } from "@/lib/ia/secciones";
-import { parrafosDocx } from "@/lib/docx/runs";
+import { bloquesDocx } from "@/lib/docx/runs";
 
 // Colores institucionales
 const AZUL       = "185FA5";
@@ -235,7 +235,7 @@ export async function generarFichaDocx(datos: DatosFicha): Promise<Buffer> {
               ],
               spacing: { before: 280, after: 80 },
             }),
-            ...parrafosDocx(contenido, {
+            ...bloquesDocx(contenido, {
               size: 18,
               color: NEGRO,
               align: s.centrado ? "center" : "left",

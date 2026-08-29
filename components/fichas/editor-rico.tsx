@@ -5,7 +5,11 @@ import { useEditor, EditorContent, BubbleMenu } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import Placeholder from "@tiptap/extension-placeholder";
-import { Bold, Italic, Underline as UnderlineIcon, RotateCcw, Pencil } from "lucide-react";
+import Table from "@tiptap/extension-table";
+import TableRow from "@tiptap/extension-table-row";
+import TableHeader from "@tiptap/extension-table-header";
+import TableCell from "@tiptap/extension-table-cell";
+import { Bold, Italic, Underline as UnderlineIcon, RotateCcw, Pencil, Table as TableIcon, Rows3, Columns3, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { esHtml, textoPlanoAHtml, htmlATextoPlano } from "@/lib/richtext/html";
 
@@ -29,7 +33,15 @@ export function EditorRico({ value, onChange, sugerencia, placeholder, minHeight
 }) {
   const editor = useEditor({
     immediatelyRender: false, // evita desajuste de hidratación en Next
-    extensions: [StarterKit, Underline, Placeholder.configure({ placeholder: placeholder ?? "" })],
+    extensions: [
+      StarterKit,
+      Underline,
+      Placeholder.configure({ placeholder: placeholder ?? "" }),
+      Table.configure({ resizable: true }),
+      TableRow,
+      TableHeader,
+      TableCell,
+    ],
     content: esHtml(value) ? value : textoPlanoAHtml(value),
     editorProps: {
       attributes: {
@@ -76,6 +88,30 @@ export function EditorRico({ value, onChange, sugerencia, placeholder, minHeight
             </button>
           ))}
         </BubbleMenu>
+      )}
+
+      {/* Barra de tabla (insertar / editar) */}
+      {editor && (
+        <div className="flex flex-wrap items-center gap-1 mb-1.5">
+          <button
+            type="button"
+            title="Insertar tabla"
+            onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
+            className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          >
+            <TableIcon className="w-3.5 h-3.5" /> Tabla
+          </button>
+          {editor.isActive("table") && (
+            <>
+              <span className="w-px h-4 bg-border mx-0.5" />
+              <button type="button" title="Agregar fila" onClick={() => editor.chain().focus().addRowAfter().run()} className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"><Rows3 className="w-3.5 h-3.5" />+ fila</button>
+              <button type="button" title="Agregar columna" onClick={() => editor.chain().focus().addColumnAfter().run()} className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"><Columns3 className="w-3.5 h-3.5" />+ col</button>
+              <button type="button" title="Eliminar fila" onClick={() => editor.chain().focus().deleteRow().run()} className="inline-flex items-center px-2 py-1 rounded-md text-[11px] border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">− fila</button>
+              <button type="button" title="Eliminar columna" onClick={() => editor.chain().focus().deleteColumn().run()} className="inline-flex items-center px-2 py-1 rounded-md text-[11px] border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">− col</button>
+              <button type="button" title="Eliminar tabla" onClick={() => editor.chain().focus().deleteTable().run()} className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] border border-border text-destructive hover:bg-destructive/10 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
+            </>
+          )}
+        </div>
       )}
 
       <div
