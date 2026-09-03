@@ -82,7 +82,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: `No se pudo crear la organización: ${orgErr?.message ?? "desconocido"}` }, { status: 500 });
   }
 
-  // 2) Invitar al coordinador por correo (crea la cuenta y envía el email)
+  // 2) Si ya existe un usuario con ese correo, resolverlo antes de invitar
+  const { data: lista } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+  const existente = lista?.users?.find((u) => (u.email ?? "").toLowerCase() === email);
+  if (existente) {
+    if (existente.last_sign_in_at) {
+      // Cuenta activa (ya usó el sistema) → no la tocamos.
+      await admin.from("organizaciones").delete().eq("id", org.id);
+      return NextResponse.json({ error: "Ya existe una cuenta activa con ese correo. Usa otro." }, { status: 400 });
+    }
+    // Invitación pendiente (nunca inició sesión) → limpiar para reinvitar.
+    await admin.auth.admin.deleteUser(existente.id);
+  }
+
+  // 3) Invitar al coordinador por correo (crea la cuenta y envía el email)
   const redirectTo = `${request.nextUrl.origin}/actualizar-contrasena`;
   const { data: inv, error: invErr } = await admin.auth.admin.inviteUserByEmail(email, {
     data: { nombre_completo: coordNombre || null, org_id: org.id, rol: ROL.COORDINADOR },
@@ -90,11 +103,8 @@ export async function POST(request: NextRequest) {
   });
   if (invErr || !inv?.user) {
     await admin.from("organizaciones").delete().eq("id", org.id); // rollback best-effort
-    const yaExiste = /registered|already|exists/i.test(invErr?.message ?? "");
-    const msg = yaExiste
-      ? "Ya existe una cuenta con ese correo. Usa otro, o bórrala en Supabase → Authentication → Users y reintenta."
-      : `No se pudo invitar al coordinador: ${invErr?.message ?? "desconocido"}`;
-    return NextResponse.json({ error: msg }, { status: 400 });
+    const detalle = invErr?.message || (invErr as { code?: string } | null)?.code || (invErr ? JSON.stringify(invErr) : "desconocido");
+    return NextResponse.json({ error: `No se pudo invitar al coordinador: ${detalle}` }, { status: 400 });
   }
 
   // 3) Asegurar el perfil con org_id + rol correctos
