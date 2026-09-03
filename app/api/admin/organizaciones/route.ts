@@ -3,6 +3,18 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { ROL } from "@/lib/auth/roles";
 
+// Contraseña temporal legible (evita 0/O, 1/l/I) que el usuario cambiará al entrar.
+function generarPassword(): string {
+  const may = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const min = "abcdefghijkmnpqrstuvwxyz";
+  const num = "23456789";
+  const todo = may + min + num;
+  const r = (s: string) => s[Math.floor(Math.random() * s.length)];
+  let p = r(may) + r(min) + r(num);
+  for (let i = 0; i < 9; i++) p += r(todo);
+  return p.split("").sort(() => Math.random() - 0.5).join("");
+}
+
 // Cliente CON la sesión del usuario (cookies) — solo para identificar al llamante.
 function sbUser() {
   const c = cookies();
@@ -82,20 +94,26 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: `No se pudo crear la organización: ${orgErr?.message ?? "desconocido"}` }, { status: 500 });
   }
 
-  // 2) Invitar al coordinador por correo (crea cuenta en Auth + envía email)
-  const redirectTo = `${request.nextUrl.origin}/actualizar-contrasena`;
-  const { data: inv, error: invErr } = await admin.auth.admin.inviteUserByEmail(email, {
-    data: { nombre_completo: coordNombre || null, org_id: org.id, rol: ROL.COORDINADOR },
-    redirectTo,
+  // 2) Crear la cuenta del coordinador con contraseña temporal (activa al instante)
+  const tempPassword = generarPassword();
+  const { data: creado, error: createErr } = await admin.auth.admin.createUser({
+    email,
+    password: tempPassword,
+    email_confirm: true,
+    user_metadata: { nombre_completo: coordNombre || null },
   });
-  if (invErr || !inv?.user) {
+  if (createErr || !creado?.user) {
     await admin.from("organizaciones").delete().eq("id", org.id); // rollback best-effort
-    return NextResponse.json({ error: `No se pudo invitar al coordinador: ${invErr?.message ?? "desconocido"}` }, { status: 500 });
+    const yaExiste = /registered|already|exists/i.test(createErr?.message ?? "");
+    const msg = yaExiste
+      ? "Ya existe una cuenta con ese correo. Usa otro, o bórrala en Supabase → Authentication → Users y reintenta."
+      : `No se pudo crear el coordinador: ${createErr?.message ?? "desconocido"}`;
+    return NextResponse.json({ error: msg }, { status: 400 });
   }
 
   // 3) Asegurar el perfil con org_id + rol correctos
   const { error: perfErr } = await admin.from("perfiles").upsert({
-    id: inv.user.id,
+    id: creado.user.id,
     nombre_completo: coordNombre || email.split("@")[0],
     rol: ROL.COORDINADOR,
     org_id: org.id,
@@ -105,5 +123,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: `Organización creada, pero falló el perfil del coordinador: ${perfErr.message}` }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true, organizacion: org, coordinador: { email, nombre: coordNombre } });
+  return NextResponse.json({
+    ok: true,
+    organizacion: org,
+    coordinador: { email, nombre: coordNombre, password: tempPassword },
+  });
 }
