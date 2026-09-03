@@ -13,8 +13,10 @@ import {
   BookMarked,
   Clock,
   ListChecks,
+  Building2,
   X,
 } from "lucide-react";
+import { ROL } from "@/lib/auth/roles";
 
 type NavItem = { href: string; label: string; icon: typeof LayoutDashboard };
 
@@ -55,10 +57,18 @@ function esActivo(pathname: string, href: string): boolean {
 
 interface SidebarContentProps {
   onClose?: () => void;
+  rol?: string | null;
 }
 
-function SidebarContent({ onClose }: SidebarContentProps) {
+// Grupo extra solo visible para el Propietario (superadmin).
+const GRUPO_PLATAFORMA = {
+  titulo: "Plataforma",
+  items: [{ href: "/organizaciones", label: "Organizaciones", icon: Building2 }],
+};
+
+function SidebarContent({ onClose, rol }: SidebarContentProps) {
   const pathname = usePathname();
+  const grupos = rol === ROL.SUPERADMIN ? [...GRUPOS, GRUPO_PLATAFORMA] : GRUPOS;
 
   return (
     <div className="flex flex-col h-full bg-sidebar">
@@ -77,7 +87,7 @@ function SidebarContent({ onClose }: SidebarContentProps) {
 
       {/* Nav — grupos con líneas separadoras tenues */}
       <nav className="flex-1 px-3 py-2 overflow-y-auto">
-        {GRUPOS.map((grupo, gi) => (
+        {grupos.map((grupo, gi) => (
           <div key={grupo.titulo} className={cn(gi > 0 && "mt-3 pt-3 border-t border-white/[0.06]")}>
             <p className="px-2 pb-1.5 text-[10px] font-semibold text-[var(--sidebar-muted)] uppercase tracking-widest">
               {grupo.titulo}
@@ -126,21 +136,21 @@ function SidebarContent({ onClose }: SidebarContentProps) {
   );
 }
 
-export function Sidebar() {
+export function Sidebar({ rol }: { rol?: string | null }) {
   return (
     <aside className="hidden md:flex fixed left-3 top-3 bottom-3 w-[216px] flex-col z-40 rounded-2xl overflow-hidden border border-sidebar-border card-shadow">
-      <SidebarContent />
+      <SidebarContent rol={rol} />
     </aside>
   );
 }
 
-export function SidebarMobile({ open, onClose }: { open?: boolean; onClose?: () => void }) {
+export function SidebarMobile({ open, onClose, rol }: { open?: boolean; onClose?: () => void; rol?: string | null }) {
   if (!open) return null;
   return (
     <>
       <div className="fixed inset-0 bg-black/40 z-40 md:hidden" onClick={onClose} />
       <aside className="fixed left-0 top-0 h-screen w-[220px] flex flex-col z-50 md:hidden shadow-xl animate-in slide-in-from-left duration-200">
-        <SidebarContent onClose={onClose} />
+        <SidebarContent onClose={onClose} rol={rol} />
       </aside>
     </>
   );

@@ -60,7 +60,7 @@ function Avatar({ email }: { email?: string }) {
   );
 }
 
-export function Topbar({ userEmail }: { userEmail?: string }) {
+export function Topbar({ userEmail, rol }: { userEmail?: string; rol?: string | null }) {
   const router = useRouter();
   const supabase = createClient();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -134,7 +134,7 @@ export function Topbar({ userEmail }: { userEmail?: string }) {
         </div>
       </header>
 
-      <SidebarMobile open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <SidebarMobile open={sidebarOpen} onClose={() => setSidebarOpen(false)} rol={rol} />
     </>
   );
 }
