@@ -35,7 +35,8 @@ export async function updateSession(request: NextRequest) {
     pathname === "/login" ||
     pathname === "/recuperar-contrasena" ||
     pathname === "/actualizar-contrasena" ||
-    pathname === "/auth/callback";
+    pathname === "/auth/callback" ||
+    pathname === "/auth/confirm";
 
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();
