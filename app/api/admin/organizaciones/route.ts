@@ -97,14 +97,28 @@ export async function POST(request: NextRequest) {
 
   // 3) Invitar al coordinador por correo (crea la cuenta y envía el email)
   const redirectTo = `${request.nextUrl.origin}/actualizar-contrasena`;
-  const { data: inv, error: invErr } = await admin.auth.admin.inviteUserByEmail(email, {
-    data: { nombre_completo: coordNombre || null, org_id: org.id, rol: ROL.COORDINADOR },
-    redirectTo,
-  });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let inv: any = null, invErr: any = null;
+  try {
+    const r = await admin.auth.admin.inviteUserByEmail(email, {
+      data: { nombre_completo: coordNombre || null, org_id: org.id, rol: ROL.COORDINADOR },
+      redirectTo,
+    });
+    inv = r.data; invErr = r.error;
+  } catch (e) {
+    invErr = e;
+  }
   if (invErr || !inv?.user) {
     await admin.from("organizaciones").delete().eq("id", org.id); // rollback best-effort
-    const detalle = invErr?.message || (invErr as { code?: string } | null)?.code || (invErr ? JSON.stringify(invErr) : "desconocido");
-    return NextResponse.json({ error: `No se pudo invitar al coordinador: ${detalle}` }, { status: 400 });
+    console.error("inviteUserByEmail error:", invErr);
+    const e = invErr ?? {};
+    const partes = [e.message, e.error_description, e.msg, e.code, e.name, e.status ? `HTTP ${e.status}` : ""].filter(Boolean);
+    let detalle = partes.join(" · ");
+    if (!detalle) {
+      try { detalle = JSON.stringify(e, Object.getOwnPropertyNames(e)); } catch { detalle = String(e); }
+    }
+    const hint = " · Suele ser el envío SMTP: verifica que el Custom SMTP esté activo y que el remitente/dominio permita ese destinatario (en Resend modo prueba, solo tu correo registrado).";
+    return NextResponse.json({ error: `No se pudo invitar al coordinador: ${detalle || "error de envío"}${hint}` }, { status: 400 });
   }
 
   // 3) Asegurar el perfil con org_id + rol correctos
