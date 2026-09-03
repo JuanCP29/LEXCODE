@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { extraerTextoPDF } from "@/lib/ia/extraer-pdf";
+import { esAdmin } from "@/lib/auth/roles";
 
 function createSupabaseServer() {
   const cookieStore = cookies();
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
       .eq("id", user.id)
       .single();
 
-    if (perfil?.rol !== "admin") {
+    if (!esAdmin(perfil?.rol)) {
       return NextResponse.json({ error: "Solo administradores pueden gestionar directrices" }, { status: 403 });
     }
 

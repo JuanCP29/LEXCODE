@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { DirectricesAdmin } from "@/components/directrices/directrices-admin";
+import { esAdmin } from "@/lib/auth/roles";
 
 export default async function DirectricesPage() {
   const supabase = createClient();
@@ -13,7 +14,7 @@ export default async function DirectricesPage() {
     .eq("id", user.id)
     .single();
 
-  if (perfil?.rol !== "admin") {
+  if (!esAdmin(perfil?.rol)) {
     return (
       <div className="max-w-2xl">
         <h1 className="text-xl font-bold">Acceso restringido</h1>

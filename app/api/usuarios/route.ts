@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { ROLES_ASIGNABLES } from "@/lib/auth/roles";
 
 function sb() {
   const c = cookies();
@@ -21,7 +22,7 @@ export async function GET() {
     .from("perfiles")
     .select("id, nombre_completo, rol")
     .eq("activo", true)
-    .in("rol", ["abogado", "revisor", "admin"])
+    .in("rol", ROLES_ASIGNABLES)
     .order("nombre_completo");
 
   if (error) {

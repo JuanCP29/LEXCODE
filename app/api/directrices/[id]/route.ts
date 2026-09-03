@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { esAdmin } from "@/lib/auth/roles";
 
 function createSupabaseServer() {
   const cookieStore = cookies();
@@ -59,7 +60,7 @@ export async function PATCH(
       .select("rol")
       .eq("id", user.id)
       .single();
-    if (perfil?.rol !== "admin") return NextResponse.json({ error: "Sin permiso" }, { status: 403 });
+    if (!esAdmin(perfil?.rol)) return NextResponse.json({ error: "Sin permiso" }, { status: 403 });
 
     const body = await request.json();
     const { data, error } = await supabase
@@ -92,7 +93,7 @@ export async function DELETE(
       .select("rol")
       .eq("id", user.id)
       .single();
-    if (perfil?.rol !== "admin") return NextResponse.json({ error: "Sin permiso" }, { status: 403 });
+    if (!esAdmin(perfil?.rol)) return NextResponse.json({ error: "Sin permiso" }, { status: 403 });
 
     // Obtener storage_path antes de eliminar
     const { data: directriz } = await supabase
