@@ -97,12 +97,20 @@ async function getData() {
   return { counts, totalFichas: totalFichas ?? 0, draft, eventos };
 }
 
+// "NOMBRE APELLIDO" / "nombre apellido" → "Nombre Apellido"
+const MIN_SALUDO = new Set(["de", "del", "la", "las", "los", "y", "e", "el", "en", "a"]);
+function tituloNombre(t: string): string {
+  return t.toLowerCase().split(/\s+/).map((p, i) => (i > 0 && MIN_SALUDO.has(p)) || /\d/.test(p) ? p : p.charAt(0).toUpperCase() + p.slice(1)).join(" ");
+}
+
 export default async function DashboardPage() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  const { data: perfil } = await supabase.from("perfiles").select("nombre_completo").eq("id", user!.id).single();
   const { counts, totalFichas, draft, eventos } = await getData();
 
-  const nombre = user?.email?.split("@")[0] ?? "abogado";
+  const nombreCompleto = (perfil?.nombre_completo ?? "").trim();
+  const nombre = nombreCompleto ? tituloNombre(nombreCompleto) : (user?.email?.split("@")[0] ?? "abogado");
   const hoy = new Date().toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" });
   const pct = (n: number) => (counts.total ? Math.round((n / counts.total) * 100) : 0);
 
