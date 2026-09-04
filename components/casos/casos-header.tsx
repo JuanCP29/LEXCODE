@@ -8,7 +8,7 @@ export function CasosHeader({ total }: CasosHeaderProps) {
       <div>
         <h1 className="text-xl font-bold text-foreground">Reparto</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          {total} proceso{total !== 1 ? "s" : ""} registrado{total !== 1 ? "s" : ""}
+          {total} proceso{total !== 1 ? "s" : ""} a tu cargo
         </p>
       </div>
     </div>

@@ -23,11 +23,13 @@ export async function GET(request: NextRequest) {
   const { data: perfil } = await supabase.from("perfiles").select("org_id").eq("id", user.id).single();
   const orgId = perfil?.org_id ?? null;
 
+  // Asignaciones es el INSUMO del reparto: la bolsa completa de la organización
+  // (incluye casos aún sin cola_estado). No se filtra por "cola_estado no nulo".
   let query = supabase
     .from("casos")
-    .select("id, radicado, radicado_bizagi, nombre_demandante, cedula_demandante, despacho, pretension, cola_estado, cola_lote, asignado_a, cola_at, devolucion_motivo")
-    .not("cola_estado", "is", null)
-    .order("cola_at", { ascending: false });
+    .select("id, radicado, radicado_bizagi, nombre_demandante, cedula_demandante, despacho, pretension, cola_estado, cola_lote, asignado_a, cola_at, created_at, devolucion_motivo")
+    .order("cola_at", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false });
 
   if (scope === "mios") {
     query = query.eq("asignado_a", user.id);
@@ -42,7 +44,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message, migracion_pendiente: true, casos: [] }, { status: 200 });
   }
 
-  const casos = data ?? [];
+  // Los casos que aún no entraron a la cola se muestran como "pendiente" (insumo por repartir).
+  const casos = (data ?? []).map((c) => ({ ...c, cola_estado: c.cola_estado ?? "pendiente" }));
   const total = casos.length;
   const completados = casos.filter((c) => c.cola_estado === "completado").length;
   const enProceso   = casos.filter((c) => c.cola_estado === "en_proceso").length;

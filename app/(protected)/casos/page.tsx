@@ -10,9 +10,12 @@ export default async function CasosPage() {
   const { data: yo } = await supabase.from("perfiles").select("rol").eq("id", user!.id).single();
   if (yo?.rol === ROL.SUPERADMIN) redirect("/dashboard");
 
+  // Reparto = los casos asignados a MÍ (el coordinador solo ve lo que se autoasignó;
+  // la bolsa completa para distribuir vive en Asignaciones).
   const { data: casos } = await supabase
     .from("casos")
     .select("*, fichas_conciliacion(id, estado), contestaciones(sec_hechos, sec_pretensiones, sec_defensa)")
+    .eq("asignado_a", user!.id)
     .order("created_at", { ascending: false });
 
   const total = casos?.length ?? 0;
