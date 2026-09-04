@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { FoqsLogo } from "@/components/ui/foqs-logo";
 import {
@@ -20,7 +21,8 @@ import {
 } from "lucide-react";
 import { ROL, esAdmin, esCoordinador } from "@/lib/auth/roles";
 
-type NavItem = { href: string; label: string; icon: typeof LayoutDashboard };
+type BadgeKey = "reparto" | "devoluciones";
+type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; badge?: BadgeKey };
 
 // Un ítem está activo por coincidencia exacta o por prefijo, evitando solapes
 // (Configuración solo exacto; Reparto no se activa en "/casos/nuevo").
@@ -37,13 +39,25 @@ interface SidebarContentProps {
 }
 
 // Grupo extra solo visible para el Propietario (superadmin).
-const GRUPO_PLATAFORMA = {
+const GRUPO_PLATAFORMA: { titulo: string; items: NavItem[] } = {
   titulo: "Plataforma",
   items: [{ href: "/organizaciones", label: "Organizaciones", icon: Building2 }],
 };
 
 function SidebarContent({ onClose, rol }: SidebarContentProps) {
   const pathname = usePathname();
+  const [contadores, setContadores] = useState<Record<BadgeKey, number>>({ reparto: 0, devoluciones: 0 });
+
+  // Contadores de casos activos (cargados − completados). Se refrescan al navegar,
+  // así el badge refleja asignaciones/finalizaciones recién hechas.
+  useEffect(() => {
+    let cancel = false;
+    fetch("/api/contadores")
+      .then((r) => r.json())
+      .then((d) => { if (!cancel) setContadores({ reparto: d.reparto ?? 0, devoluciones: d.devoluciones ?? 0 }); })
+      .catch(() => {});
+    return () => { cancel = true; };
+  }, [pathname]);
 
   // Navegación por rol:
   //  · Propietario (superadmin): solo plataforma (Inicio, Configuración, Repositorio, Organizaciones).
@@ -55,12 +69,12 @@ function SidebarContent({ onClose, rol }: SidebarContentProps) {
   const espacioItems: NavItem[] = [
     { href: "/dashboard", label: "Inicio", icon: LayoutDashboard },
     ...(!prop ? [
-      { href: "/casos", label: "Reparto", icon: FolderOpen },
+      { href: "/casos", label: "Reparto", icon: FolderOpen, badge: "reparto" as BadgeKey },
       { href: "/documentos", label: "Historial", icon: FileText },
     ] : []),
     ...(coord ? [
       { href: "/cola-de-casos", label: "Asignaciones", icon: ListChecks },
-      { href: "/devoluciones", label: "Devoluciones", icon: Undo2 },
+      { href: "/devoluciones", label: "Devoluciones", icon: Undo2, badge: "devoluciones" as BadgeKey },
     ] : []),
     ...(!prop ? [{ href: "/pendientes", label: "Pendientes", icon: Clock }] : []),
   ];
@@ -101,8 +115,9 @@ function SidebarContent({ onClose, rol }: SidebarContentProps) {
               {grupo.titulo}
             </p>
             <div className="space-y-0.5">
-              {grupo.items.map(({ href, label, icon: Icon }) => {
+              {grupo.items.map(({ href, label, icon: Icon, badge }) => {
                 const active = esActivo(pathname, href);
+                const count = badge ? contadores[badge] : 0;
                 return (
                   <Link
                     key={href}
@@ -120,6 +135,16 @@ function SidebarContent({ onClose, rol }: SidebarContentProps) {
                     )}
                     <Icon className={cn("w-4 h-4 shrink-0", active ? "text-[#35b9db]" : "text-[var(--sidebar-muted)]")} />
                     <span>{label}</span>
+                    {badge && count > 0 && (
+                      <span
+                        className={cn(
+                          "ml-auto shrink-0 min-w-[20px] text-center text-[11px] font-semibold tabular-nums px-1.5 py-0.5 rounded-md",
+                          active ? "bg-[#35b9db]/20 text-[#35b9db]" : "bg-white/10 text-[var(--sidebar-muted)]"
+                        )}
+                      >
+                        {count > 999 ? "999+" : count}
+                      </span>
+                    )}
                   </Link>
                 );
               })}
