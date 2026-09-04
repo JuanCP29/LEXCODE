@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CambiarContrasena } from "@/components/config/cambiar-contrasena";
 
 export default async function ConfiguracionPage() {
   const supabase = createClient();
@@ -37,6 +38,8 @@ export default async function ConfiguracionPage() {
           </div>
         </CardContent>
       </Card>
+
+      <CambiarContrasena />
     </div>
   );
 }
