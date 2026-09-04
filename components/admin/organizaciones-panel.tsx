@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Building2, UserPlus, Mail, CheckCircle2, AlertCircle, Users } from "lucide-react";
+import { Building2, UserPlus, Mail, CheckCircle2, AlertCircle, Users, Copy, Check, KeyRound } from "lucide-react";
 import { FoqsLoader } from "@/components/ui/foqs-loader";
 import { cn } from "@/lib/utils";
 
@@ -25,7 +25,8 @@ export function OrganizacionesPanel() {
   const [coordNombre, setCoordNombre] = useState("");
   const [coordEmail, setCoordEmail] = useState("");
   const [enviando, setEnviando] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
+  const [cred, setCred] = useState<{ org: string; email: string; password: string } | null>(null);
+  const [copiado, setCopiado] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const cargar = useCallback(async () => {
@@ -46,7 +47,7 @@ export function OrganizacionesPanel() {
   async function crear(e: React.FormEvent) {
     e.preventDefault();
     setEnviando(true);
-    setMsg(null);
+    setCred(null);
     setError(null);
     try {
       const res = await fetch("/api/admin/organizaciones", {
@@ -56,7 +57,7 @@ export function OrganizacionesPanel() {
       });
       const body = await res.json();
       if (!res.ok) throw new Error(body.error ?? "Error al crear");
-      setMsg(`Organización “${body.organizacion.nombre}” creada. Se envió la invitación a ${coordEmail}.`);
+      setCred({ org: body.organizacion.nombre, email: coordEmail, password: body.coordinador.password });
       setNombre(""); setCoordNombre(""); setCoordEmail("");
       cargar();
     } catch (e) {
@@ -64,6 +65,15 @@ export function OrganizacionesPanel() {
     } finally {
       setEnviando(false);
     }
+  }
+
+  async function copiar() {
+    if (!cred) return;
+    try {
+      await navigator.clipboard.writeText(`Correo: ${cred.email}\nContraseña temporal: ${cred.password}\nEntra en la app y cámbiala en Configuración.`);
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 2000);
+    } catch { /* noop */ }
   }
 
   return (
@@ -97,7 +107,7 @@ export function OrganizacionesPanel() {
                   placeholder="Ej: Laura Ramírez"
                   className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring/25 focus:border-ring/50" />
               </Campo>
-              <Campo label="Correo (se enviará la invitación)">
+              <Campo label="Correo del coordinador">
                 <div className="relative">
                   <Mail className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <input value={coordEmail} onChange={(e) => setCoordEmail(e.target.value)} type="email" required
@@ -113,15 +123,33 @@ export function OrganizacionesPanel() {
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" /> {error}
             </p>
           )}
-          {msg && (
-            <p className="text-sm text-green-700 dark:text-green-400 bg-green-500/10 border border-green-500/30 rounded-md px-3 py-2 flex items-start gap-2">
-              <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" /> {msg}
-            </p>
+          {cred && (
+            <div className="rounded-lg border border-green-500/40 bg-green-500/10 p-3 space-y-2">
+              <p className="text-xs font-semibold text-green-700 dark:text-green-400 flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4" /> Organización “{cred.org}” creada
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                Comparte estas credenciales con el Coordinador. Entrará en <strong>Iniciar sesión</strong> y podrá cambiar la contraseña en Configuración.
+              </p>
+              <div className="rounded-md border border-border bg-card p-2.5 text-xs font-mono space-y-1">
+                <div className="flex justify-between gap-2">
+                  <span className="text-muted-foreground">Correo</span>
+                  <span className="text-foreground truncate">{cred.email}</span>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <span className="text-muted-foreground flex items-center gap-1"><KeyRound className="w-3 h-3" /> Clave</span>
+                  <span className="text-foreground font-semibold">{cred.password}</span>
+                </div>
+              </div>
+              <button type="button" onClick={copiar} className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-ink hover:underline">
+                {copiado ? <><Check className="w-3.5 h-3.5" /> Copiado</> : <><Copy className="w-3.5 h-3.5" /> Copiar credenciales</>}
+              </button>
+            </div>
           )}
 
           <button type="submit" disabled={enviando}
             className="w-full h-10 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-[0.99] transition-all disabled:opacity-60 inline-flex items-center justify-center gap-2">
-            {enviando ? <><FoqsLoader size="sm" /> Creando e invitando…</> : <><UserPlus className="w-4 h-4" /> Crear e invitar</>}
+            {enviando ? <><FoqsLoader size="sm" /> Creando…</> : <><UserPlus className="w-4 h-4" /> Crear coordinador</>}
           </button>
         </form>
       </section>

@@ -3,6 +3,18 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { ROL } from "@/lib/auth/roles";
 
+// Contraseña temporal legible (evita 0/O, 1/l/I) que el usuario cambiará al entrar.
+function generarPassword(): string {
+  const may = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const min = "abcdefghijkmnpqrstuvwxyz";
+  const num = "23456789";
+  const todo = may + min + num;
+  const r = (s: string) => s[Math.floor(Math.random() * s.length)];
+  let p = r(may) + r(min) + r(num);
+  for (let i = 0; i < 9; i++) p += r(todo);
+  return p.split("").sort(() => Math.random() - 0.5).join("");
+}
+
 // Cliente CON la sesión del usuario (cookies) — solo para identificar al llamante.
 function sbUser() {
   const c = cookies();
@@ -82,7 +94,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: `No se pudo crear la organización: ${orgErr?.message ?? "desconocido"}` }, { status: 500 });
   }
 
-  // 2) Si ya existe un usuario con ese correo, resolverlo antes de invitar
+  // 2) Si ya existe un usuario con ese correo, resolverlo antes de crear
   const { data: lista } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
   const existente = lista?.users?.find((u) => (u.email ?? "").toLowerCase() === email);
   if (existente) {
@@ -91,39 +103,36 @@ export async function POST(request: NextRequest) {
       await admin.from("organizaciones").delete().eq("id", org.id);
       return NextResponse.json({ error: "Ya existe una cuenta activa con ese correo. Usa otro." }, { status: 400 });
     }
-    // Invitación pendiente (nunca inició sesión) → limpiar para reinvitar.
+    // Cuenta pendiente (nunca inició sesión) → limpiar para recrear.
     await admin.auth.admin.deleteUser(existente.id);
   }
 
-  // 3) Invitar al coordinador por correo (crea la cuenta y envía el email)
-  const redirectTo = `${request.nextUrl.origin}/actualizar-contrasena`;
+  // 3) Crear la cuenta del coordinador con contraseña temporal (activa al instante)
+  const tempPassword = generarPassword();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let inv: any = null, invErr: any = null;
+  let creado: any = null, createErr: any = null;
   try {
-    const r = await admin.auth.admin.inviteUserByEmail(email, {
-      data: { nombre_completo: coordNombre || null, org_id: org.id, rol: ROL.COORDINADOR },
-      redirectTo,
+    const r = await admin.auth.admin.createUser({
+      email,
+      password: tempPassword,
+      email_confirm: true,
+      user_metadata: { nombre_completo: coordNombre || null, org_id: org.id, rol: ROL.COORDINADOR },
     });
-    inv = r.data; invErr = r.error;
+    creado = r.data; createErr = r.error;
   } catch (e) {
-    invErr = e;
+    createErr = e;
   }
-  if (invErr || !inv?.user) {
+  if (createErr || !creado?.user) {
     await admin.from("organizaciones").delete().eq("id", org.id); // rollback best-effort
-    console.error("inviteUserByEmail error:", invErr);
-    const e = invErr ?? {};
-    const partes = [e.message, e.error_description, e.msg, e.code, e.name, e.status ? `HTTP ${e.status}` : ""].filter(Boolean);
-    let detalle = partes.join(" · ");
-    if (!detalle) {
-      try { detalle = JSON.stringify(e, Object.getOwnPropertyNames(e)); } catch { detalle = String(e); }
-    }
-    const hint = " · Suele ser el envío SMTP: verifica que el Custom SMTP esté activo y que el remitente/dominio permita ese destinatario (en Resend modo prueba, solo tu correo registrado).";
-    return NextResponse.json({ error: `No se pudo invitar al coordinador: ${detalle || "error de envío"}${hint}` }, { status: 400 });
+    const e = createErr ?? {};
+    let detalle = e.message || e.code || e.name || "";
+    if (!detalle) { try { detalle = JSON.stringify(e, Object.getOwnPropertyNames(e)); } catch { detalle = String(e); } }
+    return NextResponse.json({ error: `No se pudo crear el coordinador: ${detalle || "desconocido"}` }, { status: 400 });
   }
 
-  // 3) Asegurar el perfil con org_id + rol correctos
+  // 4) Asegurar el perfil con org_id + rol correctos
   const { error: perfErr } = await admin.from("perfiles").upsert({
-    id: inv.user.id,
+    id: creado.user.id,
     nombre_completo: coordNombre || email.split("@")[0],
     rol: ROL.COORDINADOR,
     org_id: org.id,
@@ -133,5 +142,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: `Organización creada, pero falló el perfil del coordinador: ${perfErr.message}` }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true, organizacion: org, coordinador: { email, nombre: coordNombre } });
+  return NextResponse.json({
+    ok: true,
+    organizacion: org,
+    coordinador: { email, nombre: coordNombre, password: tempPassword },
+  });
 }
