@@ -48,7 +48,7 @@ export async function DashboardCoordinador({ nombre, userId }: { nombre: string;
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Abogados sustanciadores" value={sustanciadores.length} icon={Users} tint="#35b9db" href="/equipo" />
         <StatCard label="Total de procesos" value={totalCasos} icon={FolderOpen} tint="#2563eb" href="/casos" />
-        <StatCard label="Devoluciones" value={devoluciones.length} icon={Undo2} tint="#d97706" href="/cola-de-casos" />
+        <StatCard label="Devoluciones" value={devoluciones.length} icon={Undo2} tint="#d97706" href="/devoluciones" />
         <StatCard label="Completados" value={completados} icon={CheckCircle2} tint="#16a34a" />
       </div>
 
@@ -71,7 +71,7 @@ export async function DashboardCoordinador({ nombre, userId }: { nombre: string;
         </SeccionCard>
 
         {/* Devoluciones */}
-        <SeccionCard icon={Undo2} titulo="Devoluciones" href="/cola-de-casos" hrefLabel="Reasignar">
+        <SeccionCard icon={Undo2} titulo="Devoluciones" href="/devoluciones" hrefLabel="Ver módulo">
           {devoluciones.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4">No hay casos devueltos pendientes de reasignar. 👌</p>
           ) : (

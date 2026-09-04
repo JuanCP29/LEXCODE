@@ -15,6 +15,7 @@ import {
   ListChecks,
   Building2,
   Users,
+  Undo2,
   X,
 } from "lucide-react";
 import { ROL, puedeCoordinar, esAdmin } from "@/lib/auth/roles";
@@ -76,7 +77,13 @@ function SidebarContent({ onClose, rol }: SidebarContentProps) {
   const coord = puedeCoordinar(rol);
   const espacio = {
     titulo: GRUPOS[0].titulo,
-    items: GRUPOS[0].items.filter((it) => it.href !== "/cola-de-casos" || coord),
+    items: GRUPOS[0].items
+      .filter((it) => it.href !== "/cola-de-casos" || coord)
+      .flatMap((it) =>
+        coord && it.href === "/cola-de-casos"
+          ? [it, { href: "/devoluciones", label: "Devoluciones", icon: Undo2 }]
+          : [it]
+      ),
   };
   const herramientas = {
     titulo: GRUPOS[1].titulo,
