@@ -32,15 +32,24 @@ export async function GET() {
   const orgId = perfil.org_id as string | null;
   if (!orgId) return NextResponse.json({ error: "Sin organización" }, { status: 400 });
 
-  const [{ data: casos }, { data: perfiles }] = await Promise.all([
-    admin
-      .from("casos")
-      .select("id, radicado, radicado_bizagi, nombre_demandante, cedula_demandante, despacho, cola_estado, asignado_a, devolucion_motivo, devuelto_at, devuelto_por")
-      .eq("org_id", orgId)
-      .not("devolucion_motivo", "is", null)
-      .order("devuelto_at", { ascending: false }),
-    admin.from("perfiles").select("id, nombre_completo, rol").eq("org_id", orgId),
-  ]);
+  // Miembros del equipo del coordinador (su organización).
+  const { data: perfiles } = await admin
+    .from("perfiles")
+    .select("id, nombre_completo, rol")
+    .eq("org_id", orgId);
+  const idsEquipo = (perfiles ?? []).map((p) => p.id);
+
+  // Casos devueltos POR alguien del equipo del coordinador.
+  // (Se filtra por quién devolvió, no por casos.org_id, porque los casos
+  //  aún no llevan el org_id del equipo operativo — pendiente Fase 2.)
+  const { data: casos } = idsEquipo.length
+    ? await admin
+        .from("casos")
+        .select("id, radicado, radicado_bizagi, nombre_demandante, cedula_demandante, despacho, cola_estado, asignado_a, devolucion_motivo, devuelto_at, devuelto_por")
+        .not("devolucion_motivo", "is", null)
+        .in("devuelto_por", idsEquipo)
+        .order("devuelto_at", { ascending: false })
+    : { data: [] };
 
   const nombrePorId = new Map<string, string>();
   for (const p of perfiles ?? []) nombrePorId.set(p.id, p.nombre_completo || "—");

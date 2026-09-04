@@ -15,17 +15,26 @@ export async function DashboardCoordinador({ nombre, userId }: { nombre: string;
   const { data: yo } = await admin.from("perfiles").select("org_id").eq("id", userId).single();
   const orgId = yo?.org_id as string | undefined;
 
-  const [{ data: equipo }, { data: casos }, { data: fichas }] = await Promise.all([
-    orgId ? admin.from("perfiles").select("id, nombre_completo, rol").eq("org_id", orgId) : Promise.resolve({ data: [] }),
-    orgId ? admin.from("casos").select("id, nombre_demandante, devolucion_motivo, fichas_conciliacion(estado)").eq("org_id", orgId).order("created_at", { ascending: false }) : Promise.resolve({ data: [] }),
-    orgId ? admin.from("fichas_conciliacion").select("id, creado_por, casos!inner(org_id)").eq("casos.org_id", orgId) : Promise.resolve({ data: [] }),
+  // Equipo del coordinador (su organización).
+  const { data: equipo } = orgId
+    ? await admin.from("perfiles").select("id, nombre_completo, rol").eq("org_id", orgId)
+    : { data: [] };
+  const idsEquipo = (equipo ?? []).map((u) => u.id);
+  const setEquipo = new Set(idsEquipo);
+
+  // Casos del pool (aún global, como Reparto) + fichas creadas por el equipo.
+  // Pendiente Fase 2: cuando los casos lleven org_id del equipo, scopear aquí.
+  const [{ data: casos }, { data: fichas }] = await Promise.all([
+    admin.from("casos").select("id, nombre_demandante, devolucion_motivo, devuelto_por, fichas_conciliacion(estado)").order("created_at", { ascending: false }),
+    idsEquipo.length ? admin.from("fichas_conciliacion").select("id, creado_por").in("creado_por", idsEquipo) : Promise.resolve({ data: [] }),
   ]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const lista = (casos ?? []) as any[];
   const totalCasos = lista.length;
   const completados = lista.filter(esFinal).length;
-  const devoluciones = lista.filter((c) => c.devolucion_motivo);
+  // Devoluciones = casos devueltos por alguien del equipo del coordinador.
+  const devoluciones = lista.filter((c) => c.devolucion_motivo && c.devuelto_por && setEquipo.has(c.devuelto_por));
 
   const sustanciadores = (equipo ?? []).filter((u) => !esCoord(u.rol));
   const nombrePorId = new Map<string, string>();
