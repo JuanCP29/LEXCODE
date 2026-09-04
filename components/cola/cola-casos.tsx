@@ -98,6 +98,7 @@ export function ColaCasos() {
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busqueda, setBusqueda] = useState("");
+  const [filtroAsignado, setFiltroAsignado] = useState<string>(""); // "" = todos · "sin" = sin asignar · userId
   const [seleccion, setSeleccion] = useState<Set<string>>(new Set());
   const [asignarA, setAsignarA] = useState("");
   const [asignando, setAsignando] = useState(false);
@@ -154,10 +155,33 @@ export function ColaCasos() {
     }
   }
 
-  // Filtro por nombre de despacho
-  const casosFiltrados = casos.filter((c) =>
-    !busqueda.trim() || (c.despacho ?? "").toLowerCase().includes(busqueda.toLowerCase())
-  );
+  // Filtro por nombre de despacho + por responsable (asignado)
+  const casosFiltrados = casos.filter((c) => {
+    const okDespacho = !busqueda.trim() || (c.despacho ?? "").toLowerCase().includes(busqueda.toLowerCase());
+    const okAsignado =
+      filtroAsignado === "" ? true :
+      filtroAsignado === "sin" ? !c.asignado_a :
+      c.asignado_a === filtroAsignado;
+    return okDespacho && okAsignado;
+  });
+
+  // Progreso por responsable (para el panel de reparto). Solo tiene sentido en "Todos".
+  type Carga = { pend: number; proc: number; comp: number; total: number };
+  const cargaPorUsuario = new Map<string, Carga>();
+  let sinAsignar = 0;
+  for (const c of casos) {
+    if (!c.asignado_a) { sinAsignar++; continue; }
+    const s = cargaPorUsuario.get(c.asignado_a) ?? { pend: 0, proc: 0, comp: 0, total: 0 };
+    s.total++;
+    if (c.cola_estado === "completado") s.comp++;
+    else if (c.cola_estado === "en_proceso") s.proc++;
+    else s.pend++;
+    cargaPorUsuario.set(c.asignado_a, s);
+  }
+  // Orden: los usuarios del equipo primero (con o sin carga), luego por nombre.
+  const responsables = usuarios
+    .map((u) => ({ ...u, carga: cargaPorUsuario.get(u.id) ?? { pend: 0, proc: 0, comp: 0, total: 0 } }))
+    .sort((a, b) => b.carga.total - a.carga.total || a.nombre.localeCompare(b.nombre));
 
   const todosSeleccionados = casosFiltrados.length > 0 && casosFiltrados.every((c) => seleccion.has(c.id));
 
@@ -273,6 +297,73 @@ export function ColaCasos() {
         </div>
       </div>
 
+      {/* Reparto por responsable — carga y progreso de cada sustanciador (clic para filtrar) */}
+      {scope === "todos" && responsables.length > 0 && (
+        <div className="bg-card rounded-xl border border-border p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-foreground">Reparto por responsable</h2>
+            {(filtroAsignado !== "") && (
+              <button type="button" onClick={() => setFiltroAsignado("")}
+                className="text-[11px] font-semibold text-brand-ink hover:underline inline-flex items-center gap-1">
+                <X className="w-3 h-3" /> Quitar filtro
+              </button>
+            )}
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
+            {responsables.map((u) => {
+              const { pend, proc, comp, total } = u.carga;
+              const pct = total > 0 ? Math.round((comp / total) * 100) : 0;
+              const activo = filtroAsignado === u.id;
+              return (
+                <button
+                  key={u.id}
+                  type="button"
+                  onClick={() => setFiltroAsignado(activo ? "" : u.id)}
+                  className={cn(
+                    "text-left rounded-lg border p-2.5 transition-colors",
+                    activo ? "border-primary bg-primary/5 ring-1 ring-primary/30" : "border-border hover:bg-muted/40"
+                  )}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-semibold text-foreground truncate">{u.esYo ? "Yo" : u.nombre}</p>
+                    <span className="text-[11px] font-bold text-foreground tabular-nums shrink-0">{total}</span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-muted overflow-hidden my-1.5">
+                    <div className="h-full bg-green-500 transition-all" style={{ width: `${pct}%` }} />
+                  </div>
+                  <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                    <span className="inline-flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full" style={{ background: ACENTO.pendiente }} />{pend}</span>
+                    <span className="inline-flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full" style={{ background: ACENTO.en_proceso }} />{proc}</span>
+                    <span className="inline-flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full" style={{ background: ACENTO.completado }} />{comp}</span>
+                  </div>
+                </button>
+              );
+            })}
+            {sinAsignar > 0 && (
+              <button
+                type="button"
+                onClick={() => setFiltroAsignado(filtroAsignado === "sin" ? "" : "sin")}
+                className={cn(
+                  "text-left rounded-lg border border-dashed p-2.5 transition-colors",
+                  filtroAsignado === "sin" ? "border-primary bg-primary/5 ring-1 ring-primary/30" : "border-border hover:bg-muted/40"
+                )}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-semibold text-muted-foreground truncate">Sin asignar</p>
+                  <span className="text-[11px] font-bold text-foreground tabular-nums shrink-0">{sinAsignar}</span>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1.5">Por repartir</p>
+              </button>
+            )}
+          </div>
+          <p className="mt-2.5 text-[10px] text-muted-foreground flex items-center gap-2">
+            <span className="inline-flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full" style={{ background: ACENTO.pendiente }} /> Pendiente</span>
+            <span className="inline-flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full" style={{ background: ACENTO.en_proceso }} /> En proceso</span>
+            <span className="inline-flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full" style={{ background: ACENTO.completado }} /> Completado</span>
+          </p>
+        </div>
+      )}
+
       {(msg || error) && (
         <div className={cn("rounded-lg px-4 py-2.5 text-sm flex items-center gap-2",
           error ? "bg-destructive/10 border border-destructive/30 text-destructive" : "bg-green-50 border border-green-200 text-green-700 dark:bg-green-900/20 dark:text-green-400")}>
@@ -289,7 +380,7 @@ export function ColaCasos() {
               <button
                 key={s}
                 type="button"
-                onClick={() => setScope(s)}
+                onClick={() => { setScope(s); setFiltroAsignado(""); }}
                 className={cn("px-3 py-1 rounded-md text-xs font-medium transition-colors",
                   scope === s ? "bg-card border border-border text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
               >
