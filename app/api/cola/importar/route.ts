@@ -48,12 +48,12 @@ export async function POST(request: NextRequest) {
   const nombreLote = lote || `Lote ${new Date().toISOString().slice(0, 16).replace("T", " ")}`;
   const ahora = new Date().toISOString();
 
-  // Radicados existentes para dedup
+  // Radicados existentes para dedup — SOLO dentro de la organización del importador
+  // (así una importación no toca ni reasigna casos de otro tenant).
   const radicados = casos.map((c) => c.radicado).filter(Boolean);
-  const { data: existentes } = await supabase
-    .from("casos")
-    .select("id, radicado")
-    .in("radicado", radicados);
+  let dedupQ = supabase.from("casos").select("id, radicado").in("radicado", radicados);
+  if (orgId) dedupQ = dedupQ.eq("org_id", orgId);
+  const { data: existentes } = await dedupQ;
   const mapaExistente = new Map((existentes ?? []).map((e) => [e.radicado, e.id]));
 
   let creados = 0;
@@ -61,15 +61,17 @@ export async function POST(request: NextRequest) {
   const nuevos: Record<string, unknown>[] = [];
 
   for (const c of casos) {
-    // Por defecto, los casos se asignan a quien los importa (aparecen en "Mis casos").
-    // Se pueden reasignar luego desde la pestaña "Todos (empresa)".
-    const asignacion = c.asignado_a ?? asignado_a ?? user.id;
+    // Regla: los casos importados entran a la BOLSA de Asignaciones SIN asignar.
+    // El coordinador los reparte (o se autoasigna) luego; así NO aparecen en su
+    // Reparto por el solo hecho de importarlos. Solo se asignan aquí si se indica
+    // un responsable explícito (por caso o para todo el lote).
+    const asignacion = c.asignado_a ?? asignado_a ?? null;
     if (mapaExistente.has(c.radicado)) {
-      // Caso ya existe → marcarlo en cola
-      await supabase
-        .from("casos")
-        .update({ cola_estado: "pendiente", cola_lote: nombreLote, cola_at: ahora, asignado_a: asignacion })
-        .eq("id", mapaExistente.get(c.radicado));
+      // Caso ya existe → marcarlo en cola. No se toca la asignación previa salvo
+      // que llegue una explícita.
+      const upd: Record<string, unknown> = { cola_estado: "pendiente", cola_lote: nombreLote, cola_at: ahora };
+      if (asignacion) upd.asignado_a = asignacion;
+      await supabase.from("casos").update(upd).eq("id", mapaExistente.get(c.radicado));
       actualizados++;
     } else {
       nuevos.push({
@@ -83,8 +85,8 @@ export async function POST(request: NextRequest) {
         clase_pretension: c.clase_pretension ?? null,
         jurisdiccion: c.jurisdiccion ?? null,
         estado: "activo",
-        abogado_id: asignacion ?? user.id,
-        asignado_a: asignacion,
+        abogado_id: user.id,          // creador (el importador), no responsable
+        asignado_a: asignacion,       // null ⇒ sin asignar (queda en la bolsa)
         org_id: orgId,
         cola_estado: "pendiente",
         cola_lote: nombreLote,
