@@ -18,7 +18,7 @@ import {
   Undo2,
   X,
 } from "lucide-react";
-import { ROL, puedeCoordinar, esAdmin } from "@/lib/auth/roles";
+import { ROL, puedeCoordinar, esAdmin, esCoordinador } from "@/lib/auth/roles";
 
 type NavItem = { href: string; label: string; icon: typeof LayoutDashboard };
 
@@ -75,12 +75,13 @@ function SidebarContent({ onClose, rol }: SidebarContentProps) {
   //  · Asignaciones y Nuevo caso → solo coordinación.
   //  · Directrices → solo admin/propietario.  · Equipo → coordinación.  · Organizaciones → propietario.
   const coord = puedeCoordinar(rol);
+  const soloCoord = esCoordinador(rol); // Devoluciones: exclusivo del Coordinador
   const espacio = {
     titulo: GRUPOS[0].titulo,
     items: GRUPOS[0].items
       .filter((it) => it.href !== "/cola-de-casos" || coord)
       .flatMap((it) =>
-        coord && it.href === "/cola-de-casos"
+        soloCoord && it.href === "/cola-de-casos"
           ? [it, { href: "/devoluciones", label: "Devoluciones", icon: Undo2 }]
           : [it]
       ),

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { puedeCoordinar, ROLES_ASIGNABLES } from "@/lib/auth/roles";
+import { esCoordinador, ROLES_ASIGNABLES } from "@/lib/auth/roles";
 
 function sbUser() {
   const c = cookies();
@@ -26,7 +26,7 @@ export async function GET() {
 
   const admin = sbAdmin();
   const { data: perfil } = await admin.from("perfiles").select("rol, org_id").eq("id", user.id).single();
-  if (!perfil || !puedeCoordinar(perfil.rol)) {
+  if (!perfil || !esCoordinador(perfil.rol)) {
     return NextResponse.json({ error: "Solo un Coordinador puede ver las devoluciones" }, { status: 403 });
   }
   const orgId = perfil.org_id as string | null;

@@ -21,6 +21,12 @@ export function puedeCoordinar(rol?: string | null): boolean {
   return esAdmin(rol) || rol === ROL.COORDINADOR;
 }
 
+// Coordinador estricto (excluye Propietario/admin). Para funciones propias del
+// cliente, como Devoluciones, que el Propietario no necesita.
+export function esCoordinador(rol?: string | null): boolean {
+  return rol === ROL.COORDINADOR;
+}
+
 // Usuarios que pueden RECIBIR casos asignados (incluye valores legados).
 export const ROLES_ASIGNABLES = [
   ROL.SUSTANCIADOR, ROL.COORDINADOR,
