@@ -17,7 +17,7 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { ROL, puedeCoordinar } from "@/lib/auth/roles";
+import { ROL, puedeCoordinar, esAdmin } from "@/lib/auth/roles";
 
 type NavItem = { href: string; label: string; icon: typeof LayoutDashboard };
 
@@ -70,18 +70,26 @@ const GRUPO_PLATAFORMA = {
 function SidebarContent({ onClose, rol }: SidebarContentProps) {
   const pathname = usePathname();
 
-  // Herramientas: agrega "Equipo" para quienes coordinan.
+  // Navegación por rol:
+  //  · Asignaciones y Nuevo caso → solo coordinación.
+  //  · Directrices → solo admin/propietario.  · Equipo → coordinación.  · Organizaciones → propietario.
+  const coord = puedeCoordinar(rol);
+  const espacio = {
+    titulo: GRUPOS[0].titulo,
+    items: GRUPOS[0].items.filter((it) => it.href !== "/cola-de-casos" || coord),
+  };
   const herramientas = {
     titulo: GRUPOS[1].titulo,
     items: [
-      ...GRUPOS[1].items,
-      ...(puedeCoordinar(rol) ? [{ href: "/equipo", label: "Equipo", icon: Users }] : []),
+      ...GRUPOS[1].items.filter((it) => it.href !== "/configuracion/directrices" || esAdmin(rol)),
+      ...(coord ? [{ href: "/equipo", label: "Equipo", icon: Users }] : []),
     ],
   };
+  const creacion = { titulo: GRUPOS[2].titulo, items: coord ? GRUPOS[2].items : [] };
   const grupos = [
-    GRUPOS[0],
+    espacio,
     herramientas,
-    GRUPOS[2],
+    ...(creacion.items.length ? [creacion] : []),
     ...(rol === ROL.SUPERADMIN ? [GRUPO_PLATAFORMA] : []),
   ];
 

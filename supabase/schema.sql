@@ -49,10 +49,29 @@ create policy "Admin actualiza cualquier perfil"
 -- Función helper: obtener rol del usuario actual
 create or replace function public.get_user_rol()
 returns text language sql security definer stable as $$
-  -- 'superadmin' (Propietario) tiene acceso total como 'admin' dentro de RLS.
-  select case when rol = 'superadmin' then 'admin' else rol end
+  -- Mapea los roles nuevos a los que entienden las políticas actuales:
+  --   superadmin/coordinador -> 'admin' (acceso total; org-scoping vendrá en Fase 2)
+  --   sustanciador           -> 'abogado' (ve/gestiona sus casos asignados)
+  select case rol
+    when 'superadmin'   then 'admin'
+    when 'coordinador'  then 'admin'
+    when 'sustanciador' then 'abogado'
+    else rol
+  end
   from public.perfiles where id = auth.uid();
 $$;
+
+-- El usuario ve y gestiona los casos ASIGNADOS a él (columna asignado_a).
+drop policy if exists "Ve casos asignados" on public.casos;
+create policy "Ve casos asignados"
+  on public.casos for select
+  using (asignado_a = auth.uid());
+
+drop policy if exists "Actualiza casos asignados" on public.casos;
+create policy "Actualiza casos asignados"
+  on public.casos for update
+  using (asignado_a = auth.uid())
+  with check (asignado_a = auth.uid());
 
 -- Trigger: crea perfil automáticamente al registrar usuario
 create or replace function public.handle_new_user()
