@@ -2,18 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { ROL } from "@/lib/auth/roles";
-
-// Contraseña temporal legible (evita 0/O, 1/l/I) que el usuario cambiará al entrar.
-function generarPassword(): string {
-  const may = "ABCDEFGHJKLMNPQRSTUVWXYZ";
-  const min = "abcdefghijkmnpqrstuvwxyz";
-  const num = "23456789";
-  const todo = may + min + num;
-  const r = (s: string) => s[Math.floor(Math.random() * s.length)];
-  let p = r(may) + r(min) + r(num);
-  for (let i = 0; i < 9; i++) p += r(todo);
-  return p.split("").sort(() => Math.random() - 0.5).join("");
-}
+import { generarPassword } from "@/lib/auth/password";
 
 // Cliente CON la sesión del usuario (cookies) — solo para identificar al llamante.
 function sbUser() {

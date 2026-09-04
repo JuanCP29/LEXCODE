@@ -14,9 +14,10 @@ import {
   Clock,
   ListChecks,
   Building2,
+  Users,
   X,
 } from "lucide-react";
-import { ROL } from "@/lib/auth/roles";
+import { ROL, puedeCoordinar } from "@/lib/auth/roles";
 
 type NavItem = { href: string; label: string; icon: typeof LayoutDashboard };
 
@@ -68,7 +69,21 @@ const GRUPO_PLATAFORMA = {
 
 function SidebarContent({ onClose, rol }: SidebarContentProps) {
   const pathname = usePathname();
-  const grupos = rol === ROL.SUPERADMIN ? [...GRUPOS, GRUPO_PLATAFORMA] : GRUPOS;
+
+  // Herramientas: agrega "Equipo" para quienes coordinan.
+  const herramientas = {
+    titulo: GRUPOS[1].titulo,
+    items: [
+      ...GRUPOS[1].items,
+      ...(puedeCoordinar(rol) ? [{ href: "/equipo", label: "Equipo", icon: Users }] : []),
+    ],
+  };
+  const grupos = [
+    GRUPOS[0],
+    herramientas,
+    GRUPOS[2],
+    ...(rol === ROL.SUPERADMIN ? [GRUPO_PLATAFORMA] : []),
+  ];
 
   return (
     <div className="flex flex-col h-full bg-sidebar">
