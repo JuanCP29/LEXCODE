@@ -1,10 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+import { ROL } from "@/lib/auth/roles";
 import { TablaCasos } from "@/components/casos/tabla-casos";
 import { CasosHeader } from "@/components/casos/casos-header";
 
 export default async function CasosPage() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  const { data: yo } = await supabase.from("perfiles").select("rol").eq("id", user!.id).single();
+  if (yo?.rol === ROL.SUPERADMIN) redirect("/dashboard");
 
   const { data: casos } = await supabase
     .from("casos")

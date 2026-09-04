@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Download } from "lucide-react";
@@ -30,6 +31,9 @@ function limpiarDespacho(t: string | null | undefined): string {
 
 export default async function DocumentosPage() {
   const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: yo } = await supabase.from("perfiles").select("rol").eq("id", user!.id).single();
+  if (yo?.rol === "superadmin") redirect("/dashboard");
 
   const { data: fichas } = await supabase
     .from("fichas_conciliacion")

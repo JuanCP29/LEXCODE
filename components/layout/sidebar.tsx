@@ -18,35 +18,9 @@ import {
   Undo2,
   X,
 } from "lucide-react";
-import { ROL, puedeCoordinar, esAdmin, esCoordinador } from "@/lib/auth/roles";
+import { ROL, esAdmin, esCoordinador } from "@/lib/auth/roles";
 
 type NavItem = { href: string; label: string; icon: typeof LayoutDashboard };
-
-const GRUPOS: { titulo: string; items: NavItem[] }[] = [
-  {
-    titulo: "Espacio de trabajo",
-    items: [
-      { href: "/dashboard",     label: "Inicio",       icon: LayoutDashboard },
-      { href: "/casos",         label: "Reparto",      icon: FolderOpen },
-      { href: "/documentos",    label: "Historial",    icon: FileText },
-      { href: "/cola-de-casos", label: "Asignaciones", icon: ListChecks },
-      { href: "/pendientes",    label: "Pendientes",   icon: Clock },
-    ],
-  },
-  {
-    titulo: "Herramientas",
-    items: [
-      { href: "/configuracion",             label: "Configuración", icon: Settings },
-      { href: "/configuracion/directrices", label: "Repositorio",   icon: BookMarked },
-    ],
-  },
-  {
-    titulo: "Creación",
-    items: [
-      { href: "/casos/nuevo", label: "Nuevo caso", icon: FilePlus },
-    ],
-  },
-];
 
 // Un ítem está activo por coincidencia exacta o por prefijo, evitando solapes
 // (Configuración solo exacto; Reparto no se activa en "/casos/nuevo").
@@ -72,33 +46,36 @@ function SidebarContent({ onClose, rol }: SidebarContentProps) {
   const pathname = usePathname();
 
   // Navegación por rol:
-  //  · Asignaciones y Nuevo caso → solo coordinación.
-  //  · Directrices → solo admin/propietario.  · Equipo → coordinación.  · Organizaciones → propietario.
-  const coord = puedeCoordinar(rol);
-  const soloCoord = esCoordinador(rol); // Devoluciones: exclusivo del Coordinador
-  const espacio = {
-    titulo: GRUPOS[0].titulo,
-    items: GRUPOS[0].items
-      .filter((it) => it.href !== "/cola-de-casos" || coord)
-      .flatMap((it) =>
-        soloCoord && it.href === "/cola-de-casos"
-          ? [it, { href: "/devoluciones", label: "Devoluciones", icon: Undo2 }]
-          : [it]
-      ),
-  };
-  const herramientas = {
-    titulo: GRUPOS[1].titulo,
-    items: [
-      ...GRUPOS[1].items.filter((it) => it.href !== "/configuracion/directrices" || esAdmin(rol)),
-      ...(coord ? [{ href: "/equipo", label: "Equipo", icon: Users }] : []),
-    ],
-  };
-  const creacion = { titulo: GRUPOS[2].titulo, items: coord ? GRUPOS[2].items : [] };
+  //  · Propietario (superadmin): solo plataforma (Inicio, Configuración, Repositorio, Organizaciones).
+  //  · Coordinador: operación de su organización (reparto, asignaciones, devoluciones, equipo, nuevo caso).
+  //  · Sustanciador: sus casos (reparto, historial, pendientes) + Configuración.
+  const prop = rol === ROL.SUPERADMIN;
+  const coord = esCoordinador(rol);
+
+  const espacioItems: NavItem[] = [
+    { href: "/dashboard", label: "Inicio", icon: LayoutDashboard },
+    ...(!prop ? [
+      { href: "/casos", label: "Reparto", icon: FolderOpen },
+      { href: "/documentos", label: "Historial", icon: FileText },
+    ] : []),
+    ...(coord ? [
+      { href: "/cola-de-casos", label: "Asignaciones", icon: ListChecks },
+      { href: "/devoluciones", label: "Devoluciones", icon: Undo2 },
+    ] : []),
+    ...(!prop ? [{ href: "/pendientes", label: "Pendientes", icon: Clock }] : []),
+  ];
+  const herramientasItems: NavItem[] = [
+    { href: "/configuracion", label: "Configuración", icon: Settings },
+    ...(esAdmin(rol) ? [{ href: "/configuracion/directrices", label: "Repositorio", icon: BookMarked }] : []),
+    ...(coord ? [{ href: "/equipo", label: "Equipo", icon: Users }] : []),
+  ];
+  const creacionItems: NavItem[] = coord ? [{ href: "/casos/nuevo", label: "Nuevo caso", icon: FilePlus }] : [];
+
   const grupos = [
-    espacio,
-    herramientas,
-    ...(creacion.items.length ? [creacion] : []),
-    ...(rol === ROL.SUPERADMIN ? [GRUPO_PLATAFORMA] : []),
+    { titulo: "Espacio de trabajo", items: espacioItems },
+    { titulo: "Herramientas", items: herramientasItems },
+    ...(creacionItems.length ? [{ titulo: "Creación", items: creacionItems }] : []),
+    ...(prop ? [GRUPO_PLATAFORMA] : []),
   ];
 
   return (

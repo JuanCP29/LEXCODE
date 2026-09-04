@@ -3,13 +3,13 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { puedeCoordinar } from "@/lib/auth/roles";
+import { esCoordinador } from "@/lib/auth/roles";
 
 export default async function NuevoCasoPage() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const { data: perfil } = await supabase.from("perfiles").select("rol").eq("id", user!.id).single();
-  if (!puedeCoordinar(perfil?.rol)) redirect("/dashboard");
+  if (!esCoordinador(perfil?.rol)) redirect("/dashboard");
 
   return (
     <div className="max-w-2xl">

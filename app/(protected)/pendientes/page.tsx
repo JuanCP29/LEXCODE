@@ -1,9 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 import { TablaPendientes } from "@/components/pendientes/tabla-pendientes";
 import { Clock } from "lucide-react";
 
 export default async function PendientesPage() {
   const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: yo } = await supabase.from("perfiles").select("rol").eq("id", user!.id).single();
+  if (yo?.rol === "superadmin") redirect("/dashboard");
 
   const { data, error } = await supabase
     .from("pendientes")
