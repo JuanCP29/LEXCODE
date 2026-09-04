@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Building2, FolderOpen, FileText, BookMarked, Inbox, Users, ArrowRight } from "lucide-react";
+import { Building2, Scale, FileText, BookMarked, Inbox, Users, ArrowRight } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Saludo, StatCard, SeccionCard, BarraDato } from "@/components/dashboard/kit";
 
@@ -9,15 +9,17 @@ const unoDe = (r: any) => (Array.isArray(r) ? r[0] : r);
 export async function DashboardPropietario({ nombre }: { nombre: string }) {
   const admin = createAdminClient();
 
-  const [{ data: orgs }, { data: perfiles }, { data: fichas }, { count: totalCasos }, { count: totalFichas }, { count: totalDirectrices }] =
+  const [{ data: orgs }, { data: perfiles }, { data: fichas }, { count: totalDirectrices }] =
     await Promise.all([
       admin.from("organizaciones").select("id, nombre").order("creado_at", { ascending: true }),
       admin.from("perfiles").select("id, org_id, rol"),
       admin.from("fichas_conciliacion").select("id, casos(org_id)"),
-      admin.from("casos").select("id", { count: "exact", head: true }),
-      admin.from("fichas_conciliacion").select("id", { count: "exact", head: true }),
       admin.from("directrices_conciliacion").select("id", { count: "exact", head: true }),
     ]);
+
+  // Conteos de plataforma (equipos de las organizaciones cliente).
+  const coordinadores = (perfiles ?? []).filter((p) => p.rol === "coordinador").length;
+  const sustanciadores = (perfiles ?? []).filter((p) => p.rol === "sustanciador").length;
 
   const usuariosPorOrg = new Map<string, number>();
   for (const p of perfiles ?? []) if (p.org_id) usuariosPorOrg.set(p.org_id, (usuariosPorOrg.get(p.org_id) ?? 0) + 1);
@@ -44,8 +46,8 @@ export async function DashboardPropietario({ nombre }: { nombre: string }) {
       {/* KPIs de plataforma */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Organizaciones" value={listaOrgs.length} icon={Building2} tint="#35b9db" href="/organizaciones" />
-        <StatCard label="Total de procesos" value={totalCasos ?? 0} icon={FolderOpen} tint="#2563eb" />
-        <StatCard label="Documentos generados" value={totalFichas ?? 0} icon={FileText} tint="#16a34a" />
+        <StatCard label="Coordinadores" value={coordinadores} icon={Users} tint="#2563eb" href="/organizaciones" />
+        <StatCard label="Sustanciadores" value={sustanciadores} icon={Scale} tint="#0891b2" href="/organizaciones" />
         <StatCard label="Directrices" value={totalDirectrices ?? 0} icon={BookMarked} tint="#7c3aed" href="/configuracion/directrices" />
       </div>
 
