@@ -97,10 +97,15 @@ async function getData() {
   return { counts, totalFichas: totalFichas ?? 0, draft, eventos };
 }
 
-// "NOMBRE APELLIDO" / "nombre apellido" → "Nombre Apellido"
+// "NOMBRE APELLIDO" / "nombre apellido" → "Nombre Apellido".
+// Si el nombre ya trae mayúsculas y minúsculas mezcladas (p. ej. "FoQs"), se respeta tal cual.
 const MIN_SALUDO = new Set(["de", "del", "la", "las", "los", "y", "e", "el", "en", "a"]);
-function tituloNombre(t: string): string {
-  return t.toLowerCase().split(/\s+/).map((p, i) => (i > 0 && MIN_SALUDO.has(p)) || /\d/.test(p) ? p : p.charAt(0).toUpperCase() + p.slice(1)).join(" ");
+function nombreMostrar(t: string): string {
+  const s = t.trim();
+  const tieneMin = /[a-zà-ÿ]/.test(s);
+  const tieneMay = /[A-ZÀ-Ÿ]/.test(s);
+  if (tieneMin && tieneMay) return s; // ya tiene casing intencional
+  return s.toLowerCase().split(/\s+/).map((p, i) => (i > 0 && MIN_SALUDO.has(p)) || /\d/.test(p) ? p : p.charAt(0).toUpperCase() + p.slice(1)).join(" ");
 }
 
 export default async function DashboardPage() {
@@ -110,7 +115,7 @@ export default async function DashboardPage() {
   const { counts, totalFichas, draft, eventos } = await getData();
 
   const nombreCompleto = (perfil?.nombre_completo ?? "").trim();
-  const nombre = nombreCompleto ? tituloNombre(nombreCompleto) : (user?.email?.split("@")[0] ?? "abogado");
+  const nombre = nombreCompleto ? nombreMostrar(nombreCompleto) : (user?.email?.split("@")[0] ?? "abogado");
   const hoy = new Date().toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" });
   const pct = (n: number) => (counts.total ? Math.round((n / counts.total) * 100) : 0);
 
