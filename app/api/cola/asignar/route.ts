@@ -23,6 +23,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "No se recibieron casos para asignar" }, { status: 400 });
   }
 
+  // Aislamiento por organización (Fase 2): solo se pueden (re)asignar casos de MI
+  // organización, y solo hacia usuarios de MI organización.
+  const { data: perfil } = await supabase.from("perfiles").select("org_id").eq("id", user.id).single();
+  const orgId = perfil?.org_id ?? null;
+  if (!orgId) return NextResponse.json({ error: "Sin organización" }, { status: 400 });
+
+  if (body.asignado_a) {
+    const { data: destino } = await supabase.from("perfiles").select("org_id").eq("id", body.asignado_a).single();
+    if (destino?.org_id !== orgId) {
+      return NextResponse.json({ error: "No puedes asignar a un usuario de otra organización." }, { status: 403 });
+    }
+  }
+
   // Al (re)asignar, se limpia la marca de devolución y pasa a "en proceso".
   const update = body.asignado_a
     ? { asignado_a: body.asignado_a, cola_estado: "en_proceso", devolucion_motivo: null }
@@ -30,7 +43,8 @@ export async function POST(request: NextRequest) {
   const { error } = await supabase
     .from("casos")
     .update(update)
-    .in("id", ids);
+    .in("id", ids)
+    .eq("org_id", orgId);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true, asignados: ids.length });

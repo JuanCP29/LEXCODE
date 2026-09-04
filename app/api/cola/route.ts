@@ -19,6 +19,10 @@ export async function GET(request: NextRequest) {
 
   const scope = request.nextUrl.searchParams.get("scope") ?? "mios";
 
+  // Organización del solicitante → el scope "todos" se limita a su tenant (Fase 2).
+  const { data: perfil } = await supabase.from("perfiles").select("org_id").eq("id", user.id).single();
+  const orgId = perfil?.org_id ?? null;
+
   let query = supabase
     .from("casos")
     .select("id, radicado, radicado_bizagi, nombre_demandante, cedula_demandante, despacho, pretension, cola_estado, cola_lote, asignado_a, cola_at, devolucion_motivo")
@@ -27,6 +31,9 @@ export async function GET(request: NextRequest) {
 
   if (scope === "mios") {
     query = query.eq("asignado_a", user.id);
+  } else if (orgId) {
+    // "todos (empresa)" = todos los casos de MI organización, no de todas.
+    query = query.eq("org_id", orgId);
   }
 
   const { data, error } = await query;

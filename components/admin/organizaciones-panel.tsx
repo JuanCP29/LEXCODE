@@ -29,6 +29,37 @@ export function OrganizacionesPanel() {
   const [copiado, setCopiado] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Agregar coordinador a una organización existente
+  const [addTo, setAddTo] = useState<string | null>(null);
+  const [addNombre, setAddNombre] = useState("");
+  const [addEmail, setAddEmail] = useState("");
+  const [addBusy, setAddBusy] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
+  const [addCred, setAddCred] = useState<{ org: string; email: string; password: string } | null>(null);
+
+  async function agregarCoord(e: React.FormEvent, org: Org) {
+    e.preventDefault();
+    setAddBusy(true);
+    setAddError(null);
+    setAddCred(null);
+    try {
+      const res = await fetch("/api/admin/organizaciones/coordinador", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ org_id: org.id, nombre: addNombre, email: addEmail }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error ?? "Error al agregar");
+      setAddCred({ org: org.nombre, email: addEmail, password: body.coordinador.password });
+      setAddNombre(""); setAddEmail("");
+      cargar();
+    } catch (e) {
+      setAddError(e instanceof Error ? e.message : "Error al agregar");
+    } finally {
+      setAddBusy(false);
+    }
+  }
+
   const cargar = useCallback(async () => {
     setCargando(true);
     try {
@@ -167,7 +198,10 @@ export function OrganizacionesPanel() {
           <p className="text-sm text-muted-foreground py-6">Aún no hay organizaciones. Crea la primera con el formulario.</p>
         ) : (
           <ul className="space-y-2.5">
-            {orgs.map((o) => (
+            {orgs.map((o) => {
+              const tieneCoord = o.usuarios.some((u) => u.rol === "coordinador" || u.rol === "admin");
+              const abierto = addTo === o.id;
+              return (
               <li key={o.id} className="rounded-lg border border-border p-3">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-semibold text-foreground">{o.nombre}</p>
@@ -187,8 +221,66 @@ export function OrganizacionesPanel() {
                     ))}
                   </div>
                 )}
+
+                {/* Agregar coordinador a esta organización existente */}
+                <div className="mt-2.5 pt-2.5 border-t border-border/70">
+                  {!abierto ? (
+                    <button
+                      type="button"
+                      onClick={() => { setAddTo(o.id); setAddError(null); setAddCred(null); setAddNombre(""); setAddEmail(""); }}
+                      className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-brand-ink hover:underline"
+                    >
+                      <UserPlus className="w-3.5 h-3.5" /> {tieneCoord ? "Agregar otro coordinador" : "Agregar coordinador"}
+                    </button>
+                  ) : (
+                    <form onSubmit={(e) => agregarCoord(e, o)} className="space-y-2">
+                      <input value={addNombre} onChange={(e) => setAddNombre(e.target.value)}
+                        placeholder="Nombre completo"
+                        className="w-full h-9 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring/25 focus:border-ring/50" />
+                      <div className="relative">
+                        <Mail className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <input value={addEmail} onChange={(e) => setAddEmail(e.target.value)} type="email" required
+                          placeholder="coordinador@cliente.com"
+                          className="w-full h-9 rounded-lg border border-input bg-background pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring/25 focus:border-ring/50" />
+                      </div>
+                      {addError && (
+                        <p className="text-xs text-destructive bg-destructive/10 border border-destructive/30 rounded-md px-2.5 py-1.5 flex items-start gap-1.5">
+                          <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" /> {addError}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <button type="submit" disabled={addBusy}
+                          className="h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 active:scale-[0.99] transition-all disabled:opacity-60 inline-flex items-center gap-1.5">
+                          {addBusy ? <><FoqsLoader size="sm" /> Creando…</> : <><UserPlus className="w-3.5 h-3.5" /> Crear</>}
+                        </button>
+                        <button type="button" onClick={() => { setAddTo(null); setAddError(null); }}
+                          className="h-9 px-3 rounded-lg border border-border text-xs font-medium text-muted-foreground hover:bg-muted transition-colors">
+                          Cancelar
+                        </button>
+                      </div>
+                    </form>
+                  )}
+
+                  {addCred && addCred.org === o.nombre && (
+                    <div className="mt-2 rounded-lg border border-green-500/40 bg-green-500/10 p-2.5 space-y-1.5">
+                      <p className="text-[11px] font-semibold text-green-700 dark:text-green-400 flex items-center gap-1.5">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Coordinador creado en “{addCred.org}”
+                      </p>
+                      <div className="rounded-md border border-border bg-card p-2 text-[11px] font-mono space-y-1">
+                        <div className="flex justify-between gap-2"><span className="text-muted-foreground">Correo</span><span className="text-foreground truncate">{addCred.email}</span></div>
+                        <div className="flex justify-between gap-2"><span className="text-muted-foreground flex items-center gap-1"><KeyRound className="w-3 h-3" /> Clave</span><span className="text-foreground font-semibold">{addCred.password}</span></div>
+                      </div>
+                      <button type="button"
+                        onClick={() => navigator.clipboard?.writeText(`Correo: ${addCred.email}\nContraseña temporal: ${addCred.password}\nEntra en la app y cámbiala en Configuración.`)}
+                        className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-brand-ink hover:underline">
+                        <Copy className="w-3 h-3" /> Copiar credenciales
+                      </button>
+                    </div>
+                  )}
+                </div>
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
       </section>

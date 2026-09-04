@@ -50,6 +50,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Organización del creador → aísla el caso a su tenant (Fase 2).
+    const { data: perfil } = await supabase.from("perfiles").select("org_id").eq("id", user.id).single();
+    const orgId = perfil?.org_id ?? null;
+
     // ── Archivos ──────────────────────────────────────────────────────────
     const demanda_pdf   = formData.get("demanda_pdf") as File | null;
     const excel_proceso = formData.get("excel_proceso") as File | null;
@@ -70,6 +74,7 @@ export async function POST(request: NextRequest) {
         jurisdiccion:        jurisdiccion       || null,
         estado:              "activo",
         abogado_id:          user.id,
+        org_id:              orgId,
       })
       .select()
       .single();

@@ -20,12 +20,12 @@ export async function DashboardCoordinador({ nombre, userId }: { nombre: string;
     ? await admin.from("perfiles").select("id, nombre_completo, rol").eq("org_id", orgId)
     : { data: [] };
   const idsEquipo = (equipo ?? []).map((u) => u.id);
-  const setEquipo = new Set(idsEquipo);
 
-  // Casos del pool (aún global, como Reparto) + fichas creadas por el equipo.
-  // Pendiente Fase 2: cuando los casos lleven org_id del equipo, scopear aquí.
+  // Casos de la organización (Fase 2: ya llevan org_id del tenant) + fichas del equipo.
   const [{ data: casos }, { data: fichas }] = await Promise.all([
-    admin.from("casos").select("id, nombre_demandante, devolucion_motivo, devuelto_por, fichas_conciliacion(estado)").order("created_at", { ascending: false }),
+    orgId
+      ? admin.from("casos").select("id, nombre_demandante, devolucion_motivo, devuelto_por, fichas_conciliacion(estado)").eq("org_id", orgId).order("created_at", { ascending: false })
+      : Promise.resolve({ data: [] }),
     idsEquipo.length ? admin.from("fichas_conciliacion").select("id, creado_por").in("creado_por", idsEquipo) : Promise.resolve({ data: [] }),
   ]);
 
@@ -33,8 +33,8 @@ export async function DashboardCoordinador({ nombre, userId }: { nombre: string;
   const lista = (casos ?? []) as any[];
   const totalCasos = lista.length;
   const completados = lista.filter(esFinal).length;
-  // Devoluciones = casos devueltos por alguien del equipo del coordinador.
-  const devoluciones = lista.filter((c) => c.devolucion_motivo && c.devuelto_por && setEquipo.has(c.devuelto_por));
+  // Devoluciones = casos de la org con causal de devolución (los devolvió el equipo).
+  const devoluciones = lista.filter((c) => c.devolucion_motivo);
 
   const sustanciadores = (equipo ?? []).filter((u) => !esCoord(u.rol));
   const nombrePorId = new Map<string, string>();

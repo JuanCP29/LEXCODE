@@ -61,6 +61,17 @@ returns text language sql security definer stable as $$
   from public.perfiles where id = auth.uid();
 $$;
 
+-- Helpers Fase 2: org y rol REAL (sin el mapeo a 'admin').
+create or replace function public.get_user_org()
+returns uuid language sql security definer stable as $$
+  select org_id from public.perfiles where id = auth.uid();
+$$;
+
+create or replace function public.get_user_rol_real()
+returns text language sql security definer stable as $$
+  select rol from public.perfiles where id = auth.uid();
+$$;
+
 -- El usuario ve y gestiona los casos ASIGNADOS a él (columna asignado_a).
 drop policy if exists "Ve casos asignados" on public.casos;
 create policy "Ve casos asignados"
@@ -128,11 +139,20 @@ create index if not exists casos_cedula_demandante_idx on public.casos(cedula_de
 
 alter table public.casos enable row level security;
 
+-- Fase 2 — acceso por organización (reemplaza el "Admin acceso total").
 drop policy if exists "Admin acceso total casos" on public.casos;
-create policy "Admin acceso total casos"
+
+drop policy if exists "Propietario acceso total casos" on public.casos;
+create policy "Propietario acceso total casos"
   on public.casos for all
-  using (public.get_user_rol() = 'admin')
-  with check (public.get_user_rol() = 'admin');
+  using (public.get_user_rol_real() = 'superadmin')
+  with check (public.get_user_rol_real() = 'superadmin');
+
+drop policy if exists "Coordinador casos de su org" on public.casos;
+create policy "Coordinador casos de su org"
+  on public.casos for all
+  using (public.get_user_rol_real() = 'coordinador' and org_id = public.get_user_org())
+  with check (public.get_user_rol_real() = 'coordinador' and org_id = public.get_user_org());
 
 drop policy if exists "Abogados ven sus propios casos" on public.casos;
 create policy "Abogados ven sus propios casos"
@@ -229,11 +249,40 @@ create index if not exists fichas_estado_idx     on public.fichas_conciliacion(e
 
 alter table public.fichas_conciliacion enable row level security;
 
+-- Fase 2 — acceso por organización (reemplaza el "Admin acceso total").
 drop policy if exists "Admin acceso total fichas" on public.fichas_conciliacion;
-create policy "Admin acceso total fichas"
+
+drop policy if exists "Propietario acceso total fichas" on public.fichas_conciliacion;
+create policy "Propietario acceso total fichas"
   on public.fichas_conciliacion for all
-  using (public.get_user_rol() = 'admin')
-  with check (public.get_user_rol() = 'admin');
+  using (public.get_user_rol_real() = 'superadmin')
+  with check (public.get_user_rol_real() = 'superadmin');
+
+drop policy if exists "Coordinador fichas de su org" on public.fichas_conciliacion;
+create policy "Coordinador fichas de su org"
+  on public.fichas_conciliacion for all
+  using (
+    public.get_user_rol_real() = 'coordinador'
+    and exists (select 1 from public.casos c
+                where c.id = fichas_conciliacion.caso_id and c.org_id = public.get_user_org())
+  )
+  with check (
+    public.get_user_rol_real() = 'coordinador'
+    and exists (select 1 from public.casos c
+                where c.id = fichas_conciliacion.caso_id and c.org_id = public.get_user_org())
+  );
+
+drop policy if exists "Sustanciador fichas de casos asignados" on public.fichas_conciliacion;
+create policy "Sustanciador fichas de casos asignados"
+  on public.fichas_conciliacion for all
+  using (
+    exists (select 1 from public.casos c
+            where c.id = fichas_conciliacion.caso_id and c.asignado_a = auth.uid())
+  )
+  with check (
+    exists (select 1 from public.casos c
+            where c.id = fichas_conciliacion.caso_id and c.asignado_a = auth.uid())
+  );
 
 drop policy if exists "Abogados ven sus propias fichas" on public.fichas_conciliacion;
 create policy "Abogados ven sus propias fichas"

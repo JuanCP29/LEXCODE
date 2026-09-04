@@ -45,8 +45,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No se recibieron casos" }, { status: 400 });
     }
 
+    // Organización de quien importa → aísla los casos a su tenant (Fase 2).
+    const { data: perfil } = await supabase.from("perfiles").select("org_id").eq("id", user.id).single();
+    const orgId = perfil?.org_id ?? null;
+
     // Insertar en lotes de 50
-    const casosConUser = casos.map((c) => ({ ...c, abogado_id: user.id, estado: "activo" }));
+    const casosConUser = casos.map((c) => ({ ...c, abogado_id: user.id, estado: "activo", org_id: orgId }));
     const BATCH = 50;
     let insertados = 0;
     const errores: string[] = [];

@@ -41,6 +41,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "No se recibieron casos" }, { status: 400 });
   }
 
+  // Organización de quien importa → aísla los casos a su tenant (Fase 2).
+  const { data: perfil } = await supabase.from("perfiles").select("org_id").eq("id", user.id).single();
+  const orgId = perfil?.org_id ?? null;
+
   const nombreLote = lote || `Lote ${new Date().toISOString().slice(0, 16).replace("T", " ")}`;
   const ahora = new Date().toISOString();
 
@@ -81,6 +85,7 @@ export async function POST(request: NextRequest) {
         estado: "activo",
         abogado_id: asignacion ?? user.id,
         asignado_a: asignacion,
+        org_id: orgId,
         cola_estado: "pendiente",
         cola_lote: nombreLote,
         cola_at: ahora,
