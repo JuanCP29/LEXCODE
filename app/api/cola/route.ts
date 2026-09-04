@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from("casos")
-    .select("id, radicado, radicado_bizagi, nombre_demandante, cedula_demandante, despacho, pretension, cola_estado, cola_lote, asignado_a, cola_at")
+    .select("id, radicado, radicado_bizagi, nombre_demandante, cedula_demandante, despacho, pretension, cola_estado, cola_lote, asignado_a, cola_at, devolucion_motivo")
     .not("cola_estado", "is", null)
     .order("cola_at", { ascending: false });
 

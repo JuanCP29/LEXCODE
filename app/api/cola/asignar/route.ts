@@ -23,9 +23,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "No se recibieron casos para asignar" }, { status: 400 });
   }
 
+  // Al (re)asignar, se limpia la marca de devolución y pasa a "en proceso".
+  const update = body.asignado_a
+    ? { asignado_a: body.asignado_a, cola_estado: "en_proceso", devolucion_motivo: null }
+    : { asignado_a: null };
   const { error } = await supabase
     .from("casos")
-    .update({ asignado_a: body.asignado_a ?? null })
+    .update(update)
     .in("id", ids);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { FileText, Lock, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { WORKFLOW_ESTADO } from "@/lib/ui/estado-badge";
+import { DevolverCaso } from "@/components/casos/devolver-caso";
 
 type ClaveEstado = "completado" | "en_proceso" | "pendiente";
 
@@ -69,6 +70,7 @@ type CasoConFichas = {
   clase_pretension: string | null;
   jurisdiccion: string | null;
   estado: string;
+  asignado_a: string | null;
   created_at: string;
   fichas_conciliacion: FichaMin[] | null;
   contestaciones?: { sec_hechos: string | null; sec_pretensiones: string | null; sec_defensa: string | null }[] | null;
@@ -77,9 +79,10 @@ type CasoConFichas = {
 interface TablaCasosProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   casos: any[];
+  currentUserId?: string | null;
 }
 
-export function TablaCasos({ casos }: TablaCasosProps) {
+export function TablaCasos({ casos, currentUserId }: TablaCasosProps) {
   const lista = casos as CasoConFichas[];
   const [query, setQuery] = useState("");
   const [filtro, setFiltro] = useState<"todos" | ClaveEstado>("todos");
@@ -213,6 +216,9 @@ export function TablaCasos({ casos }: TablaCasosProps) {
                   {/* Acciones */}
                   <td className="px-4 py-3 whitespace-nowrap">
                     <div className="flex items-center justify-end gap-2">
+                      {currentUserId && caso.asignado_a === currentUserId && (
+                        <DevolverCaso casoId={caso.id} demandante={aNombrePropio(caso.nombre_demandante)} />
+                      )}
                       <Link
                         href={`/generador/${caso.id}/params`}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all active:scale-[0.98] border-primary text-primary hover:bg-[var(--sidebar)] hover:border-[var(--sidebar)] hover:text-white"

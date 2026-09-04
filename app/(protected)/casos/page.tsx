@@ -4,6 +4,7 @@ import { CasosHeader } from "@/components/casos/casos-header";
 
 export default async function CasosPage() {
   const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
   const { data: casos } = await supabase
     .from("casos")
@@ -16,7 +17,7 @@ export default async function CasosPage() {
     <div className="space-y-5 max-w-[1400px]">
       <CasosHeader total={total} />
       <div className="bg-card rounded-xl border border-border card-shadow overflow-hidden">
-        <TablaCasos casos={casos ?? []} />
+        <TablaCasos casos={casos ?? []} currentUserId={user?.id ?? null} />
       </div>
     </div>
   );

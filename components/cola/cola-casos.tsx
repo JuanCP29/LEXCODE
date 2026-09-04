@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import {
   Upload, Loader2, ChevronDown, CheckCircle2, Clock, RefreshCw,
-  ListChecks, AlertCircle, UserCheck, Search, X,
+  ListChecks, AlertCircle, UserCheck, Search, X, Undo2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { WORKFLOW_ESTADO } from "@/lib/ui/estado-badge";
@@ -19,6 +19,7 @@ type CasoCola = {
   cola_estado: "pendiente" | "en_proceso" | "completado";
   cola_lote: string | null;
   asignado_a: string | null;
+  devolucion_motivo: string | null;
 };
 
 type Resumen = { total: number; completados: number; enProceso: number; pendientes: number; progreso: number };
@@ -402,6 +403,11 @@ export function ColaCasos() {
                       <p className="font-semibold text-foreground text-sm leading-tight">{aTitulo(c.nombre_demandante)}</p>
                       {c.cedula_demandante && (
                         <p className="text-xs text-muted-foreground tabular-nums mt-0.5">C.C. {c.cedula_demandante}</p>
+                      )}
+                      {c.devolucion_motivo && (
+                        <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5 flex items-center gap-1 max-w-[240px] truncate" title={c.devolucion_motivo}>
+                          <Undo2 className="w-3 h-3 shrink-0" /> Devuelto: {c.devolucion_motivo}
+                        </p>
                       )}
                     </td>
                     {/* Radicado + bizagi */}
