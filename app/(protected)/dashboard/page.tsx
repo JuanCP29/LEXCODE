@@ -4,6 +4,9 @@ import {
   FileText, FolderOpen, Clock, Loader2, CheckCircle2,
   FilePlus, ArrowRight, ChevronRight, Activity, Users, CalendarDays,
 } from "lucide-react";
+import { ROL } from "@/lib/auth/roles";
+import { DashboardPropietario } from "@/components/dashboard/dashboard-propietario";
+import { DashboardCoordinador } from "@/components/dashboard/dashboard-coordinador";
 
 type ClaveEstado = "completado" | "en_proceso" | "pendiente";
 
@@ -111,11 +114,17 @@ function nombreMostrar(t: string): string {
 export default async function DashboardPage() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const { data: perfil } = await supabase.from("perfiles").select("nombre_completo").eq("id", user!.id).single();
-  const { counts, totalFichas, draft, eventos } = await getData();
+  const { data: perfil } = await supabase.from("perfiles").select("nombre_completo, rol").eq("id", user!.id).single();
 
   const nombreCompleto = (perfil?.nombre_completo ?? "").trim();
   const nombre = nombreCompleto ? nombreMostrar(nombreCompleto) : (user?.email?.split("@")[0] ?? "abogado");
+
+  // Dashboard por rol
+  if (perfil?.rol === ROL.SUPERADMIN) return <DashboardPropietario nombre={nombre} />;
+  if (perfil?.rol === ROL.COORDINADOR) return <DashboardCoordinador nombre={nombre} userId={user!.id} />;
+
+  // Sustanciador (y roles restantes): dashboard actual
+  const { counts, totalFichas, draft, eventos } = await getData();
   const hoy = new Date().toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" });
   const pct = (n: number) => (counts.total ? Math.round((n / counts.total) * 100) : 0);
 
