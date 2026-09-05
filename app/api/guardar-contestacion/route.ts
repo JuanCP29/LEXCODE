@@ -61,6 +61,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ id: data.id });
   } catch (e) {
     console.error("guardar-contestacion:", e);
-    return NextResponse.json({ error: e instanceof Error ? e.message : "Error interno" }, { status: 500 });
+    // Los errores de Supabase (PostgrestError) NO son instancias de Error: extraemos
+    // su mensaje/código explícitamente para no ocultarlos como "Error interno".
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const err = e as any;
+    let detalle = "";
+    if (err && (err.message || err.code)) detalle = [err.code, err.message].filter(Boolean).join(" · ");
+    else if (e instanceof Error) detalle = e.message;
+    else { try { detalle = JSON.stringify(e, Object.getOwnPropertyNames(err ?? {})); } catch { detalle = String(e); } }
+    return NextResponse.json({ error: `No se pudo guardar: ${detalle || "error desconocido"}` }, { status: 500 });
   }
 }

@@ -23,15 +23,26 @@ create index if not exists contestaciones_caso_id_idx on public.contestaciones(c
 
 alter table public.contestaciones enable row level security;
 
+-- Acceso por rol/organización (ver db/migrations/007_contestaciones_rls_asignado.sql).
 drop policy if exists "Admin total contestaciones" on public.contestaciones;
-create policy "Admin total contestaciones" on public.contestaciones for all
-  using (public.get_user_rol() = 'admin')
-  with check (public.get_user_rol() = 'admin');
-
 drop policy if exists "Abogado gestiona contestaciones de sus casos" on public.contestaciones;
-create policy "Abogado gestiona contestaciones de sus casos" on public.contestaciones for all
-  using (exists (select 1 from public.casos c where c.id = caso_id and c.abogado_id = auth.uid()))
-  with check (exists (select 1 from public.casos c where c.id = caso_id and c.abogado_id = auth.uid()));
+
+drop policy if exists "Propietario total contestaciones" on public.contestaciones;
+create policy "Propietario total contestaciones" on public.contestaciones for all
+  using (public.get_user_rol_real() = 'superadmin')
+  with check (public.get_user_rol_real() = 'superadmin');
+
+drop policy if exists "Coordinador contestaciones de su org" on public.contestaciones;
+create policy "Coordinador contestaciones de su org" on public.contestaciones for all
+  using (public.get_user_rol_real() = 'coordinador'
+         and exists (select 1 from public.casos c where c.id = caso_id and c.org_id = public.get_user_org()))
+  with check (public.get_user_rol_real() = 'coordinador'
+         and exists (select 1 from public.casos c where c.id = caso_id and c.org_id = public.get_user_org()));
+
+drop policy if exists "Sustanciador contestaciones de casos asignados" on public.contestaciones;
+create policy "Sustanciador contestaciones de casos asignados" on public.contestaciones for all
+  using (exists (select 1 from public.casos c where c.id = caso_id and c.asignado_a = auth.uid()))
+  with check (exists (select 1 from public.casos c where c.id = caso_id and c.asignado_a = auth.uid()));
 
 drop policy if exists "Revisor lee contestaciones" on public.contestaciones;
 create policy "Revisor lee contestaciones" on public.contestaciones for select
