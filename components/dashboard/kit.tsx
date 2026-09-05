@@ -22,14 +22,14 @@ export function StatCard({ label, value, icon: Icon, tint, sub, href }: {
       <span className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tint}1f` }}>
         <Icon className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: tint }} />
       </span>
-      <div className="min-w-0">
+      <div className="min-w-0 w-full sm:w-auto">
         <p className="text-xs text-muted-foreground leading-tight break-words">{label}</p>
         <p className="text-2xl sm:text-3xl font-bold text-foreground tabular-nums leading-tight mt-0.5">{value}</p>
         {sub && <p className="text-[11px] text-muted-foreground mt-0.5 break-words">{sub}</p>}
       </div>
     </>
   );
-  const cls = "bg-card rounded-xl border border-border card-shadow-md px-4 py-4 sm:px-5 sm:py-5 flex items-center gap-3 sm:gap-4 transition-all";
+  const cls = "bg-card rounded-xl border border-border card-shadow-md px-4 py-4 sm:px-5 sm:py-5 flex flex-col items-start gap-2.5 sm:flex-row sm:items-center sm:gap-4 transition-all";
   return href
     ? <Link href={href} className={`${cls} hover:-translate-y-0.5 hover:border-brand/30`}>{inner}</Link>
     : <div className={cls}>{inner}</div>;
