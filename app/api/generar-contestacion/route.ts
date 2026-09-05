@@ -3,7 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
-export const maxDuration = 60;
+export const maxDuration = 300; // la "defensa" puede tardar ~1 min; damos margen (se limita al plan de Vercel)
 export const dynamic = "force-dynamic";
 
 function createSupabaseServer() {
@@ -46,6 +46,7 @@ conste; no inventes cifras ni normas. Resalta EN NEGRITA con doble asterisco (**
 };
 
 export async function POST(request: NextRequest) {
+  let seccion: Seccion | undefined;
   try {
     const supabase = createSupabaseServer();
     const { data: { user } } = await supabase.auth.getUser();
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json() as { caso_id?: string; seccion?: Seccion };
     const { caso_id } = body;
-    const seccion = body.seccion;
+    seccion = body.seccion;
     if (!caso_id || !seccion || !REGLAS[seccion]) {
       return NextResponse.json({ error: "caso_id y seccion (hechos|pretensiones|defensa) son obligatorios" }, { status: 400 });
     }
@@ -100,6 +101,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ texto: texto || null });
   } catch (e) {
     console.error("generar-contestacion:", e);
-    return NextResponse.json({ error: e instanceof Error ? e.message : "Error interno" }, { status: 500 });
+    // Detalle accionable (status de la API, o serialización si no es Error) en vez de "Error interno".
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const err = e as any;
+    let detalle = "";
+    if (err && typeof err.status === "number") detalle = `IA HTTP ${err.status}: ${err.message ?? ""}`.trim();
+    else if (e instanceof Error) detalle = err.message || err.name || "";
+    else { try { detalle = JSON.stringify(e, Object.getOwnPropertyNames(err ?? {})); } catch { detalle = String(e); } }
+    const donde = seccion ? ` (${seccion})` : "";
+    return NextResponse.json({ error: `No se pudo generar${donde}: ${detalle || "error desconocido"}` }, { status: 500 });
   }
 }

@@ -84,11 +84,21 @@ export function EditorContestacion({ casoId, inicial }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ caso_id: casoId, seccion }),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Error al generar");
-      if (json.texto) {
-        setTexto((t) => ({ ...t, [col]: json.texto }));
-        setSugeridos((s) => ({ ...s, [col]: json.texto }));
+      // Si el servidor corta la función (timeout), la respuesta no es JSON.
+      let json: { error?: string; texto?: string } = {};
+      try { json = await res.json(); } catch { json = {}; }
+      if (!res.ok) {
+        throw new Error(
+          json.error ??
+          (res.status === 504 || res.status === 502
+            ? "La generación tardó demasiado y el servidor la interrumpió. Intenta de nuevo."
+            : `El servidor respondió ${res.status}.`)
+        );
+      }
+      const texto = json.texto;
+      if (texto) {
+        setTexto((t) => ({ ...t, [col]: texto }));
+        setSugeridos((s) => ({ ...s, [col]: texto }));
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al generar");
