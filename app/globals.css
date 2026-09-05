@@ -153,6 +153,9 @@
       var(--font-ui), "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     font-feature-settings: "cv02" 1, "cv03" 1, "cv04" 1, "calt" 1;
     letter-spacing: -0.011em;
+    /* Red de seguridad móvil: nada desborda horizontalmente la pantalla.
+       Los contenedores de tablas conservan su propio scroll interno. */
+    overflow-x: hidden;
   }
 
   /* Scrollbars finos estilo macOS */

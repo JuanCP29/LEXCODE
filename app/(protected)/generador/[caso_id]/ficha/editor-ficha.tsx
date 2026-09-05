@@ -189,8 +189,8 @@ export function EditorFicha({ caso, fichaInicial }: EditorFichaProps) {
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)] -m-6 overflow-hidden">
-      {/* Sidebar de 19 secciones */}
-      <aside className="w-56 shrink-0 border-r border-border bg-muted/20 overflow-y-auto flex flex-col">
+      {/* Sidebar de 19 secciones (oculto en móvil; ver navegación horizontal abajo) */}
+      <aside className="hidden md:flex w-56 shrink-0 border-r border-border bg-muted/20 overflow-y-auto flex-col">
         <div className="px-3 pt-4 pb-2">
           <Link href={`/generador/${caso.id}/params`}>
             <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mb-3">
@@ -233,7 +233,7 @@ export function EditorFicha({ caso, fichaInicial }: EditorFichaProps) {
       {/* Área principal */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Topbar del editor */}
-        <div className="shrink-0 border-b border-border px-6 py-3 flex items-center justify-between bg-background">
+        <div className="shrink-0 border-b border-border px-4 md:px-6 py-3 flex flex-wrap items-center justify-between gap-2 bg-background">
           <div className="flex items-center gap-3">
             <div>
               <p className="text-sm font-semibold font-mono">{caso.radicado}</p>
@@ -249,7 +249,7 @@ export function EditorFicha({ caso, fichaInicial }: EditorFichaProps) {
               {estadoFicha === "exportada" ? "Exportada" : estaAprobada ? "Aprobada" : estadoFicha === "en_revision" ? "En revisión" : "Borrador"}
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {mensajeGuardado && (
               <span className="text-xs text-green-600 font-medium">{mensajeGuardado}</span>
             )}
@@ -305,9 +305,29 @@ export function EditorFicha({ caso, fichaInicial }: EditorFichaProps) {
           </div>
         </div>
 
+        {/* Navegación de secciones — solo móvil (el panel lateral se oculta) */}
+        <div className="md:hidden shrink-0 border-b border-border bg-muted/10 overflow-x-auto flex gap-1.5 px-3 py-2">
+          {SECCIONES_VISIBLES.map((s) => {
+            const activa = seccionActiva === s.key;
+            return (
+              <button
+                key={s.key}
+                onClick={() => scrollASeccion(s.key)}
+                className={cn(
+                  "shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs whitespace-nowrap transition-colors",
+                  activa ? "bg-accent text-foreground font-medium" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <span className={cn("w-1.5 h-1.5 rounded-full", secciones[s.key] ? "bg-green-500" : "bg-border")} />
+                {s.numero}
+              </button>
+            );
+          })}
+        </div>
+
         {/* Nombre de archivo editable */}
         {fichaId && (
-          <div className="shrink-0 px-6 py-2 border-b border-border bg-muted/10 flex items-center gap-2">
+          <div className="shrink-0 px-4 md:px-6 py-2 border-b border-border bg-muted/10 flex items-center gap-2">
             <label className="text-xs text-muted-foreground shrink-0">Nombre de archivo</label>
             <input
               value={nombreArchivo}
@@ -327,7 +347,7 @@ export function EditorFicha({ caso, fichaInicial }: EditorFichaProps) {
         )}
 
         {/* Secciones scrollables */}
-        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
+        <div className="flex-1 overflow-y-auto px-4 md:px-6 py-6 space-y-6">
           {SECCIONES_VISIBLES.map((s) => {
             const valorActual = secciones[s.key] ||
               (s.tipo === "DEFAULT" ? generarTextoDefault(s.key, optsDefault) : "");
