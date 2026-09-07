@@ -49,10 +49,14 @@ function decodificar(s: string): string {
 }
 
 // Convierte el contenido inline de un párrafo (con <strong>/<em>/<u>/<br>) en runs.
+// También tolera <p> anidados: TipTap envuelve el contenido de cada celda de tabla en <p>,
+// de modo que parsearInline recibe "<p>texto</p>". Sin reconocer <p>, la regex partía el texto
+// y dejaba "p>texto/p>" literal en el PDF/DOCX. Aquí <p>/</p> se tratan como límites de bloque
+// (salto de línea entre párrafos), no como texto.
 function parsearInline(html: string): Run[] {
   const runs: Run[] = [];
   let bold = 0, italic = 0, underline = 0;
-  const re = /<(\/?)(strong|b|em|i|u|br)\b[^>]*>|([^<]+)/gi;
+  const re = /<(\/?)(strong|b|em|i|u|br|p|div)\b[^>]*>|([^<]+)/gi;
   let m: RegExpExecArray | null;
   while ((m = re.exec(html))) {
     if (m[3] != null) {
@@ -63,6 +67,12 @@ function parsearInline(html: string): Run[] {
     const cierre = m[1] === "/";
     const tag = (m[2] || "").toLowerCase();
     if (tag === "br") { runs.push({ text: "\n" }); continue; }
+    if (tag === "p" || tag === "div") {
+      // Al ABRIR un nuevo bloque tras contenido previo, inserta un salto (separa párrafos dentro
+      // de una celda). Ignora la etiqueta en sí para que no aparezca como texto.
+      if (!cierre && runs.some((r) => r.text.trim() !== "")) runs.push({ text: "\n" });
+      continue;
+    }
     const d = cierre ? -1 : 1;
     if (tag === "strong" || tag === "b") bold += d;
     else if (tag === "em" || tag === "i") italic += d;
