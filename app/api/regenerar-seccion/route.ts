@@ -8,11 +8,10 @@ import { MATRIZ_SECCIONES } from "@/lib/ficha/matriz-secciones";
 import { construirPromptConsideraciones } from "@/lib/ficha/metodo-consideraciones";
 import { armarExpedienteConsideraciones } from "@/lib/ficha/expediente";
 
-// Consideraciones usa Opus 5 (razonamiento) y puede tardar; damos margen (aplica en plan Pro).
 export const maxDuration = 300;
-// Modelo de la vía especializada de Consideraciones. Si el plan/llave no habilita Opus 5,
-// cambiar aquí a "claude-sonnet-5" o "claude-sonnet-4-6".
-const MODELO_CONSIDERACIONES = "claude-opus-5";
+// Modelo de la vía especializada de Consideraciones. En plan Hobby (60s) se usa Sonnet, que cabe
+// en el tiempo; con plan Pro puede subirse a "claude-opus-5" para máxima calidad (ver max_tokens abajo).
+const MODELO_CONSIDERACIONES = "claude-sonnet-4-6";
 
 function createSupabaseServer() {
   const cookieStore = cookies();
@@ -192,14 +191,15 @@ export async function POST(request: NextRequest) {
         hay_fallo: ficha.hay_fallo,
         sintesis_fallo: ficha.sintesis_fallo,
         conciliable: ficha.conciliable,
+        fewShot: false, // aligerado para caber en 60s (Hobby); con Pro+Opus 5 puede activarse
       });
 
       const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
-      // Streaming para no exceder el timeout HTTP del SDK con salida larga + razonamiento.
+      // Streaming para no exceder el timeout HTTP del SDK con salida larga.
       const stream = anthropic.messages.stream({
         model: MODELO_CONSIDERACIONES,
-        // Una Consideraciones completa (con subsunción y accesorias) supera 8k; damos margen.
-        max_tokens: 16000,
+        // Calibrado para caber en ~60s (Hobby). Con Pro+Opus 5 puede subirse a 12000-16000.
+        max_tokens: 4000,
         messages: [{ role: "user", content: promptCons }],
       });
       const msg = await stream.finalMessage();

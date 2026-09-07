@@ -155,6 +155,8 @@ export type FuentesConsideraciones = {
   jurisprudencia?: string;
   /** 0 = sección completa (default) · 1 = pasos 1–5 · 2 = pasos 6–9 (para el split del cliente). */
   parte?: 0 | 1 | 2;
+  /** Incluir ejemplos few-shot (default true en la completa). Poner false para aligerar en planes con 60s. */
+  fewShot?: boolean;
 };
 
 /**
@@ -169,7 +171,7 @@ export function construirPromptConsideraciones(f: FuentesConsideraciones): strin
   // planes con límite de 60s) se omite: el método por sí solo ya produce la estructura de 9 pasos,
   // y así cada parte cabe en el tiempo disponible.
   const fewshot =
-    parte !== 0
+    parte !== 0 || f.fewShot === false
       ? ""
       : [...EJEMPLOS_CONSIDERACIONES]
           .sort((a, b) => (a.postura === postura ? -1 : b.postura === postura ? 1 : 0))
