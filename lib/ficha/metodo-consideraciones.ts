@@ -52,16 +52,25 @@ Sigue este MÉTODO (adáptalo a la pretensión; omite un paso solo si no hay fue
    línea con la recomendación de NO conciliar.
 
 ESTILO: jurídico institucional colombiano, tercera persona ("la entidad que represento", "mi representada"), cita textual
-entre comillas, resalta en NEGRITA (doble asterisco **dato**) los datos clave (semanas, %, montos, resoluciones, fechas,
-normas, sentencias).
+entre comillas.
 
-FORMATO: responde SOLO el cuerpo de las CONSIDERACIONES, en PROSA JURÍDICA CONTINUA, EXACTAMENTE como los ejemplos de
-referencia. Los 9 pasos son una GUÍA INTERNA de razonamiento, NO títulos: el texto debe fluir de un tema al siguiente sin
-señalizarlos. PROHIBIDO: encabezados o numeración de pasos (nada de "I.", "II.", "1.", "PASO 1", "DELIMITACIÓN:", etc.),
-markdown de títulos (nada de "#", "##"), y tablas. NO agregues un encabezado de documento ni repitas los datos del proceso
-(radicado, despacho, partes) como ficha inicial. La ÚNICA excepción de formato es la NOTA DE TRAZABILIDAD DE CITAS del final.
-Conserva la NEGRITA (**dato**) en los datos clave. Si detectas datos contradictorios o faltantes en las fuentes, deja
-constancia expresa de ello en el propio texto (sin inventar el dato) para que el abogado lo verifique.`;
+FORMATO DE SALIDA — HTML (IMPORTANTE): responde SOLO el cuerpo de las CONSIDERACIONES, en HTML válido y simple, con el mismo
+estilo de PROSA CONTINUA de los ejemplos de referencia. Reglas:
+- Cada párrafo va envuelto en <p>…</p>. Prosa jurídica continua: los 9 pasos son GUÍA INTERNA de razonamiento, NO títulos;
+  el texto fluye de un tema al siguiente sin señalizarlos. PROHIBIDO: encabezados o numeración de pasos (nada de "I.", "II.",
+  "1.", "PASO 1", "DELIMITACIÓN:"), etiquetas de título HTML (<h1>…<h6>) y markdown (#, ##).
+- Resalta los datos clave con <strong>dato</strong> (semanas, %, montos, resoluciones, fechas, normas, sentencias).
+- DEMOSTRACIONES CUANTITATIVAS (tasa de reemplazo, IBL, liquidación, comparación de mesadas): cuando refuercen la defensa y
+  se deriven de datos que CONSTAN en las fuentes, preséntalas como lo hacen las contestaciones oro, eligiendo el formato:
+    · COMPARACIÓN de varias magnitudes en columnas (p. ej. IBL 1 vs IBL 2 vs mesada) → una <table> HTML BREVE con una fila
+      de encabezado (<tr><th>…</th></tr>) y las filas de datos (<tr><td>…</td></tr>).
+    · CÁLCULO SECUENCIAL (p. ej. tasa de reemplazo: semanas adicionales → bloques de 50 → 1.5%) → un <p> con las líneas del
+      cálculo separadas por <br> (ej.: 1959 − 1300 = 659<br>659 / 50 = 13.18<br>13.18 × 1.5% = 19.77%<br>…).
+  NUNCA inventes cifras: toda cantidad debe constar o derivarse aritméticamente de las fuentes.
+- NO agregues encabezado de documento ni repitas los datos del proceso (radicado, despacho, partes) como ficha inicial.
+- Cierra con la NOTA DE TRAZABILIDAD DE CITAS en <p> (una sentencia por línea, con <br>).
+- Si detectas datos contradictorios o faltantes en las fuentes, déjalo constando en el propio texto (sin inventar el dato)
+  para que el abogado lo verifique.`;
 
 /** Bloque de pretensiones accesorias — casi plantilla; fija la doctrina correcta (resarcitoria). */
 export const BLOQUE_ACCESORIAS = `PRETENSIONES ACCESORIAS (pronúnciate solo sobre las que pida la demanda):
@@ -211,7 +220,7 @@ Vas a redactar la sección CONSIDERACIONES de la Ficha de Conciliación (formato
 
 ${instruccionConsideraciones(postura)}
 
-${fewshot ? `═══════════ EJEMPLOS DE REFERENCIA (imita ESTILO y ESTRUCTURA; NO copies sus hechos, cifras ni sentencias) ═══════════\n\n${fewshot}\n\n` : ""}═══════════ CASO A RESOLVER — FUENTES AUTORIZADAS ═══════════
+${fewshot ? `═══════════ EJEMPLOS DE REFERENCIA (imita ESTILO y ESTRUCTURA de prosa; NO copies sus hechos, cifras ni sentencias; los ejemplos se muestran como texto, pero TU salida debe ir en HTML según el FORMATO indicado) ═══════════\n\n${fewshot}\n\n` : ""}═══════════ CASO A RESOLVER — FUENTES AUTORIZADAS ═══════════
 
 PARÁMETROS:
 - Radicado: ${f.radicado}
@@ -226,5 +235,5 @@ ${bloques.join("\n\n")}
 
 ═══════════ TU TAREA ═══════════
 ${tarea}
-Usa SOLO las fuentes autorizadas de arriba. Responde en prosa jurídica, sin JSON, sin encabezado de documento ni tablas: SOLO el texto de las Consideraciones${parte === 1 ? " (pasos 1–5)" : parte === 2 ? " (pasos 6–9)" : ""}.`;
+Usa SOLO las fuentes autorizadas de arriba. Responde en HTML (párrafos <p>, sin JSON, sin cercos de código, sin encabezado de documento), siguiendo el FORMATO DE SALIDA: SOLO el cuerpo de las Consideraciones${parte === 1 ? " (pasos 1–5)" : parte === 2 ? " (pasos 6–9)" : ""}.`;
 }
