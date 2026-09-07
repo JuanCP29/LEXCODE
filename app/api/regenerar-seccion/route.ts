@@ -5,6 +5,13 @@ import Anthropic from "@anthropic-ai/sdk";
 import { extraerTextoPDF } from "@/lib/ia/extraer-pdf";
 import { SECCIONES } from "@/lib/ia/secciones";
 import { MATRIZ_SECCIONES } from "@/lib/ficha/matriz-secciones";
+import { construirPromptConsideraciones } from "@/lib/ficha/metodo-consideraciones";
+
+// Consideraciones usa Opus 5 (razonamiento) y puede tardar; damos margen (aplica en plan Pro).
+export const maxDuration = 300;
+// Modelo de la vía especializada de Consideraciones. Si el plan/llave no habilita Opus 5,
+// cambiar aquí a "claude-sonnet-5" o "claude-sonnet-4-6".
+const MODELO_CONSIDERACIONES = "claude-opus-5";
 
 function createSupabaseServer() {
   const cookieStore = cookies();
@@ -165,6 +172,47 @@ export async function POST(request: NextRequest) {
         const buffer = Buffer.from(await linData.arrayBuffer());
         textoLineamientos = await extraerTextoPDF(buffer);
       }
+    }
+
+    // ── 2b. Vía ESPECIALIZADA para CONSIDERACIONES (método + few-shot + Opus 5) ──
+    if (seccion_key === "sec_16_consideraciones") {
+      const promptCons = construirPromptConsideraciones({
+        radicado: caso.radicado,
+        nombre_demandante: caso.nombre_demandante,
+        pretension: caso.pretension,
+        clase_pretension: caso.clase_pretension,
+        jurisdiccion: caso.jurisdiccion,
+        textoDemanda,
+        textoLineamientos,
+        pretende_intereses: ficha.pretende_intereses,
+        pretende_indexacion: ficha.pretende_indexacion,
+        hay_fallo: ficha.hay_fallo,
+        sintesis_fallo: ficha.sintesis_fallo,
+        conciliable: ficha.conciliable,
+      });
+
+      const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+      // Streaming para no exceder el timeout HTTP del SDK con salida larga + razonamiento.
+      const stream = anthropic.messages.stream({
+        model: MODELO_CONSIDERACIONES,
+        max_tokens: 8000,
+        messages: [{ role: "user", content: promptCons }],
+      });
+      const msg = await stream.finalMessage();
+      // Opus 5 razona por defecto: tomamos el bloque de texto (no el de "thinking").
+      const bloqueTexto = msg.content.find((b) => b.type === "text");
+      const contenido = (bloqueTexto && "text" in bloqueTexto ? bloqueTexto.text : "").trim();
+
+      if (!contenido) {
+        return NextResponse.json({ error: "La IA no devolvió texto para Consideraciones" }, { status: 502 });
+      }
+
+      await supabase
+        .from("fichas_conciliacion")
+        .update({ [seccion_key]: contenido })
+        .eq("id", ficha_id);
+
+      return NextResponse.json({ contenido, modelo: MODELO_CONSIDERACIONES, metodo: "consideraciones-v1" });
     }
 
     // ── 3. Prompt focalizado en una sola sección ──────────────────────────
