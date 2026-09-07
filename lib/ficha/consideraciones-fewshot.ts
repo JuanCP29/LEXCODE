@@ -68,4 +68,34 @@ En cuanto a los intereses moratorios del artículo 141 de la Ley 100 de 1993, no
 
 En consecuencia, no se encuentran acreditados, en esta etapa, los presupuestos para presumir la ineficacia del traslado, por lo que se recomienda continuar la defensa judicial y NO conciliar.`,
   },
+  {
+    etiqueta: "Intereses moratorios e indexación sobre retroactivo (vejez anticipada por invalidez) — improcedencia",
+    pretension: "invalidez / intereses",
+    postura: "negacion",
+    texto: `El problema se contrae a determinar si proceden intereses moratorios (art. 141 Ley 100/1993) o indexación sobre el retroactivo de una prestación (pensión de vejez anticipada por invalidez) que ya fue reconocida y pagada.
+
+Mediante Resolución SUB-XXXXX del [fecha], COLPENSIONES reconoció la prestación con disfrute a partir del [fecha] y liquidó el retroactivo causado, disponiendo su pago, que se efectuó el [fecha]. Entre la radicación de la solicitud y el acto de reconocimiento transcurrieron aproximadamente [N] días.
+
+La Corte Constitucional (Sentencia T-588 de 2003) diferenció los términos aplicables: cuatro (4) meses para resolver la solicitud de reconocimiento y seis (6) meses para materializar el pago. En el caso, COLPENSIONES resolvió dentro del primer término y pagó el retroactivo dentro del segundo, por lo que no se advierte conducta omisiva ni dilatoria.
+
+Los intereses moratorios del artículo 141 tienen naturaleza resarcitoria y suponen un retardo jurídicamente imputable a la administradora. Que el retroactivo comprenda períodos anteriores a la fecha de reconocimiento no configura, por sí solo, mora: se trata de un retroactivo derivado de una prestación con fecha de disfrute anterior, definida administrativamente dentro de los términos legales; no hay retardo injustificado.
+
+La indexación, dirigida a preservar el poder adquisitivo, tampoco procede al haberse pagado las sumas de forma íntegra y oportuna; además, la jurisprudencia reitera la incompatibilidad entre intereses moratorios e indexación.
+
+Corolario, COLPENSIONES actuó conforme a la ley; no existe saldo insoluto ni mora que dé lugar a los conceptos reclamados.`,
+  },
+  {
+    etiqueta: "Reliquidación de pensión de vejez (IBL y tasa de reemplazo) — negación",
+    pretension: "reliquidación de vejez",
+    postura: "negacion",
+    texto: `La controversia consiste en establecer si procede reliquidar la pensión de vejez con un IBL y una tasa de reemplazo del 80%, conforme al artículo 34 de la Ley 100 de 1993 (modificado por el artículo 10 de la Ley 797 de 2003).
+
+El artículo 21 de la Ley 100 regula el IBL (promedio de los últimos diez años, salvo opción por toda la vida laboral con un mínimo de 1250 semanas). En el caso, el IBL más favorable resultó del promedio de los diez (10) años, por valor de $[X].
+
+El artículo 34 fija la fórmula r = 65,50 − 0,50 s (donde s = número de smlmv contenidos en el IBL). Efectuadas las operaciones, s = [X] y r = [Y]%. La norma permite incrementar la tasa un 1,5% por cada 50 semanas adicionales a las mínimas requeridas, pero ese incremento está sujeto a la misma fórmula decreciente y a un tope: el aumento máximo es del 15% (equivalente a 500 semanas adicionales), de modo que la tasa definitiva es [Y]% + 15% = [Z]%.
+
+En consecuencia, no es posible aplicar el 80% de manera indistinta: el tope del 80% solo corresponde a quien tenga tasa inicial del 65% y decrece según el nivel de ingresos. Respecto de la Sentencia SL3501-2022 invocada por el demandante, la Oficina Asesora de Asuntos Legales, mediante Memorando OAL-016 del 25 de enero de 2023, fijó la posición institucional de conservar la línea vigente. Así, la tasa aplicada por COLPENSIONES ([Z]%) se ajusta a la Ley 100 modificada por la Ley 797.
+
+Los intereses moratorios (art. 141) no proceden respecto de reajustes y reliquidaciones, y la indexación, por accesoria, sigue la suerte de la pretensión principal. En conclusión, la mesada se mantiene conforme a la resolución vigente; COLPENSIONES actuó conforme a derecho.`,
+  },
 ];

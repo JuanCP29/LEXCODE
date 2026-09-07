@@ -143,9 +143,10 @@ export function construirPromptConsideraciones(f: FuentesConsideraciones): strin
   const postura = inferirPostura(f.pretension, f.clase_pretension, f.textoDemanda);
 
   // Ejemplos: primero el de la misma postura, luego el resto (imitan estilo, no hechos).
-  const ejemplos = [...EJEMPLOS_CONSIDERACIONES].sort((a, b) =>
-    a.postura === postura ? -1 : b.postura === postura ? 1 : 0
-  );
+  // Se limita a 4 para acotar el costo por llamada sin perder cobertura de tipos.
+  const ejemplos = [...EJEMPLOS_CONSIDERACIONES]
+    .sort((a, b) => (a.postura === postura ? -1 : b.postura === postura ? 1 : 0))
+    .slice(0, 4);
   const fewshot = ejemplos
     .map(
       (e, i) =>
