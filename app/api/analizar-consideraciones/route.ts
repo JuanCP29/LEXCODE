@@ -31,9 +31,20 @@ const FOCO_RESOLUCION =
   "resoluciones/oficios: usa las demas actuaciones (p. ej. la SUB inicial) SOLO como antecedente imprescindible y en la medida en " +
   "que la resolucion objeto de analisis las cite.";
 
+// POSTURA: las Consideraciones son la DEFENSA de COLPENSIONES (nuestra representada, parte demandada).
+const POSTURA_DEFENSA =
+  "POSTURA (OBLIGATORIA): redactas la DEFENSA JURIDICA de COLPENSIONES, que es la parte DEMANDADA y nuestra representada. " +
+  "El objetivo es sustentar por que su actuacion se ajusto a derecho y por que el asunto NO es susceptible de conciliacion. " +
+  "NUNCA defiendas los intereses del demandante ni adoptes su tesis. Si un hecho, norma o precedente le favorece, NO lo acojas " +
+  "como conclusion: identificalo como un RIESGO a contrarrestar y DISTINGUELO (por que no aplica a este caso, por que la " +
+  "resolucion se ajusta a la ley, o porque la carga de la prueba recae en el demandante -art. 167 CGP- y el acto goza de " +
+  "presuncion de legalidad). La recomendacion, por regla general, es NO CONCILIAR y continuar la defensa judicial; solo si la " +
+  "actuacion de la entidad fue MANIFIESTAMENTE contraria a la ley se senalan los puntos concretos, sin abandonar la defensa.";
+
 // Reglas de la seccion CONSIDERACIONES (fuente exclusiva: resoluciones/oficios de Colpensiones).
 const REGLAS_CONSIDERACIONES = `Redacta UNICAMENTE la seccion CONSIDERACIONES de la Ficha de Conciliacion (campo unico "consideraciones").
 ${FOCO_RESOLUCION}
+${POSTURA_DEFENSA}
 Tercera persona, formal y
 tecnico, de extension MODERADA y enfocada (aprox. 4 a 7 parrafos; se conciso, no divagues), con SUBTITULOS breves cuando ayude
 (p. ej. "MARCO NORMATIVO", "CALCULO DE SEMANAS Y TASA DE REEMPLAZO", "ANALISIS DEL CASO", "CONCLUSION Y POSTURA"). Usa UNICAMENTE
@@ -60,13 +71,14 @@ ESTRUCTURA:
         OBJETO DE ANALISIS. Para cada uno, busca coincidencia en el bloque "REPOSITORIO INSTITUCIONAL" (abajo) y APOYATE en su
         contenido para ROBUSTECER (transcribe/parafrasea lo pertinente), CITANDOLO entre parentesis (p. ej. «(Repositorio: Memorando OAL 016)»).
     (b) SOLO SI la resolucion NO menciona ningun precedente ni marco institucional, acude a la JURISPRUDENCIA identificada en la
-        Seccion 4 (bloque «JURISPRUDENCIA RELEVANTE IDENTIFICADA EN LA SECCION 4», si se incluye): elige la de MAYOR relevancia para
-        la pretension, analiza su ratio decidendi e incidencia en el riesgo, y —si coincide con un documento del repositorio— acude
-        nuevamente a el para darle mayor fuerza argumentativa.
+        Seccion 4 (bloque «JURISPRUDENCIA RELEVANTE IDENTIFICADA EN LA SECCION 4», si se incluye): usala EN CLAVE DE DEFENSA de
+        Colpensiones. Si esa jurisprudencia FAVORECE al demandante, NO la adoptes como tesis: trátala como un RIESGO a contrarrestar,
+        DISTINGUIENDOLA de los hechos del caso y explicando por que no aplica o por que la resolucion se ajusta a la ley.
     En ambos casos, usa el repositorio SOLO cuando coincida realmente; no lo uses para introducir temas ajenos al caso.
-(4) CONCLUSION Y POSTURA (OBLIGATORIA AL FINAL): fija la postura de Colpensiones y una RECOMENDACION clara: si la actuacion de la
-    entidad se ajusto a derecho, concluye que es "juridicamente viable continuar ejerciendo la defensa judicial y NO acceder a
-    formula conciliatoria"; si hay aspectos favorables al demandante o incertidumbre, senala los puntos a revisar o conciliar.
+(4) CONCLUSION Y POSTURA (OBLIGATORIA AL FINAL): fija la postura de defensa de Colpensiones. Por regla general concluye que es
+    "juridicamente viable continuar ejerciendo la defensa judicial y NO acceder a formula conciliatoria", sustentando por que la
+    actuacion de la entidad se ajusto a derecho y por que la carga de desvirtuar el acto recae en el demandante. SOLO si la actuacion
+    fue manifiestamente contraria a la ley (p. ej. un error aritmetico reconocido) senala expresamente ese punto concreto.
 
 Si NO hay resoluciones/oficios de Colpensiones en el paquete, NO construyas el marco con la demanda: limita la seccion al encuadre
 y la postura con lo que conste en actuaciones de la entidad; si no hay base suficiente, devuelve null.
@@ -81,6 +93,7 @@ exactamente la palabra: null`;
 // Se divide en dos partes que el cliente pide en paralelo y concatena.
 const REGLAS_PARTE1 = `Redacta la PRIMERA PARTE de la seccion CONSIDERACIONES de la Ficha de Conciliacion.
 ${FOCO_RESOLUCION}
+${POSTURA_DEFENSA}
 Tercera persona, formal y tecnico. FUENTE EXCLUSIVA: solo las resoluciones/oficios; NO incorpores informacion del TRASLADO/demanda.
 Incluye, con SUBTITULOS breves:
 (1) ENCUADRE + RAZONES: por que Colpensiones nego o reconocio parcialmente (motivacion, IBL, tasa de reemplazo, semanas, fechas de
@@ -93,7 +106,7 @@ RESALTA EN NEGRITA con doble asterisco (**dato**) los SUBTITULOS y los datos cla
 Comillas angulares « ». Responde SOLO el texto, sin JSON ni encabezados. Si no hay resoluciones/oficios, responde: null`;
 
 const REGLAS_PARTE2 = `Redacta la SEGUNDA PARTE de la seccion CONSIDERACIONES de la Ficha de Conciliacion. Ya se redactaron el encuadre y el
-marco normativo; NO los repitas. ${FOCO_RESOLUCION} Tercera
+marco normativo; NO los repitas. ${FOCO_RESOLUCION} ${POSTURA_DEFENSA} Tercera
 persona, formal y tecnico. FUENTE EXCLUSIVA: solo resoluciones/oficios (y el repositorio institucional si coincide); NO el
 TRASLADO/demanda. Incluye, con SUBTITULOS breves:
 (3) MARCO JURISPRUDENCIAL E INSTITUCIONAL, con esta PRIORIDAD:
@@ -102,11 +115,13 @@ TRASLADO/demanda. Incluye, con SUBTITULOS breves:
         OBJETO DE ANALISIS. Para cada uno, busca coincidencia en el bloque "REPOSITORIO INSTITUCIONAL" (abajo) y APOYATE en su
         contenido para robustecer, CITANDOLO entre parentesis (p. ej. «(Repositorio: Memorando OAL 016)»).
     (b) SOLO SI la resolucion NO menciona ningun precedente ni marco institucional, acude a la JURISPRUDENCIA identificada en la
-        Seccion 4 (bloque «JURISPRUDENCIA RELEVANTE IDENTIFICADA EN LA SECCION 4», si se incluye): elige la de MAYOR relevancia para
-        la pretension, analiza su ratio decidendi e incidencia en el riesgo, y —si coincide con un documento del repositorio— apoyate
-        en el para darle mayor fuerza argumentativa.
-(4) CONCLUSION Y POSTURA (OBLIGATORIA AL FINAL): postura de Colpensiones + recomendacion clara (si la actuacion se ajusto a derecho,
-    "viable continuar la defensa judicial y NO acceder a formula conciliatoria"; si hay dudas, los puntos a revisar o conciliar).
+        Seccion 4 (bloque «JURISPRUDENCIA RELEVANTE IDENTIFICADA EN LA SECCION 4», si se incluye) y usala EN CLAVE DE DEFENSA. Si esa
+        jurisprudencia FAVORECE al demandante, NO la adoptes como tesis: trátala como RIESGO a contrarrestar, DISTINGUIENDOLA de los
+        hechos del caso; si coincide con el repositorio, apoyate en el para reforzar la posicion de la entidad.
+(4) CONCLUSION Y POSTURA (OBLIGATORIA AL FINAL): postura de defensa de Colpensiones. Por regla general "es juridicamente viable
+    continuar ejerciendo la defensa judicial y NO acceder a formula conciliatoria", sustentando por que la actuacion se ajusto a
+    derecho y por que la carga de desvirtuar el acto recae en el demandante. SOLO si la actuacion fue manifiestamente contraria a la
+    ley senala ese punto concreto, sin abandonar la defensa.
 En (3) se CONCISO (resume la ratio de cada sentencia en 1-2 frases; no transcribas en exceso) para RESERVAR espacio: la (4)
 CONCLUSION Y POSTURA es obligatoria y debe quedar COMPLETA, nunca cortada. RESALTA EN NEGRITA con doble asterisco (**dato**) los
 SUBTITULOS y los datos clave (semanas, %, montos, resoluciones, fechas, nombres).
