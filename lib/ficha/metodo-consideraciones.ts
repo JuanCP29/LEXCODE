@@ -171,7 +171,7 @@ export function construirPromptConsideraciones(f: FuentesConsideraciones): strin
       ? ""
       : [...EJEMPLOS_CONSIDERACIONES]
           .sort((a, b) => (a.postura === postura ? -1 : b.postura === postura ? 1 : 0))
-          .slice(0, 3)
+          .slice(0, parte === 2 ? 2 : 3) // la parte 2 lleva jurisprudencia+repositorio: menos ejemplos para no exceder tiempo
           .map((e, i) => `───── EJEMPLO ${i + 1} · ${e.etiqueta} (postura: ${e.postura}) ─────\n${e.texto}`)
           .join("\n\n");
 

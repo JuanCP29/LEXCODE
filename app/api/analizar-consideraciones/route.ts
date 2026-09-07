@@ -7,7 +7,8 @@ import { combinarPDFsBase64 } from "@/lib/ia/combinar-pdfs";
 import { buscarCoincidenciasRepositorio, construirFuentesRepositorio } from "@/lib/ia/repositorio-match";
 import { construirPromptConsideraciones } from "@/lib/ficha/metodo-consideraciones";
 
-export const maxDuration = 60;
+// El motor unificado (metodo + few-shot + repositorio) es mas pesado; damos margen (plan Pro).
+export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
 function createSupabaseServer() {
