@@ -6,6 +6,7 @@ import { extraerTextoPDF } from "@/lib/ia/extraer-pdf";
 import { SECCIONES } from "@/lib/ia/secciones";
 import { MATRIZ_SECCIONES } from "@/lib/ficha/matriz-secciones";
 import { construirPromptConsideraciones } from "@/lib/ficha/metodo-consideraciones";
+import { armarExpedienteConsideraciones } from "@/lib/ficha/expediente";
 
 // Consideraciones usa Opus 5 (razonamiento) y puede tardar; damos margen (aplica en plan Pro).
 export const maxDuration = 300;
@@ -176,13 +177,15 @@ export async function POST(request: NextRequest) {
 
     // ── 2b. Vía ESPECIALIZADA para CONSIDERACIONES (método + few-shot + Opus 5) ──
     if (seccion_key === "sec_16_consideraciones") {
+      // Expediente COMPLETO (todos los documentos OCR-eados + actos), no solo texto_expediente.
+      const expediente = await armarExpedienteConsideraciones(supabase, caso_id, textoDemanda);
       const promptCons = construirPromptConsideraciones({
         radicado: caso.radicado,
         nombre_demandante: caso.nombre_demandante,
         pretension: caso.pretension,
         clase_pretension: caso.clase_pretension,
         jurisdiccion: caso.jurisdiccion,
-        textoDemanda,
+        textoDemanda: expediente,
         textoLineamientos,
         pretende_intereses: ficha.pretende_intereses,
         pretende_indexacion: ficha.pretende_indexacion,

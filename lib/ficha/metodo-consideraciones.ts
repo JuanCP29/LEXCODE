@@ -191,8 +191,8 @@ PARÁMETROS:
 - Hay fallo de primera instancia: ${f.hay_fallo ? "Sí" : "No"}${f.hay_fallo && f.sintesis_fallo ? `\n- Síntesis del fallo: ${f.sintesis_fallo}` : ""}
 - Postura del abogado sobre conciliar: ${f.conciliable == null ? "No definida" : f.conciliable ? "Conciliable" : "No conciliable"}
 
-TEXTO DE LA DEMANDA / EXPEDIENTE:
-${f.textoDemanda?.trim() ? f.textoDemanda.slice(0, 45000) : "No se proporcionó texto del expediente."}
+EXPEDIENTE DEL CASO (documentos procesados: traslado, resoluciones, historia laboral, anexos):
+${f.textoDemanda?.trim() ? f.textoDemanda.slice(0, 120000) : "No se proporcionó texto del expediente."}
 
 LINEAMIENTOS / DIRECTRICES DEL CASO:
 ${f.textoLineamientos?.trim() ? f.textoLineamientos.slice(0, 25000) : "No se proporcionaron lineamientos."}
