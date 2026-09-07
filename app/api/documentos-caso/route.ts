@@ -3,8 +3,10 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { extraerTextoPDF } from "@/lib/ia/extraer-pdf";
+import { transcribirPDFVision } from "@/lib/ia/ocr-claude";
 
-export const maxDuration = 60;
+// El OCR con visión de documentos escaneados de varias páginas puede tardar; margen (plan Pro).
+export const maxDuration = 300;
 export const runtime = "nodejs";
 
 const TIPOS_VALIDOS = ["traslado_demanda", "acto_administrativo", "historia_laboral", "anexo"];
@@ -173,11 +175,24 @@ async function registrarDocumento(request: NextRequest) {
         .eq("id", doc.id);
     } else {
       try {
-        const texto = await extraerTextoPDF(buffer);
+        // 1) Capa de texto nativa (PDF digital).
+        let texto = await extraerTextoPDF(buffer);
+        let metodo = "texto";
+
+        // 2) Si viene escaneado (sin texto), OCR con visión de Claude.
         if (!texto || texto.length < 50) {
-          // PDF escaneado sin capa de texto
+          try {
+            const textoOCR = await transcribirPDFVision(buffer, "application/pdf");
+            if (textoOCR && textoOCR.length >= 50) { texto = textoOCR; metodo = "ocr"; }
+          } catch (e) {
+            console.error("OCR visión:", e);
+          }
+        }
+
+        if (!texto || texto.length < 50) {
+          // Sigue ilegible (o excede el tamaño admitido para OCR).
           estadoFinal = "error";
-          advertencia = "El PDF no contiene texto extraíble (posible documento escaneado). Requiere transcripción manual.";
+          advertencia = "El PDF no contiene texto extraíble y el OCR no pudo procesarlo (posible archivo muy grande o ilegible). Requiere revisión manual.";
           await supabase.from("documentos_caso")
             .update({ estado_procesamiento: "error", error_procesamiento: advertencia })
             .eq("id", doc.id);
@@ -186,8 +201,9 @@ async function registrarDocumento(request: NextRequest) {
           await supabase.from("documentos_caso")
             .update({ estado_procesamiento: "ok", texto_extraido: texto })
             .eq("id", doc.id);
+          if (metodo === "ocr") advertencia = "El documento estaba escaneado; se transcribió automáticamente por OCR. Verifica datos sensibles antes de usarlo.";
 
-          // 4. Acto administrativo → extracción estructurada con Claude
+          // Acto administrativo → extracción estructurada con Claude
           if (tipoDocumento === "acto_administrativo") {
             try {
               const datos = await extraerDatosActo(texto);
