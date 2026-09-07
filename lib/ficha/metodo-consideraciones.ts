@@ -78,6 +78,15 @@ const TONO: Record<PosturaColpensiones, string> = {
     "afirmaciones de la demanda y, cuando aplique, que la responsabilidad recae en el tercero; aun así, concluye NO conciliar.",
 };
 
+/** Control de alucinación en citas jurisprudenciales — el punto de mayor riesgo. */
+export const REGLA_CITAS = `CITAS JURISPRUDENCIALES (control de alucinación — CRÍTICO):
+- Cita una sentencia con su radicado (SL/SU/C/T-…) SOLO si aparece en las FUENTES (demanda, resoluciones, doctrina interna).
+- NO reproduzcas de memoria listados de radicados, ni afirmes que una sentencia "reitera" algo si su número no consta.
+- Si un argumento se apoya en una línea jurisprudencial cuya identificación NO obra en las fuentes, exprésalo de forma
+  genérica ("conforme a la jurisprudencia reiterada de la Sala de Casación Laboral") SIN inventar el número.
+- Cierra con una breve "NOTA DE TRAZABILIDAD DE CITAS": lista las sentencias que citaste e indica, para cada una, si
+  OBRA EN LAS FUENTES o si es una REFERENCIA GENERAL A VERIFICAR por el abogado.`;
+
 export const REGLAS_TRAZABILIDAD = `REGLAS ESTRICTAS:
 - NO inventes hechos, fechas, cifras, normas ni jurisprudencia. Toda norma o sentencia citada debe aparecer en las fuentes.
 - Usa EXCLUSIVAMENTE la información de las fuentes autorizadas que se te entregan. Si un dato necesario no consta, dilo
@@ -98,6 +107,8 @@ export function instruccionConsideraciones(postura: PosturaColpensiones): string
     JERARQUIA_ACTOS,
     "",
     BLOQUE_ACCESORIAS,
+    "",
+    REGLA_CITAS,
     "",
     REGLAS_TRAZABILIDAD,
   ].join("\n");
