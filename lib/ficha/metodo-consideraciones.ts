@@ -149,6 +149,12 @@ export type FuentesConsideraciones = {
   hay_fallo: boolean;
   sintesis_fallo: string | null;
   conciliable: boolean | null;
+  /** Doctrina interna / repositorio institucional que coincide con el caso (RAG). */
+  repositorio?: string;
+  /** Jurisprudencia identificada (Sección 4) para el paso 6, en clave de defensa. */
+  jurisprudencia?: string;
+  /** 0 = sección completa (default) · 1 = pasos 1–5 · 2 = pasos 6–9 (para el split del cliente). */
+  parte?: 0 | 1 | 2;
 };
 
 /**
@@ -157,29 +163,47 @@ export type FuentesConsideraciones = {
  */
 export function construirPromptConsideraciones(f: FuentesConsideraciones): string {
   const postura = inferirPostura(f.pretension, f.clase_pretension, f.textoDemanda);
+  const parte = f.parte ?? 0;
 
-  // Ejemplos: primero el de la misma postura, luego el resto (imitan estilo, no hechos).
-  // Se limita a 4 para acotar el costo por llamada sin perder cobertura de tipos.
-  const ejemplos = [...EJEMPLOS_CONSIDERACIONES]
-    .sort((a, b) => (a.postura === postura ? -1 : b.postura === postura ? 1 : 0))
-    .slice(0, 4);
-  const fewshot = ejemplos
-    .map(
-      (e, i) =>
-        `───── EJEMPLO ${i + 1} · ${e.etiqueta} (postura: ${e.postura}) ─────\n${e.texto}`
-    )
-    .join("\n\n");
+  // Few-shot: se omite en la parte 1 (hechos/encuadre) para acotar tokens; en 0 y 2 va (estilo del análisis).
+  const fewshot =
+    parte === 1
+      ? ""
+      : [...EJEMPLOS_CONSIDERACIONES]
+          .sort((a, b) => (a.postura === postura ? -1 : b.postura === postura ? 1 : 0))
+          .slice(0, 3)
+          .map((e, i) => `───── EJEMPLO ${i + 1} · ${e.etiqueta} (postura: ${e.postura}) ─────\n${e.texto}`)
+          .join("\n\n");
+
+  const tarea =
+    parte === 1
+      ? "GENERA SOLO los pasos 1 a 5 del método (delimitación, antecedentes administrativos, datos duros, marco normativo, doctrina interna). NO incluyas jurisprudencia, subsunción, accesorias ni corolario; termina justo tras la doctrina interna."
+      : parte === 2
+      ? "Ya se redactaron los pasos 1 a 5 (encuadre, datos y marco normativo); NO los repitas. Redacta SOLO los pasos 6 a 9 (jurisprudencia con control de citas, subsunción hecho↔requisito, pretensiones accesorias y corolario), empezando directamente en el marco jurisprudencial. El corolario con la recomendación (por regla general NO CONCILIAR) es obligatorio y debe quedar completo."
+      : "Redacta la sección COMPLETA siguiendo los 9 pasos del método.";
+
+  const bloques: string[] = [];
+  bloques.push(
+    `EXPEDIENTE DEL CASO (documentos procesados: traslado, resoluciones, historia laboral, anexos):\n${
+      f.textoDemanda?.trim() ? f.textoDemanda.slice(0, 120000) : "No se proporcionó texto del expediente."
+    }`
+  );
+  if (f.textoLineamientos?.trim()) bloques.push(`LINEAMIENTOS / DIRECTRICES DEL CASO:\n${f.textoLineamientos.slice(0, 25000)}`);
+  if (f.repositorio?.trim())
+    bloques.push(
+      `DOCTRINA INTERNA / REPOSITORIO INSTITUCIONAL (úsalo en el paso 5 y para ANCLAR las citas de doctrina/jurisprudencia; cítalo así: «(Repositorio: Memorando OAL 016)»):\n${f.repositorio.slice(0, 20000)}`
+    );
+  if (f.jurisprudencia?.trim() && parte !== 1)
+    bloques.push(
+      `JURISPRUDENCIA IDENTIFICADA (para el paso 6; cítala solo si es pertinente y aplícala EN CLAVE DE DEFENSA — si favorece al demandante, distínguela como riesgo a contrarrestar):\n${f.jurisprudencia.slice(0, 4000)}`
+    );
 
   return `Eres abogado externo de COLPENSIONES, experto en derecho laboral y seguridad social colombiana.
 Vas a redactar la sección CONSIDERACIONES de la Ficha de Conciliación (formato GDJ-GPO-FMT-005).
 
 ${instruccionConsideraciones(postura)}
 
-═══════════ EJEMPLOS DE REFERENCIA (imita ESTILO y ESTRUCTURA; NO copies sus hechos, cifras ni sentencias) ═══════════
-
-${fewshot}
-
-═══════════ CASO A RESOLVER — FUENTES AUTORIZADAS ═══════════
+${fewshot ? `═══════════ EJEMPLOS DE REFERENCIA (imita ESTILO y ESTRUCTURA; NO copies sus hechos, cifras ni sentencias) ═══════════\n\n${fewshot}\n\n` : ""}═══════════ CASO A RESOLVER — FUENTES AUTORIZADAS ═══════════
 
 PARÁMETROS:
 - Radicado: ${f.radicado}
@@ -189,14 +213,10 @@ PARÁMETROS:
 - Pretende intereses moratorios: ${f.pretende_intereses ? "Sí" : "No"}
 - Pretende indexación: ${f.pretende_indexacion ? "Sí" : "No"}
 - Hay fallo de primera instancia: ${f.hay_fallo ? "Sí" : "No"}${f.hay_fallo && f.sintesis_fallo ? `\n- Síntesis del fallo: ${f.sintesis_fallo}` : ""}
-- Postura del abogado sobre conciliar: ${f.conciliable == null ? "No definida" : f.conciliable ? "Conciliable" : "No conciliable"}
 
-EXPEDIENTE DEL CASO (documentos procesados: traslado, resoluciones, historia laboral, anexos):
-${f.textoDemanda?.trim() ? f.textoDemanda.slice(0, 120000) : "No se proporcionó texto del expediente."}
-
-LINEAMIENTOS / DIRECTRICES DEL CASO:
-${f.textoLineamientos?.trim() ? f.textoLineamientos.slice(0, 25000) : "No se proporcionaron lineamientos."}
+${bloques.join("\n\n")}
 
 ═══════════ TU TAREA ═══════════
-Redacta ÚNICAMENTE el texto de la sección CONSIDERACIONES para este caso, siguiendo el método y el estilo de los ejemplos, usando SOLO las fuentes autorizadas de arriba. No incluyas encabezados de otras secciones, ni JSON, ni comentarios: responde directamente con el texto de las Consideraciones.`;
+${tarea}
+Usa SOLO las fuentes autorizadas de arriba. Responde en prosa jurídica, sin JSON, sin encabezado de documento ni tablas: SOLO el texto de las Consideraciones${parte === 1 ? " (pasos 1–5)" : parte === 2 ? " (pasos 6–9)" : ""}.`;
 }

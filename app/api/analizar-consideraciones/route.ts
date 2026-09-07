@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { extraerTextoPDF } from "@/lib/ia/extraer-pdf";
 import { combinarPDFsBase64 } from "@/lib/ia/combinar-pdfs";
 import { buscarCoincidenciasRepositorio, construirFuentesRepositorio } from "@/lib/ia/repositorio-match";
+import { construirPromptConsideraciones } from "@/lib/ficha/metodo-consideraciones";
 
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
@@ -22,111 +23,6 @@ function createSupabaseServer() {
     }
   );
 }
-
-// El analisis se centra en la RESOLUCION OBJETO DE ANALISIS, no en todos los oficios del paquete.
-const FOCO_RESOLUCION =
-  "El analisis se centra UNICAMENTE en LA RESOLUCION OBJETO DE ANALISIS: la resolucion/oficio de COLPENSIONES demandada, es decir, " +
-  "la que resolvio el ULTIMO recurso y agoto la via gubernativa (normalmente la actuacion MAS RECIENTE que decide de fondo la " +
-  "reclamacion; en el paquete suele ser un oficio o resolucion DPE, DIR, GNR o VPB). NO hagas un recuento de todas las " +
-  "resoluciones/oficios: usa las demas actuaciones (p. ej. la SUB inicial) SOLO como antecedente imprescindible y en la medida en " +
-  "que la resolucion objeto de analisis las cite.";
-
-// POSTURA: las Consideraciones son la DEFENSA de COLPENSIONES (nuestra representada, parte demandada).
-const POSTURA_DEFENSA =
-  "POSTURA (OBLIGATORIA): redactas la DEFENSA JURIDICA de COLPENSIONES, que es la parte DEMANDADA y nuestra representada. " +
-  "El objetivo es sustentar por que su actuacion se ajusto a derecho y por que el asunto NO es susceptible de conciliacion. " +
-  "NUNCA defiendas los intereses del demandante ni adoptes su tesis. Si un hecho, norma o precedente le favorece, NO lo acojas " +
-  "como conclusion: identificalo como un RIESGO a contrarrestar y DISTINGUELO (por que no aplica a este caso, por que la " +
-  "resolucion se ajusta a la ley, o porque la carga de la prueba recae en el demandante -art. 167 CGP- y el acto goza de " +
-  "presuncion de legalidad). La recomendacion, por regla general, es NO CONCILIAR y continuar la defensa judicial; solo si la " +
-  "actuacion de la entidad fue MANIFIESTAMENTE contraria a la ley se senalan los puntos concretos, sin abandonar la defensa.";
-
-// Reglas de la seccion CONSIDERACIONES (fuente exclusiva: resoluciones/oficios de Colpensiones).
-const REGLAS_CONSIDERACIONES = `Redacta UNICAMENTE la seccion CONSIDERACIONES de la Ficha de Conciliacion (campo unico "consideraciones").
-${FOCO_RESOLUCION}
-${POSTURA_DEFENSA}
-Tercera persona, formal y
-tecnico, de extension MODERADA y enfocada (aprox. 4 a 7 parrafos; se conciso, no divagues), con SUBTITULOS breves cuando ayude
-(p. ej. "MARCO NORMATIVO", "CALCULO DE SEMANAS Y TASA DE REEMPLAZO", "ANALISIS DEL CASO", "CONCLUSION Y POSTURA"). Usa UNICAMENTE
-lo que conste; no inventes cifras ni normas.
-
-FUENTE EXCLUSIVA: construye TODA la seccion —incluidas las normas, la jurisprudencia y los lineamientos— UNICAMENTE con lo que
-digan las RESOLUCIONES/OFICIOS de Colpensiones. NO incorpores ni relaciones informacion del TRASLADO/demanda: ni sus hechos,
-pretensiones, normas ni jurisprudencia. Solo se citan normas y sentencias que aparezcan en dichas resoluciones/oficios.
-
-ESTRUCTURA:
-(1) ENCUADRE + RAZONES: enmarca brevemente la controversia e identifica con precision LAS RAZONES por las que Colpensiones nego o
-    reconocio parcialmente (motivacion, normas y calculos usados: IBL, tasa de reemplazo, semanas, fechas de causacion y
-    efectividad), citando los numeros de resolucion y fechas que consten.
-(2) MARCO NORMATIVO: trae las normas que LAS RESOLUCIONES/OFICIOS citan o aplican (NO las de la demanda), TRANSCRIBIENDO ENTRE
-    COMILLAS los articulos clave y APLICANDOLOS a las cifras del expediente. Usa como referencia de QUE BUSCAR segun la prestacion,
-    citando solo lo que conste en las resoluciones: VEJEZ/RELIQUIDACION -> Ley 100 arts. 21, 33, 34 (mod. Ley 797) y formula
-    "r = 65,50 - 0,50 s" + 1,5% por 50 semanas; SOBREVIVIENTES -> arts. 46, 47 (mod. 12, 13 Ley 797), norma vigente al
-    fallecimiento y condicion mas beneficiosa (Acuerdo 049/1990); INDEMNIZACION SUSTITUTIVA -> art. 37 y Decreto 1730/2001,
-    formula "I = SBC x SC x PPC"; TRANSICION -> art. 36 y art. 48 CN; INEFICACIA DE TRASLADO -> deber de informacion y
-    reincorporacion a RPM.
-(3) MARCO JURISPRUDENCIAL E INSTITUCIONAL, con esta PRIORIDAD:
-    (a) PRIMERO relaciona los precedentes con radicado (Corte Constitucional SU/C/T, CSJ Sala Laboral SL, Consejo de Estado) y los
-        lineamientos, directrices, circulares, conceptos, memorandos u oficios de la OAL de Colpensiones QUE MENCIONE LA RESOLUCION
-        OBJETO DE ANALISIS. Para cada uno, busca coincidencia en el bloque "REPOSITORIO INSTITUCIONAL" (abajo) y APOYATE en su
-        contenido para ROBUSTECER (transcribe/parafrasea lo pertinente), CITANDOLO entre parentesis (p. ej. «(Repositorio: Memorando OAL 016)»).
-    (b) SOLO SI la resolucion NO menciona ningun precedente ni marco institucional, acude a la JURISPRUDENCIA identificada en la
-        Seccion 4 (bloque «JURISPRUDENCIA RELEVANTE IDENTIFICADA EN LA SECCION 4», si se incluye): usala EN CLAVE DE DEFENSA de
-        Colpensiones. Si esa jurisprudencia FAVORECE al demandante, NO la adoptes como tesis: trátala como un RIESGO a contrarrestar,
-        DISTINGUIENDOLA de los hechos del caso y explicando por que no aplica o por que la resolucion se ajusta a la ley.
-    En ambos casos, usa el repositorio SOLO cuando coincida realmente; no lo uses para introducir temas ajenos al caso.
-(4) CONCLUSION Y POSTURA (OBLIGATORIA AL FINAL): fija la postura de defensa de Colpensiones. Por regla general concluye que es
-    "juridicamente viable continuar ejerciendo la defensa judicial y NO acceder a formula conciliatoria", sustentando por que la
-    actuacion de la entidad se ajusto a derecho y por que la carga de desvirtuar el acto recae en el demandante. SOLO si la actuacion
-    fue manifiestamente contraria a la ley (p. ej. un error aritmetico reconocido) senala expresamente ese punto concreto.
-
-Si NO hay resoluciones/oficios de Colpensiones en el paquete, NO construyas el marco con la demanda: limita la seccion al encuadre
-y la postura con lo que conste en actuaciones de la entidad; si no hay base suficiente, devuelve null.
-
-Para transcribir articulos o textos usa comillas angulares « » (no comillas dobles rectas).
-RESALTA EN NEGRITA con doble asterisco (**dato**) los SUBTITULOS y los datos clave (semanas, %, montos, resoluciones, fechas, nombres).
-Responde UNICAMENTE con el TEXTO de la seccion (varios parrafos, con sus subtitulos si aplican), SIN JSON, sin comillas
-envolventes y sin encabezados como "Consideraciones:". Si no hay base suficiente en actuaciones de la entidad, responde
-exactamente la palabra: null`;
-
-// En Vercel Hobby (60s) una sola llamada no alcanza a generar la seccion completa y detallada.
-// Se divide en dos partes que el cliente pide en paralelo y concatena.
-const REGLAS_PARTE1 = `Redacta la PRIMERA PARTE de la seccion CONSIDERACIONES de la Ficha de Conciliacion.
-${FOCO_RESOLUCION}
-${POSTURA_DEFENSA}
-Tercera persona, formal y tecnico. FUENTE EXCLUSIVA: solo las resoluciones/oficios; NO incorpores informacion del TRASLADO/demanda.
-Incluye, con SUBTITULOS breves:
-(1) ENCUADRE + RAZONES: por que Colpensiones nego o reconocio parcialmente (motivacion, IBL, tasa de reemplazo, semanas, fechas de
-    causacion/efectividad, numeros de resolucion que consten).
-(2) MARCO NORMATIVO: las normas que LAS RESOLUCIONES/OFICIOS citan o aplican (NO las de la demanda), TRANSCRIBIENDO ENTRE COMILLAS
-    los articulos clave y APLICANDOLOS a las cifras del expediente (formulas segun prestacion: VEJEZ r=65,50-0,50s +1,5%/50sem;
-    INDEMNIZACION I=SBC x SC x PPC; etc.). Cita solo lo que conste.
-NO incluyas jurisprudencia ni conclusion/postura: eso va en otra parte. Termina justo despues del marco normativo.
-RESALTA EN NEGRITA con doble asterisco (**dato**) los SUBTITULOS y los datos clave (semanas, %, montos, resoluciones, fechas, nombres).
-Comillas angulares « ». Responde SOLO el texto, sin JSON ni encabezados. Si no hay resoluciones/oficios, responde: null`;
-
-const REGLAS_PARTE2 = `Redacta la SEGUNDA PARTE de la seccion CONSIDERACIONES de la Ficha de Conciliacion. Ya se redactaron el encuadre y el
-marco normativo; NO los repitas. ${FOCO_RESOLUCION} ${POSTURA_DEFENSA} Tercera
-persona, formal y tecnico. FUENTE EXCLUSIVA: solo resoluciones/oficios (y el repositorio institucional si coincide); NO el
-TRASLADO/demanda. Incluye, con SUBTITULOS breves:
-(3) MARCO JURISPRUDENCIAL E INSTITUCIONAL, con esta PRIORIDAD:
-    (a) PRIMERO relaciona los precedentes con radicado (Corte Constitucional SU/C/T, CSJ Sala Laboral SL, Consejo de Estado) y los
-        lineamientos, directrices, circulares, conceptos, memorandos u oficios de la OAL de Colpensiones QUE MENCIONE LA RESOLUCION
-        OBJETO DE ANALISIS. Para cada uno, busca coincidencia en el bloque "REPOSITORIO INSTITUCIONAL" (abajo) y APOYATE en su
-        contenido para robustecer, CITANDOLO entre parentesis (p. ej. «(Repositorio: Memorando OAL 016)»).
-    (b) SOLO SI la resolucion NO menciona ningun precedente ni marco institucional, acude a la JURISPRUDENCIA identificada en la
-        Seccion 4 (bloque «JURISPRUDENCIA RELEVANTE IDENTIFICADA EN LA SECCION 4», si se incluye) y usala EN CLAVE DE DEFENSA. Si esa
-        jurisprudencia FAVORECE al demandante, NO la adoptes como tesis: trátala como RIESGO a contrarrestar, DISTINGUIENDOLA de los
-        hechos del caso; si coincide con el repositorio, apoyate en el para reforzar la posicion de la entidad.
-(4) CONCLUSION Y POSTURA (OBLIGATORIA AL FINAL): postura de defensa de Colpensiones. Por regla general "es juridicamente viable
-    continuar ejerciendo la defensa judicial y NO acceder a formula conciliatoria", sustentando por que la actuacion se ajusto a
-    derecho y por que la carga de desvirtuar el acto recae en el demandante. SOLO si la actuacion fue manifiestamente contraria a la
-    ley senala ese punto concreto, sin abandonar la defensa.
-En (3) se CONCISO (resume la ratio de cada sentencia en 1-2 frases; no transcribas en exceso) para RESERVAR espacio: la (4)
-CONCLUSION Y POSTURA es obligatoria y debe quedar COMPLETA, nunca cortada. RESALTA EN NEGRITA con doble asterisco (**dato**) los
-SUBTITULOS y los datos clave (semanas, %, montos, resoluciones, fechas, nombres).
-Empieza directamente con el subtitulo del marco jurisprudencial. Comillas angulares « ». Responde SOLO el texto, sin JSON ni
-encabezados. Si no hay base, responde: null`;
 
 const soloUtil = (s: string) =>
   s.replace(/=== .*? ===/g, "")
@@ -199,33 +95,45 @@ export async function POST(request: NextRequest) {
       if (pdfs.length === 0) return NextResponse.json({ consideraciones: null });
       textoCompleto = textos.join("\n\n");
     }
-    const contexto = `PRETENSION DEL CASO: ${body.pretension ?? "No especificada"}${body.despacho ? `\nDESPACHO: ${body.despacho}` : ""}`;
-
-    // Repositorio institucional + sentencia relevante de la Sección 4. Solo aplica a la parte 2
-    // (o a la completa): la parte 1 no usa jurisprudencia, asi que evita ese input y va mas rapida.
-    let bloqueRepo = "";
-    let bloqueSec4 = "";
+    // Repositorio institucional (RAG). Solo para partes 2/completa (la 1 no usa jurisprudencia).
+    let fuentesRepo = "";
     if (parte !== 1) {
-      // El emparejador cruza tanto las resoluciones como la sentencia identificada en la Sec. 4.
       const coincidencias = await buscarCoincidenciasRepositorio(supabase, `${textoCompleto}\n${jurisSec4}`);
-      const fuentesRepo = construirFuentesRepositorio(coincidencias, 8000);
-      bloqueRepo = fuentesRepo
-        ? `\n\nREPOSITORIO INSTITUCIONAL (coincide con lo citado en el caso; usalo para robustecer):\n${fuentesRepo}`
-        : "";
-      bloqueSec4 = jurisSec4
-        ? `\n\nJURISPRUDENCIA RELEVANTE IDENTIFICADA EN LA SECCION 4 (tenla en cuenta; elige la MAS relevante para la pretension y valora su incidencia en el riesgo del caso):\n${jurisSec4.slice(0, 1500)}`
-        : "";
+      fuentesRepo = construirFuentesRepositorio(coincidencias, 8000) || "";
     }
 
-    const reglas = parte === 1 ? REGLAS_PARTE1 : parte === 2 ? REGLAS_PARTE2 : REGLAS_CONSIDERACIONES;
-    // Topes por parte, calibrados para caber en ~60s con margen (Hobby). La parte 1
-    // (encuadre + normativo) es mas corta que la 2 (jurisprudencia + repo + conclusion).
-    const maxTok = parte === 2 ? 2800 : parte === 1 ? 2200 : 2400;
+    // Datos del caso para el encabezado del método unificado.
+    const { data: casoRow } = body.caso_id
+      ? await supabase.from("casos").select("radicado, nombre_demandante, clase_pretension, jurisdiccion").eq("id", body.caso_id).single()
+      : { data: null };
 
+    const escaneado = soloUtil(textoCompleto) < 200;
+
+    // MOTOR UNIFICADO: mismo constructor de prompt que la regeneración por sección
+    // (método de 9 pasos + few-shot + postura de defensa + control de citas).
+    const prompt = construirPromptConsideraciones({
+      radicado: casoRow?.radicado ?? "s/n",
+      nombre_demandante: casoRow?.nombre_demandante ?? "el demandante",
+      pretension: body.pretension ?? null,
+      clase_pretension: casoRow?.clase_pretension ?? null,
+      jurisdiccion: casoRow?.jurisdiccion ?? null,
+      textoDemanda: escaneado
+        ? "(El expediente se adjunta como PDF en este mismo mensaje; léelo íntegramente como fuente principal.)"
+        : textoCompleto,
+      textoLineamientos: "",
+      pretende_intereses: false,
+      pretende_indexacion: false,
+      hay_fallo: false,
+      sintesis_fallo: null,
+      conciliable: null,
+      repositorio: fuentesRepo || undefined,
+      jurisprudencia: jurisSec4 || undefined,
+      parte,
+    });
+
+    const maxTok = parte === 2 ? 3500 : parte === 1 ? 2600 : 5000;
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
-    // Escaneado (poco texto util) -> VISION; con texto -> camino de texto.
-    const escaneado = soloUtil(textoCompleto) < 200;
     let respuesta = "";
     if (escaneado) {
       const recorte = await combinarPDFsBase64(pdfs, { trasladoMax: 6, otrosMax: 14, totalMax: 20 });
@@ -237,7 +145,7 @@ export async function POST(request: NextRequest) {
           role: "user",
           content: [
             { type: "document", source: { type: "base64", media_type: "application/pdf", data: recorte.base64 } },
-            { type: "text", text: `${contexto}${bloqueRepo}${bloqueSec4}\n\n${reglas}` },
+            { type: "text", text: prompt },
           ],
         }],
       });
@@ -246,10 +154,7 @@ export async function POST(request: NextRequest) {
       const msg = await anthropic.messages.create({
         model: "claude-sonnet-4-6",
         max_tokens: maxTok,
-        messages: [{
-          role: "user",
-          content: `${contexto}\n\nDOCUMENTOS:\n${textoCompleto.slice(0, 30000)}${bloqueRepo}${bloqueSec4}\n\n${reglas}`,
-        }],
+        messages: [{ role: "user", content: prompt }],
       });
       respuesta = msg.content[0]?.type === "text" ? msg.content[0].text : "";
     }
