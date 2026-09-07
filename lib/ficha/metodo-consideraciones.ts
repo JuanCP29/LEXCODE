@@ -167,11 +167,12 @@ export function construirPromptConsideraciones(f: FuentesConsideraciones): strin
   const postura = inferirPostura(f.pretension, f.clase_pretension, f.textoDemanda);
   const parte = f.parte ?? 0;
 
-  // Few-shot solo en la sección COMPLETA (parte 0). En el flujo dividido (partes 1/2, usado en
-  // planes con límite de 60s) se omite: el método por sí solo ya produce la estructura de 9 pasos,
-  // y así cada parte cabe en el tiempo disponible.
+  // Few-shot: por defecto solo en la sección COMPLETA (parte 0), porque en el flujo dividido con
+  // límite de 60s (Hobby) no cabe. Pero un `fewShot: true` explícito lo fuerza también en las
+  // partes 1/2 (p. ej. corriendo en LOCAL con Opus 5, sin tope de tiempo) para máxima calidad.
+  const usarFewshot = f.fewShot === true || (parte === 0 && f.fewShot !== false);
   const fewshot =
-    parte !== 0 || f.fewShot === false
+    !usarFewshot
       ? ""
       : [...EJEMPLOS_CONSIDERACIONES]
           .sort((a, b) => (a.postura === postura ? -1 : b.postura === postura ? 1 : 0))

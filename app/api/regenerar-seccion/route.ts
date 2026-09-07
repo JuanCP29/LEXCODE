@@ -9,9 +9,11 @@ import { construirPromptConsideraciones } from "@/lib/ficha/metodo-consideracion
 import { armarExpedienteConsideraciones } from "@/lib/ficha/expediente";
 
 export const maxDuration = 300;
-// Modelo de la vía especializada de Consideraciones. En plan Hobby (60s) se usa Sonnet, que cabe
-// en el tiempo; con plan Pro puede subirse a "claude-opus-5" para máxima calidad (ver max_tokens abajo).
-const MODELO_CONSIDERACIONES = "claude-sonnet-4-6";
+// Config por entorno: en Vercel (plan Hobby, tope 60s) usa Sonnet acotado; en LOCAL (sin tope)
+// usa la ruta GOLD: Opus 5 + few-shot + salida amplia. process.env.VERCEL solo existe en Vercel.
+const EN_VERCEL = process.env.VERCEL === "1";
+const MODELO_CONSIDERACIONES = EN_VERCEL ? "claude-sonnet-4-6" : "claude-opus-5";
+const MAXTOK_CONSIDERACIONES = EN_VERCEL ? 4000 : 14000;
 
 function createSupabaseServer() {
   const cookieStore = cookies();
@@ -191,15 +193,16 @@ export async function POST(request: NextRequest) {
         hay_fallo: ficha.hay_fallo,
         sintesis_fallo: ficha.sintesis_fallo,
         conciliable: ficha.conciliable,
-        fewShot: false, // aligerado para caber en 60s (Hobby); con Pro+Opus 5 puede activarse
+        // En Vercel (Hobby, 60s) se aligera; en LOCAL se usa la ruta gold con few-shot completo.
+        fewShot: !EN_VERCEL,
       });
 
       const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
       // Streaming para no exceder el timeout HTTP del SDK con salida larga.
       const stream = anthropic.messages.stream({
         model: MODELO_CONSIDERACIONES,
-        // Calibrado para caber en ~60s (Hobby). Con Pro+Opus 5 puede subirse a 12000-16000.
-        max_tokens: 4000,
+        // Hobby: Sonnet acotado (~60s). Local: Opus 5 con salida amplia (sin tope de plataforma).
+        max_tokens: MAXTOK_CONSIDERACIONES,
         messages: [{ role: "user", content: promptCons }],
       });
       const msg = await stream.finalMessage();

@@ -11,6 +11,11 @@ import { construirPromptConsideraciones } from "@/lib/ficha/metodo-consideracion
 export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
+// Config por entorno: en Vercel (Hobby, 60s) usa Sonnet acotado; en LOCAL (sin tope) usa la ruta
+// GOLD: Opus 5 + few-shot + salida amplia. process.env.VERCEL solo existe en Vercel.
+const EN_VERCEL = process.env.VERCEL === "1";
+const MODELO_CONS = EN_VERCEL ? "claude-sonnet-4-6" : "claude-opus-5";
+
 function createSupabaseServer() {
   const cookieStore = cookies();
   return createServerClient(
@@ -130,10 +135,13 @@ export async function POST(request: NextRequest) {
       repositorio: fuentesRepo || undefined,
       jurisprudencia: jurisSec4 || undefined,
       parte,
+      fewShot: !EN_VERCEL, // en local activamos few-shot completo (más calidad, sin tope de 60s)
     });
 
-    // Calibrado para caber en ~60s (plan Hobby): salida moderada por parte.
-    const maxTok = parte === 2 ? 2800 : parte === 1 ? 2200 : 4000;
+    // Hobby: salida moderada por parte para caber en ~60s. Local: salida amplia (Opus 5, sin tope).
+    const maxTok = EN_VERCEL
+      ? (parte === 2 ? 2800 : parte === 1 ? 2200 : 4000)
+      : (parte === 2 ? 6000 : parte === 1 ? 5000 : 12000);
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
     let respuesta = "";
@@ -141,7 +149,7 @@ export async function POST(request: NextRequest) {
       const recorte = await combinarPDFsBase64(pdfs, { trasladoMax: 6, otrosMax: 14, totalMax: 20 });
       if (!recorte) return NextResponse.json({ consideraciones: null });
       const msg = await anthropic.messages.create({
-        model: "claude-sonnet-4-6",
+        model: MODELO_CONS,
         max_tokens: maxTok,
         messages: [{
           role: "user",
@@ -154,7 +162,7 @@ export async function POST(request: NextRequest) {
       respuesta = msg.content[0]?.type === "text" ? msg.content[0].text : "";
     } else {
       const msg = await anthropic.messages.create({
-        model: "claude-sonnet-4-6",
+        model: MODELO_CONS,
         max_tokens: maxTok,
         messages: [{ role: "user", content: prompt }],
       });
