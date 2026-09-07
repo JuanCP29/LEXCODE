@@ -132,7 +132,8 @@ export async function POST(request: NextRequest) {
       parte,
     });
 
-    const maxTok = parte === 2 ? 3500 : parte === 1 ? 2600 : 5000;
+    // Calibrado para caber en ~60s (plan Hobby): salida moderada por parte.
+    const maxTok = parte === 2 ? 2800 : parte === 1 ? 2200 : 4000;
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
     let respuesta = "";

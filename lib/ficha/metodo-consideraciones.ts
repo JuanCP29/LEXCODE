@@ -165,21 +165,23 @@ export function construirPromptConsideraciones(f: FuentesConsideraciones): strin
   const postura = inferirPostura(f.pretension, f.clase_pretension, f.textoDemanda);
   const parte = f.parte ?? 0;
 
-  // Few-shot: se omite en la parte 1 (hechos/encuadre) para acotar tokens; en 0 y 2 va (estilo del análisis).
+  // Few-shot solo en la sección COMPLETA (parte 0). En el flujo dividido (partes 1/2, usado en
+  // planes con límite de 60s) se omite: el método por sí solo ya produce la estructura de 9 pasos,
+  // y así cada parte cabe en el tiempo disponible.
   const fewshot =
-    parte === 1
+    parte !== 0
       ? ""
       : [...EJEMPLOS_CONSIDERACIONES]
           .sort((a, b) => (a.postura === postura ? -1 : b.postura === postura ? 1 : 0))
-          .slice(0, parte === 2 ? 2 : 3) // la parte 2 lleva jurisprudencia+repositorio: menos ejemplos para no exceder tiempo
+          .slice(0, 3)
           .map((e, i) => `───── EJEMPLO ${i + 1} · ${e.etiqueta} (postura: ${e.postura}) ─────\n${e.texto}`)
           .join("\n\n");
 
   const tarea =
     parte === 1
-      ? "GENERA SOLO los pasos 1 a 5 del método (delimitación, antecedentes administrativos, datos duros, marco normativo, doctrina interna). NO incluyas jurisprudencia, subsunción, accesorias ni corolario; termina justo tras la doctrina interna."
+      ? "GENERA SOLO los pasos 1 a 5 del método (delimitación, antecedentes administrativos, datos duros, marco normativo, doctrina interna). NO incluyas jurisprudencia, subsunción, accesorias ni corolario; termina justo tras la doctrina interna. Sé conciso y directo."
       : parte === 2
-      ? "Ya se redactaron los pasos 1 a 5 (encuadre, datos y marco normativo); NO los repitas. Redacta SOLO los pasos 6 a 9 (jurisprudencia con control de citas, subsunción hecho↔requisito, pretensiones accesorias y corolario), empezando directamente en el marco jurisprudencial. El corolario con la recomendación (por regla general NO CONCILIAR) es obligatorio y debe quedar completo."
+      ? "Ya se redactaron los pasos 1 a 5 (encuadre, datos y marco normativo); NO los repitas. Redacta SOLO los pasos 6 a 9 (jurisprudencia con control de citas, subsunción hecho↔requisito, pretensiones accesorias y corolario), empezando directamente en el marco jurisprudencial. Sé CONCISO: resume la ratio de cada sentencia en 1-2 frases y no transcribas en exceso, de modo que el COROLARIO con la recomendación (por regla general NO CONCILIAR) quede COMPLETO, nunca cortado."
       : "Redacta la sección COMPLETA siguiendo los 9 pasos del método.";
 
   const bloques: string[] = [];
