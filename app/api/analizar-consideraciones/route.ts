@@ -144,6 +144,13 @@ export async function POST(request: NextRequest) {
       : (parte === 2 ? 6000 : parte === 1 ? 5000 : 12000);
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
+    // Opus 5 razona por defecto: el content trae un bloque `thinking` ANTES del `text`.
+    // Hay que buscar el bloque de texto, NO tomar content[0] (que sería el pensamiento).
+    const textoDeRespuesta = (msg: Anthropic.Message): string => {
+      const b = msg.content.find((x) => x.type === "text");
+      return b && "text" in b ? b.text : "";
+    };
+
     let respuesta = "";
     if (escaneado) {
       const recorte = await combinarPDFsBase64(pdfs, { trasladoMax: 6, otrosMax: 14, totalMax: 20 });
@@ -159,14 +166,14 @@ export async function POST(request: NextRequest) {
           ],
         }],
       });
-      respuesta = msg.content[0]?.type === "text" ? msg.content[0].text : "";
+      respuesta = textoDeRespuesta(msg);
     } else {
       const msg = await anthropic.messages.create({
         model: MODELO_CONS,
         max_tokens: maxTok,
         messages: [{ role: "user", content: prompt }],
       });
-      respuesta = msg.content[0]?.type === "text" ? msg.content[0].text : "";
+      respuesta = textoDeRespuesta(msg);
     }
 
     // Texto plano (robusto para texto largo). Limpia cercos de codigo y trata "null" como vacio.

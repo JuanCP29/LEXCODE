@@ -228,7 +228,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
             }
             const j = await r.json();
             if (j && typeof j.consideraciones === "string" && esUtil(j.consideraciones)) return { texto: j.consideraciones, error: null };
-            if (intento === 1) continue; // respuesta vacía → reintenta una vez
+            // 200 pero vacío: NO reintentar — no cambiaría el resultado y duplicaría el costo (Opus 5).
             return { texto: null, error: null };
           } catch (e) {
             if (intento === 1) continue;
