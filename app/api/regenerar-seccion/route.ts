@@ -195,7 +195,8 @@ export async function POST(request: NextRequest) {
       // Streaming para no exceder el timeout HTTP del SDK con salida larga + razonamiento.
       const stream = anthropic.messages.stream({
         model: MODELO_CONSIDERACIONES,
-        max_tokens: 8000,
+        // Una Consideraciones completa (con subsunción y accesorias) supera 8k; damos margen.
+        max_tokens: 16000,
         messages: [{ role: "user", content: promptCons }],
       });
       const msg = await stream.finalMessage();

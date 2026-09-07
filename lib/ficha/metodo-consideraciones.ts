@@ -53,7 +53,12 @@ Sigue este MÉTODO (adáptalo a la pretensión; omite un paso solo si no hay fue
 
 ESTILO: jurídico institucional colombiano, tercera persona ("la entidad que represento", "mi representada"), cita textual
 entre comillas, resalta en NEGRITA (doble asterisco **dato**) los datos clave (semanas, %, montos, resoluciones, fechas,
-normas, sentencias).`;
+normas, sentencias).
+
+FORMATO: responde SOLO el cuerpo de las CONSIDERACIONES, en prosa jurídica continua. NO agregues un encabezado de documento
+ni repitas los datos del proceso (radicado, despacho, partes) como ficha inicial; NO uses tablas. Puedes usar subtítulos breves
+para los pasos del método. Si detectas datos contradictorios o faltantes en las fuentes, deja constancia expresa de ello
+(sin inventar el dato) para que el abogado lo verifique.`;
 
 /** Bloque de pretensiones accesorias — casi plantilla; fija la doctrina correcta (resarcitoria). */
 export const BLOQUE_ACCESORIAS = `PRETENSIONES ACCESORIAS (pronúnciate solo sobre las que pida la demanda):
