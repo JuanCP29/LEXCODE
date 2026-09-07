@@ -138,10 +138,13 @@ export async function POST(request: NextRequest) {
       fewShot: !EN_VERCEL, // en local activamos few-shot completo (más calidad, sin tope de 60s)
     });
 
-    // Hobby: salida moderada por parte para caber en ~60s. Local: salida amplia (Opus 5, sin tope).
+    // Hobby: salida moderada por parte para caber en ~60s. Local: salida MUY amplia (Opus 5, sin
+    // tope de tiempo). Opus 5 razona por defecto y el pensamiento CUENTA dentro de max_tokens; la
+    // salida en HTML (etiquetas) además infla el conteo → hay que dar holgura para que el COROLARIO
+    // y la NOTA DE TRAZABILIDAD queden completos.
     const maxTok = EN_VERCEL
       ? (parte === 2 ? 2800 : parte === 1 ? 2200 : 4000)
-      : (parte === 2 ? 6000 : parte === 1 ? 5000 : 12000);
+      : (parte === 2 ? 9000 : parte === 1 ? 8000 : 20000);
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
     // Opus 5 razona por defecto: el content trae un bloque `thinking` ANTES del `text`.

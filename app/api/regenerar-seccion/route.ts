@@ -13,7 +13,9 @@ export const maxDuration = 300;
 // usa la ruta GOLD: Opus 5 + few-shot + salida amplia. process.env.VERCEL solo existe en Vercel.
 const EN_VERCEL = process.env.VERCEL === "1";
 const MODELO_CONSIDERACIONES = EN_VERCEL ? "claude-sonnet-4-6" : "claude-opus-5";
-const MAXTOK_CONSIDERACIONES = EN_VERCEL ? 4000 : 14000;
+// Opus 5 razona por defecto y el pensamiento cuenta dentro de max_tokens; la salida HTML infla el
+// conteo. En local damos holgura para que el corolario y la NOTA DE TRAZABILIDAD queden completos.
+const MAXTOK_CONSIDERACIONES = EN_VERCEL ? 4000 : 20000;
 
 function createSupabaseServer() {
   const cookieStore = cookies();
