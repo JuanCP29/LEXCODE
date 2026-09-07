@@ -104,8 +104,20 @@ export async function POST(request: NextRequest) {
       .filter((p) => p.advertencia)
       .map((p) => ({ seccion: p.mapping.sectionNumber, detalle: p.advertencia! }));
 
-    // 4. Llamada a Claude solo con las secciones generables
-    const prompt = solo_guardar ? null : construirPromptV2(caso, params, contexto, plan);
+    // Optimización de costo: las secciones que YA vienen diligenciadas en `secciones_manual`
+    // (p. ej. Consideraciones generada aparte con Opus 5, o cualquier sección llena por el
+    // formulario) se sobrescriben en el paso 5 de todos modos; regenerarlas con IA es gasto
+    // puro. Se resuelven como "directa" (contenido ya provisto) para EXCLUIRLAS del prompt sin
+    // marcarlas como críticas vacías. Así el prompt de la ficha solo genera lo que falta.
+    const planEfectivo = plan.map((p) => {
+      const manual = secciones_manual?.[p.mapping.dbColumn];
+      return p.accion === "generar" && manual != null && String(manual).trim() !== ""
+        ? { ...p, accion: "directa" as const, contenidoDirecto: String(manual) }
+        : p;
+    });
+
+    // 4. Llamada a Claude solo con las secciones que realmente falta generar.
+    const prompt = solo_guardar ? null : construirPromptV2(caso, params, contexto, planEfectivo);
     let respuestaTexto = "";
 
     if (prompt) {
@@ -123,8 +135,8 @@ export async function POST(request: NextRequest) {
 
     // 5. Resolver secciones (IA + N/A + directas)
     const secciones = prompt
-      ? parsearRespuestaV2(respuestaTexto, plan)
-      : parsearRespuestaV2("{}", plan.filter((p) => p.accion !== "generar"));
+      ? parsearRespuestaV2(respuestaTexto, planEfectivo)
+      : parsearRespuestaV2("{}", planEfectivo.filter((p) => p.accion !== "generar"));
 
     // Secciones estandarizadas con texto fijo
     secciones["sec_6_sentencia"] = "No aplica";
@@ -192,7 +204,7 @@ export async function POST(request: NextRequest) {
 
     // 7. Trazabilidad por sección (best-effort: no bloquea si la tabla no existe aún)
     try {
-      const filasTrazabilidad = plan.map((p) => {
+      const filasTrazabilidad = planEfectivo.map((p) => {
         const m = p.mapping;
         let fuenteId: string | null = null;
         if (p.accion === "generar") {
