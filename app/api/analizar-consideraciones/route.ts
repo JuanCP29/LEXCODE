@@ -179,6 +179,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ consideraciones });
   } catch (e) {
     console.error("analizar-consideraciones:", e);
-    return NextResponse.json({ error: e instanceof Error ? e.message : "Error interno" }, { status: 500 });
+    // Los errores del SDK de Anthropic traen .status. Un 4xx (p. ej. 400 por crédito agotado, 401,
+    // 429) NO es transitorio: se propaga tal cual para que el cliente NO reintente y muestre el motivo.
+    const status = e && typeof e === "object" && "status" in e && typeof (e as { status: unknown }).status === "number"
+      ? (e as { status: number }).status
+      : 500;
+    const msg = e instanceof Error ? e.message : "Error interno";
+    return NextResponse.json({ error: msg }, { status: status >= 400 && status < 500 ? status : 500 });
   }
 }

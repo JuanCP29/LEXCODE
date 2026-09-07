@@ -190,25 +190,18 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
         onSugerencias?.(acumulado);
       };
 
-      // Consideraciones (sec. 11): en Hobby (60s) una sola llamada no alcanza a generarla
-      // completa, asi que se pide en DOS partes en paralelo (encuadre+normativo / jurisprudencia+
-      // conclusion) y se ensamblan en orden. Reutiliza el texto ya extraído (no re-ingiere).
+      // Consideraciones (sec. 11). Estrategia según entorno:
+      //  - LOCAL (localhost): UNA sola llamada (parte 0). Sin límite de 60s, así evitamos
+      //    re-enviar el expediente completo + few-shot DOS veces (mitad del costo en Opus 5).
+      //  - VERCEL (Hobby, 60s): una sola llamada no alcanza; se pide en DOS partes en paralelo
+      //    (encuadre+normativo / jurisprudencia+conclusión) y se ensamblan en orden.
       setEstadoConsid("Consideraciones: generando…");
-      const cPartes: (string | null)[] = [null, null]; // [parte1, parte2]
-      const doneP = [false, false];
       const esUtil = (x: string | null): x is string => !!x && x.trim() !== "" && x.trim().toLowerCase() !== "null";
-      const ensamblar = () => {
-        const partesOk = cPartes.filter(esUtil);
-        const texto = partesOk.join("\n\n");
-        if (texto) aplicar({ consideraciones: texto });
-        if (doneP[0] && doneP[1]) {
-          if (partesOk.length === 2) setEstadoConsid(null);
-          else if (partesOk.length === 1) setEstadoConsid("Consideraciones: se generó una parte; la otra no respondió — vuelve a pulsar «Analizar con IA» para completarla");
-          else setEstadoConsid("Consideraciones: sin contenido");
-        }
-      };
-      // Reintento una vez si una parte falla/tarda (la latencia en Hobby es variable).
-      const pedirParte = async (parte: 1 | 2) => {
+
+      // Pide una parte (0 = completa). Reintenta UNA vez SOLO ante fallos transitorios (red o 5xx);
+      // nunca ante errores del cliente (400/401/402/403 — p. ej. crédito agotado), que reintentar
+      // solo encarecería sin cambiar el resultado.
+      const pedir = async (parte: 0 | 1 | 2): Promise<{ texto: string | null; error: string | null }> => {
         for (let intento = 1; intento <= 2; intento++) {
           try {
             const r = await fetch("/api/analizar-consideraciones", {
@@ -225,24 +218,58 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
               }),
             });
             if (!r.ok) {
-              if (intento === 1) continue;
-              setEstadoConsid(`Consideraciones: error HTTP ${r.status} (parte ${parte})`);
-              break;
+              if (r.status < 500) { // no transitorio: no reintentar
+                let msg = `error HTTP ${r.status}`;
+                try { const j = await r.json(); if (j?.error) msg = String(j.error); } catch { /* sin cuerpo */ }
+                return { texto: null, error: msg };
+              }
+              if (intento === 1) continue; // 5xx: reintenta una vez
+              return { texto: null, error: `error HTTP ${r.status}` };
             }
             const j = await r.json();
-            if (j && typeof j.consideraciones === "string" && esUtil(j.consideraciones)) { cPartes[parte - 1] = j.consideraciones; break; }
-            if (intento === 1) continue; // respuesta vacía → reintenta
-            break;
+            if (j && typeof j.consideraciones === "string" && esUtil(j.consideraciones)) return { texto: j.consideraciones, error: null };
+            if (intento === 1) continue; // respuesta vacía → reintenta una vez
+            return { texto: null, error: null };
           } catch (e) {
             if (intento === 1) continue;
-            setEstadoConsid(`Consideraciones: fallo de red (parte ${parte}: ${e instanceof Error ? e.message : "desconocido"})`);
+            return { texto: null, error: `fallo de red (${e instanceof Error ? e.message : "desconocido"})` };
           }
         }
-        doneP[parte - 1] = true;
-        ensamblar();
+        return { texto: null, error: null };
       };
-      pedirParte(1);
-      pedirParte(2);
+
+      const esLocal = typeof window !== "undefined" && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname);
+      if (esLocal) {
+        // Llamada única (parte 0).
+        pedir(0).then(({ texto, error }) => {
+          if (esUtil(texto)) { aplicar({ consideraciones: texto }); setEstadoConsid(null); }
+          else setEstadoConsid(`Consideraciones: ${error ?? "sin contenido"}`);
+        });
+      } else {
+        // Dos partes en paralelo (Vercel Hobby).
+        const cPartes: (string | null)[] = [null, null];
+        const doneP = [false, false];
+        let errP: string | null = null;
+        const ensamblar = () => {
+          const partesOk = cPartes.filter(esUtil);
+          const texto = partesOk.join("\n\n");
+          if (texto) aplicar({ consideraciones: texto });
+          if (doneP[0] && doneP[1]) {
+            if (partesOk.length === 2) setEstadoConsid(null);
+            else if (partesOk.length === 1) setEstadoConsid("Consideraciones: se generó una parte; la otra no respondió — vuelve a pulsar «Analizar con IA» para completarla");
+            else setEstadoConsid(`Consideraciones: ${errP ?? "sin contenido"}`);
+          }
+        };
+        const correr = async (parte: 1 | 2) => {
+          const res = await pedir(parte);
+          cPartes[parte - 1] = res.texto;
+          if (res.error) errP = res.error;
+          doneP[parte - 1] = true;
+          ensamblar();
+        };
+        correr(1);
+        correr(2);
+      }
 
       // Jurisprudencia (sec. 9): sentencia mas relevante de la sec. 4 + repositorio.
       if (sug?.normas && /jurisprudencia\s*:/i.test(sug.normas)) {
