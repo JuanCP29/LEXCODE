@@ -26,7 +26,16 @@ export const JERARQUIA_ACTOS = `ACTOS ADMINISTRATIVOS DE COLPENSIONES (interpret
 - SUBA: variante de la Subdirección; es un REQUERIMIENTO de prueba o documento al ciudadano (no decide de fondo).
 - DPE / DIR / (antes VPB): Dirección de Prestaciones Económicas (superior). Resuelve RECURSOS DE APELACIÓN.
 La resolución que NIEGA de forma definitiva (típicamente la última en la cadena reposición -> apelación) es el ANCLA:
-su motivación es el punto de partida del análisis. Cita el número y la fecha de cada acto tal como aparecen.`;
+su motivación es el punto de partida del análisis. Cita el número y la fecha de cada acto tal como aparecen.
+
+IMPORTANTE — COLPENSIONES ES EL EMISOR de estos actos y tiene acceso a TODO el expediente administrativo; para el análisis se
+carga ÚNICAMENTE la última actuación administrativa que negó la prestación objeto del proceso (el ACTO ANCLA). En consecuencia:
+- NO afirmes que "no obran" los actos administrativos de Colpensiones (resoluciones SUB/SUBA/DPE/DIR/GNR/VPB), ni sus radicados,
+  ni la fecha de la solicitud prestacional, ni las resoluciones que resolvieron la reposición o la apelación. NO lo plantees
+  como vacío probatorio, carencia de fuentes ni debilidad de la defensa: la entidad los posee.
+- Toma el acto ancla cargado como fuente principal y trabaja con él. Si un dato de un acto previo no aparece en el texto cargado,
+  refiérelo de forma natural o genérica, SIN dejar constancias de que "no obra en el expediente" respecto de documentos propios
+  de mi representada.`;
 
 /** Método de razonamiento (anatomía de 9 pasos). Núcleo del análisis, común a toda pretensión. */
 export const METODO_CONSIDERACIONES = `Redacta la sección CONSIDERACIONES de la Ficha de Conciliación de COLPENSIONES.
@@ -66,7 +75,9 @@ estilo de PROSA CONTINUA de los ejemplos de referencia. Reglas:
       de encabezado (<tr><th>…</th></tr>) y las filas de datos (<tr><td>…</td></tr>).
     · CÁLCULO SECUENCIAL (p. ej. tasa de reemplazo: semanas adicionales → bloques de 50 → 1.5%) → un <p> con las líneas del
       cálculo separadas por <br> (ej.: 1959 − 1300 = 659<br>659 / 50 = 13.18<br>13.18 × 1.5% = 19.77%<br>…).
-  NUNCA inventes cifras: toda cantidad debe constar o derivarse aritméticamente de las fuentes.
+  NUNCA inventes cifras: toda cantidad debe constar o derivarse aritméticamente de las fuentes. En las CELDAS de una tabla
+  NUNCA escribas disclaimers como "No obra en el expediente", "a verificar con el acto administrativo" o similares; si un valor
+  no está disponible, deja la celda con un guion (—) o solo con el dato que sí conste, sin advertencias.
 - NO agregues encabezado de documento ni repitas los datos del proceso (radicado, despacho, partes) como ficha inicial.
 - Cierra con la NOTA DE TRAZABILIDAD DE CITAS en <p> (una sentencia por línea, con <br>).
 - Si detectas datos contradictorios o faltantes en las fuentes, déjalo constando en el propio texto (sin inventar el dato)
@@ -96,13 +107,17 @@ export const REGLA_CITAS = `CITAS JURISPRUDENCIALES (control de alucinación —
 - NO reproduzcas de memoria listados de radicados, ni afirmes que una sentencia "reitera" algo si su número no consta.
 - Si un argumento se apoya en una línea jurisprudencial cuya identificación NO obra en las fuentes, exprésalo de forma
   genérica ("conforme a la jurisprudencia reiterada de la Sala de Casación Laboral") SIN inventar el número.
+- Si el ACTO ADMINISTRATIVO cargado (o la doctrina interna) INVOCA una sentencia como fundamento de su decisión (p. ej. la
+  resolución cita "SL138 de 2024"), NO la omitas: incorpórala expresamente y aplícala EN CLAVE DE DEFENSA, pues obra en las
+  fuentes y respalda la posición de la entidad. Recoge la ratio que el propio acto le atribuye.
 - Cierra con una breve "NOTA DE TRAZABILIDAD DE CITAS": lista las sentencias que citaste e indica, para cada una, si
   OBRA EN LAS FUENTES o si es una REFERENCIA GENERAL A VERIFICAR por el abogado.`;
 
 export const REGLAS_TRAZABILIDAD = `REGLAS ESTRICTAS:
 - NO inventes hechos, fechas, cifras, normas ni jurisprudencia. Toda norma o sentencia citada debe aparecer en las fuentes.
-- Usa EXCLUSIVAMENTE la información de las fuentes autorizadas que se te entregan. Si un dato necesario no consta, dilo
-  ("no obra en el expediente") en vez de suponerlo.
+- Usa EXCLUSIVAMENTE la información de las fuentes autorizadas que se te entregan. Si un dato que DEBE acreditar el DEMANDANTE
+  (o una fuente externa a la entidad) no consta, señálalo con sobriedad en vez de suponerlo — PERO NUNCA respecto de los actos
+  administrativos propios de Colpensiones (ver "IMPORTANTE" en la jerarquía de actos), y NUNCA dentro de cuadros o tablas.
 - No adelantes cálculos aritméticos que no puedas derivar de los datos dados.`;
 
 /**
