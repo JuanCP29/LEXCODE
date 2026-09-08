@@ -3,17 +3,19 @@
 import { useState, useRef, useMemo } from "react";
 import {
   Plus, Trash2, FileText, Upload, Loader2,
-  CheckCircle2, AlertCircle, Search, X, Power,
+  CheckCircle2, AlertCircle, Search, X, Power, Eye,
 } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 // ── Configuración por tipo de documento (color de riel + pill) ──────────
 const TIPO_CFG: Record<string, { label: string; color: string; badge: string }> = {
-  directriz:   { label: "Directriz",   color: "#6366f1", badge: "bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-900" },
-  memorando:   { label: "Memorando",   color: "#f43f5e", badge: "bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900" },
-  lineamiento: { label: "Lineamiento", color: "#10b981", badge: "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900" },
-  otro:        { label: "Otro",        color: "#64748b", badge: "bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800/50 dark:text-slate-300 dark:border-slate-700" },
+  directriz:      { label: "Directriz",      color: "#6366f1", badge: "bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-900" },
+  memorando:      { label: "Memorando",      color: "#f43f5e", badge: "bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900" },
+  concepto:       { label: "Concepto",       color: "#10b981", badge: "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900" },
+  circular:       { label: "Circular",       color: "#f59e0b", badge: "bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900" },
+  jurisprudencia: { label: "Jurisprudencia", color: "#8b5cf6", badge: "bg-violet-50 text-violet-700 border border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-900" },
+  otro:           { label: "Otro",           color: "#64748b", badge: "bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800/50 dark:text-slate-300 dark:border-slate-700" },
 };
 const TIPO_OPTS = Object.entries(TIPO_CFG).map(([value, c]) => ({ value, label: c.label }));
 function tipoCfg(t: string | null | undefined) {
@@ -27,6 +29,7 @@ type Directriz = {
   codigo?: string | null;
   fecha_directriz?: string | null;
   nombre_original: string | null;
+  storage_path?: string | null;
   activo: boolean;
   created_at: string;
   // Campos legacy conservados en BD (ya no se editan desde el repositorio)
@@ -57,7 +60,7 @@ export function DirectricesAdmin({ directrices: inicial }: DirectricesAdminProps
   const [fechaDocumento, setFechaDocumento] = useState("");
 
   const conteos = useMemo(() => {
-    const c: Record<string, number> = { directriz: 0, memorando: 0, lineamiento: 0, otro: 0 };
+    const c: Record<string, number> = { directriz: 0, memorando: 0, concepto: 0, circular: 0, jurisprudencia: 0, otro: 0 };
     lista.forEach((d) => { const t = d.tipo_documento ?? "directriz"; if (t in c) c[t] += 1; });
     return c;
   }, [lista]);
@@ -412,11 +415,24 @@ export function DirectricesAdmin({ directrices: inicial }: DirectricesAdminProps
                           {cfg.label}
                         </span>
                       </td>
-                      {/* Código */}
+                      {/* Código + enlace Ver */}
                       <td className="px-4 py-3">
-                        {d.codigo
-                          ? <span className="font-mono text-xs text-foreground/70">{d.codigo}</span>
-                          : <span className="text-muted-foreground">—</span>}
+                        <div className="flex flex-col gap-1">
+                          {d.codigo
+                            ? <span className="font-mono text-xs text-foreground/70">{d.codigo}</span>
+                            : <span className="text-muted-foreground">—</span>}
+                          {d.storage_path && (
+                            <a
+                              href={`/api/directrices/${d.id}/ver`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary hover:underline w-fit"
+                              title="Abrir el documento (PDF)"
+                            >
+                              <Eye className="w-3 h-3" /> Ver
+                            </a>
+                          )}
+                        </div>
                       </td>
                       {/* Fecha */}
                       <td className="px-4 py-3 text-muted-foreground text-xs whitespace-nowrap tabular-nums">

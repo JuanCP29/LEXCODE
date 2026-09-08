@@ -38,7 +38,8 @@ export type DocRepo = {
 };
 
 const TIPO_LABEL: Record<string, string> = {
-  directriz: "Directriz", memorando: "Memorando", lineamiento: "Lineamiento", otro: "Documento",
+  directriz: "Directriz", memorando: "Memorando", concepto: "Concepto",
+  circular: "Circular", jurisprudencia: "Jurisprudencia", otro: "Documento",
 };
 
 /**

@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
       .from("directrices_conciliacion")
       .insert({
         nombre,
-        tipo_documento: ["directriz", "memorando", "lineamiento", "otro"].includes(tipo_documento)
+        tipo_documento: ["directriz", "memorando", "concepto", "circular", "jurisprudencia", "otro"].includes(tipo_documento)
           ? tipo_documento
           : "directriz",
         pretension,

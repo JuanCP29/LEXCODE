@@ -27,7 +27,7 @@ export default async function DirectricesPage() {
 
   const { data: directrices } = await supabase
     .from("directrices_conciliacion")
-    .select("id, nombre, tipo_documento, codigo, fecha_directriz, pretension, clase_pretension, nombre_original, activo, created_at, directriz_tipologias(tipologia_id)")
+    .select("id, nombre, tipo_documento, codigo, fecha_directriz, pretension, clase_pretension, nombre_original, storage_path, activo, created_at, directriz_tipologias(tipologia_id)")
     .order("pretension")
     .order("nombre");
 
