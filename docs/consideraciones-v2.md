@@ -48,7 +48,7 @@ Hallazgos al comparar mi borrador (9 pasos, sintético) vs. el oro:
 ## Roadmap
 - [x] Fase 0 · Diagnóstico — brechas identificadas.
 - [ ] **Fase 1 · Estándar objetivo (EN CURSO)** — principios + estructura/orden + doctrina de fuentes + rúbrica.
-- [ ] Fase 2 · Corpus curado (few-shot v2 anotado, por tipo de pretensión).
+- [ ] **Fase 2 · Retrieval del criterio institucional (DISEÑO CERRADO — ver abajo).**
 - [ ] Fase 3 · Rediseño del prompt (nuevo `metodo-consideraciones`).
 - [ ] Fase 4 · Banco de evaluación (casos con salida esperada, medir e iterar).
 - [ ] Fase 5 · Integración y despliegue.
@@ -128,3 +128,34 @@ jurisprudencia identificada (Sección 4).
 
 ### D. Rúbrica medible
 _(se deriva de A–C una vez definidos)_
+
+---
+
+## Fase 2 — Retrieval del criterio institucional (DISEÑO CERRADO)
+
+Reto: el repositorio no está clasificado por escenario (pretension='general'); solo por
+`tipo_documento`. Y los docs son enormes (hasta 106k chars) → no se inyectan completos.
+
+**Componente 1 — Enriquecer en la ingesta (una vez por doc).** Al subir un doc, una llamada Sonnet
+genera una "ficha de criterio" en columnas nuevas de `directrices_conciliacion`:
+`resumen_criterio`, `escenarios` (prestación+controversia), `jurisprudencia_acogida` (radicados que
+adopta), `condiciones_aplicacion` (solo directrices). Backfill de los ~30 docs actuales por script.
+
+**Componente 2 — Recuperar por caso** (reemplaza `buscarCoincidenciasRepositorio`):
+1. FILTRO POR NATURALEZA según el flag `conciliable`: SÍ → `tipo_documento='directriz'`; NO →
+   {memorando,concepto,circular,jurisprudencia,otro}, activo=true.
+2. SELECCIÓN POR ESCENARIO = **SELECTOR CON IA** (decisión del cliente): se pasa a Sonnet el catálogo
+   de fichas de criterio (nombre+tipo+resumen+escenarios) + la controversia del caso; devuelve 2–5
+   IDs aplicables. Señal de refuerzo: si el acto ancla cita una sentencia y un doc la acoge, sube su
+   prioridad. (Embeddings/pgvector queda como vía de escalamiento futura si el repo crece mucho.)
+3. INYECCIÓN COMPACTA: resumen_criterio + jurisprudencia_acogida + condiciones + pasaje relevante
+   recortado del texto de los docs seleccionados.
+
+**Componente 3 — Integrar en el generador:** `construirPromptConsideraciones` recibe el flag y el
+bloque de criterios separado en "DIRECTRIZ APLICABLE" (rama SÍ) o "CRITERIOS DE DEFENSA" (rama NO).
+
+Validado a mano (caso 10521453, rama NO): inyectando Concepto BZ_2018_4671485 + Concepto 2015_5672865
++ Lineamiento 004/2020 (recuperados del repo), el v3 alcanza el nivel del oro. El repositorio es el motor.
+
+Orden de construcción: (1) migración + enriquecimiento + backfill → (2) módulo de retrieval
+(selector IA) → (3) integración en analizar-consideraciones/regenerar-seccion + construirPrompt.

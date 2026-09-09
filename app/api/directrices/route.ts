@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { extraerTextoPDF } from "@/lib/ia/extraer-pdf";
+import { enriquecerDirectriz } from "@/lib/ia/enriquecer-directriz";
 import { esAdmin } from "@/lib/auth/roles";
+
+// El enriquecimiento (ficha de criterio por IA) puede tardar en documentos grandes.
+export const maxDuration = 300;
 
 function createSupabaseServer() {
   const cookieStore = cookies();
@@ -116,14 +120,25 @@ export async function POST(request: NextRequest) {
       // Continuar sin storage si falla — el texto ya está extraído
     }
 
+    const tipoNormalizado = ["directriz", "memorando", "concepto", "circular", "jurisprudencia", "otro"].includes(tipo_documento)
+      ? tipo_documento
+      : "directriz";
+
+    // Enriquecimiento (ficha de criterio por IA). Best-effort: si falla, el documento se guarda
+    // igual y queda pendiente de enriquecer (enriquecido_at null → lo toma el backfill).
+    let ficha = null;
+    try {
+      ficha = await enriquecerDirectriz(textoExtraido, tipoNormalizado);
+    } catch (e) {
+      console.error("enriquecer-directriz (no bloqueante):", e);
+    }
+
     // Insertar en DB
     const { data: directriz, error: insertError } = await supabase
       .from("directrices_conciliacion")
       .insert({
         nombre,
-        tipo_documento: ["directriz", "memorando", "concepto", "circular", "jurisprudencia", "otro"].includes(tipo_documento)
-          ? tipo_documento
-          : "directriz",
+        tipo_documento: tipoNormalizado,
         pretension,
         clase_pretension: clase_pretension || null,
         codigo: codigo || null,
@@ -133,6 +148,13 @@ export async function POST(request: NextRequest) {
         texto_extraido: textoExtraido,
         subido_por: user.id,
         activo: true,
+        resumen_criterio: ficha?.resumen_criterio ?? null,
+        prestaciones: ficha?.prestaciones ?? null,
+        escenarios: ficha?.escenarios ?? null,
+        jurisprudencia_acogida: ficha?.jurisprudencia_acogida ?? null,
+        condiciones_aplicacion: ficha?.condiciones_aplicacion ?? null,
+        es_regla_conciliacion: ficha?.es_regla_conciliacion ?? null,
+        enriquecido_at: ficha ? new Date().toISOString() : null,
       })
       .select()
       .single();
