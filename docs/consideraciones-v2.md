@@ -48,7 +48,8 @@ Hallazgos al comparar mi borrador (9 pasos, sintético) vs. el oro:
 ## Roadmap
 - [x] Fase 0 · Diagnóstico — brechas identificadas.
 - [ ] **Fase 1 · Estándar objetivo (EN CURSO)** — principios + estructura/orden + doctrina de fuentes + rúbrica.
-- [ ] **Fase 2 · Retrieval del criterio institucional (DISEÑO CERRADO — ver abajo).**
+- [~] **Fase 2 · Retrieval del criterio institucional** — P1 enriquecimiento ✅ (22/27), P2 selector ✅,
+      P3 integración al generador ✅ (código; falta validar en vivo por crédito). Ver diseño abajo.
 - [ ] Fase 3 · Rediseño del prompt (nuevo `metodo-consideraciones`).
 - [ ] Fase 4 · Banco de evaluación (casos con salida esperada, medir e iterar).
 - [ ] Fase 5 · Integración y despliegue.

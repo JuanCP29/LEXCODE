@@ -4,7 +4,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { extraerTextoPDF } from "@/lib/ia/extraer-pdf";
 import { combinarPDFsBase64 } from "@/lib/ia/combinar-pdfs";
-import { buscarCoincidenciasRepositorio, construirFuentesRepositorio } from "@/lib/ia/repositorio-match";
+import { recuperarCriterios } from "@/lib/ia/recuperar-criterios";
 import { construirPromptConsideraciones } from "@/lib/ficha/metodo-consideraciones";
 
 // El motor unificado (metodo + few-shot + repositorio) es mas pesado; damos margen (plan Pro).
@@ -55,7 +55,9 @@ export async function POST(request: NextRequest) {
       caso_id?: string | null;   // para leer el texto persistido del expediente (Fase 1)
       parte?: number;            // 1 = encuadre+normativo · 2 = jurisprudencia+conclusion · 0/omitido = completa
       normasSec4?: string | null; // Normas+Jurisprudencia de la Sección 4 (para traer la sentencia más relevante)
+      conciliable?: boolean;     // flag del caso: true → rama conciliabilidad; false/omitido → rama defensa
     };
+    const conciliable = body.conciliable === true;
     const paths = body.paths ?? [];
     const parte = body.parte === 1 ? 1 : body.parte === 2 ? 2 : 0;
 
@@ -101,11 +103,24 @@ export async function POST(request: NextRequest) {
       if (pdfs.length === 0) return NextResponse.json({ consideraciones: null });
       textoCompleto = textos.join("\n\n");
     }
-    // Repositorio institucional (RAG). Solo para partes 2/completa (la 1 no usa jurisprudencia).
-    let fuentesRepo = "";
+    // Rama conciliabilidad: la sección se genera completa en una sola pasada. Si el cliente pidiera la
+    // parte 2 (flujo dividido de Hobby), no se duplica: la parte 1 ya produjo el análisis completo.
+    if (conciliable && parte === 2) return NextResponse.json({ consideraciones: null });
+
+    // Criterios institucionales (Fase 2): rama conciliabilidad → DIRECTRIZ aplicable; rama defensa →
+    // CRITERIOS DE DEFENSA. Selector con IA sobre el repositorio enriquecido. Solo partes 2/completa.
+    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+    let bloqueCriterios = "";
     if (parte !== 1) {
-      const coincidencias = await buscarCoincidenciasRepositorio(supabase, `${textoCompleto}\n${jurisSec4}`);
-      fuentesRepo = construirFuentesRepositorio(coincidencias, 8000) || "";
+      try {
+        const ret = await recuperarCriterios(supabase, anthropic, {
+          pretension: body.pretension ?? null,
+          controversia: `${textoCompleto}\n${jurisSec4}`,
+          conciliable,
+          textoActoAncla: textoCompleto,
+        });
+        bloqueCriterios = ret.bloqueInyeccion || "";
+      } catch (e) { console.error("recuperarCriterios:", e); }
     }
 
     // Datos del caso para el encabezado del método unificado.
@@ -131,8 +146,8 @@ export async function POST(request: NextRequest) {
       pretende_indexacion: false,
       hay_fallo: false,
       sintesis_fallo: null,
-      conciliable: null,
-      repositorio: fuentesRepo || undefined,
+      conciliable,
+      bloqueCriterios: bloqueCriterios || undefined,
       jurisprudencia: jurisSec4 || undefined,
       parte,
       fewShot: !EN_VERCEL, // en local activamos few-shot completo (más calidad, sin tope de 60s)
@@ -145,7 +160,6 @@ export async function POST(request: NextRequest) {
     const maxTok = EN_VERCEL
       ? (parte === 2 ? 2800 : parte === 1 ? 2200 : 4000)
       : (parte === 2 ? 9000 : parte === 1 ? 8000 : 20000);
-    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
     // Opus 5 razona por defecto: el content trae un bloque `thinking` ANTES del `text`.
     // Hay que buscar el bloque de texto, NO tomar content[0] (que sería el pensamiento).

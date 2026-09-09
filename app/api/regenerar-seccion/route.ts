@@ -7,6 +7,7 @@ import { SECCIONES } from "@/lib/ia/secciones";
 import { MATRIZ_SECCIONES } from "@/lib/ficha/matriz-secciones";
 import { construirPromptConsideraciones } from "@/lib/ficha/metodo-consideraciones";
 import { armarExpedienteConsideraciones } from "@/lib/ficha/expediente";
+import { recuperarCriterios } from "@/lib/ia/recuperar-criterios";
 
 export const maxDuration = 300;
 // Config por entorno: en Vercel (plan Hobby, tope 60s) usa Sonnet acotado; en LOCAL (sin tope)
@@ -182,6 +183,21 @@ export async function POST(request: NextRequest) {
     if (seccion_key === "sec_16_consideraciones") {
       // Expediente COMPLETO (todos los documentos OCR-eados + actos), no solo texto_expediente.
       const expediente = await armarExpedienteConsideraciones(supabase, caso_id, textoDemanda);
+
+      // Criterios institucionales (Fase 2): según el flag conciliable de la ficha, recupera la DIRECTRIZ
+      // (rama SÍ) o los CRITERIOS DE DEFENSA (rama NO) del repositorio enriquecido.
+      const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+      let bloqueCriterios = "";
+      try {
+        const ret = await recuperarCriterios(supabase, anthropic, {
+          pretension: caso.pretension,
+          controversia: expediente,
+          conciliable: ficha.conciliable === true,
+          textoActoAncla: expediente,
+        });
+        bloqueCriterios = ret.bloqueInyeccion || "";
+      } catch (e) { console.error("recuperarCriterios:", e); }
+
       const promptCons = construirPromptConsideraciones({
         radicado: caso.radicado,
         nombre_demandante: caso.nombre_demandante,
@@ -195,11 +211,10 @@ export async function POST(request: NextRequest) {
         hay_fallo: ficha.hay_fallo,
         sintesis_fallo: ficha.sintesis_fallo,
         conciliable: ficha.conciliable,
+        bloqueCriterios: bloqueCriterios || undefined,
         // En Vercel (Hobby, 60s) se aligera; en LOCAL se usa la ruta gold con few-shot completo.
         fewShot: !EN_VERCEL,
       });
-
-      const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
       // Streaming para no exceder el timeout HTTP del SDK con salida larga.
       const stream = anthropic.messages.stream({
         model: MODELO_CONSIDERACIONES,
