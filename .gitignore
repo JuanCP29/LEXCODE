@@ -34,3 +34,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# datos locales del histórico AOE (rutas absolutas de la máquina / muestras regenerables)
+scripts/aoe_paths.txt
+scripts/muestra_estratificada.csv
+_tmp_*.mjs

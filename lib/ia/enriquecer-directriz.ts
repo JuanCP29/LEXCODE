@@ -18,7 +18,7 @@ export type FichaCriterio = {
   es_regla_conciliacion: boolean;
 };
 
-const PRESTACIONES_VALIDAS = ["vejez", "sobrevivientes", "invalidez", "administradora", "transversal"];
+const PRESTACIONES_VALIDAS = ["vejez", "sobrevivientes", "invalidez", "indemnizacion", "administradora", "transversal"];
 const MODELO = "claude-sonnet-4-6";
 const MAX_TEXTO = 150000; // los docs grandes (hasta ~106k) caben; cap por seguridad
 
@@ -39,8 +39,9 @@ Extrae:
    Lenguaje institucional, objetivo, sin opinión propia. Recoge el criterio, no un resumen del texto.
 
 2. prestaciones — una o varias de esta lista CERRADA (minúscula), según a qué prestación aplica el
-   criterio: "vejez", "sobrevivientes", "invalidez", "administradora", "transversal" (usa
-   "transversal" cuando aplica a cualquier prestación, p. ej. reglas probatorias o de intereses).
+   criterio: "vejez", "sobrevivientes", "invalidez", "indemnizacion", "administradora", "transversal"
+   (usa "indemnizacion" para la indemnización sustitutiva / devolución de saldos; "transversal" cuando
+   aplica a cualquier prestación, p. ej. reglas probatorias o de intereses).
 
 3. escenarios — lista de subtemas/etiquetas libres, en minúscula, que describan la controversia o el
    requisito que el documento gobierna (ej.: "convivencia", "5 años", "cónyuge separado de hecho",
