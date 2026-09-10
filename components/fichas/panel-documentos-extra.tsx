@@ -64,6 +64,7 @@ interface PanelDocumentosExtraProps {
   despacho?: string | null;
   casoId?: string;
   documentos?: DocumentoPrevio[];
+  conciliable?: boolean | null; // flag del formulario: true → rama conciliabilidad; false → defensa
   onCamposExtraidos: (campos: CamposExtraidos) => void;
   onSugerencias?: (s: Sugerencias | null) => void;
 }
@@ -96,7 +97,7 @@ function valorLegible(val: unknown): string {
   return String(val);
 }
 
-export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despacho, casoId, documentos }: PanelDocumentosExtraProps) {
+export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despacho, casoId, documentos, conciliable }: PanelDocumentosExtraProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [archivos, setArchivos] = useState<File[]>([]);
   const [estado, setEstado] = useState<Estado>("idle");
@@ -215,6 +216,7 @@ export function PanelDocumentosExtra({ onCamposExtraidos, onSugerencias, despach
                 caso_id: casoId,
                 parte,
                 normasSec4: sug?.normas ?? null,
+                conciliable: conciliable === true, // enruta la rama (conciliabilidad vs. defensa)
               }),
             });
             if (!r.ok) {

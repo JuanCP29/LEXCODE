@@ -142,6 +142,7 @@ interface FormularioParametricoProps {
   causanteCedulaSugerida?: string | null; // cédula del causante/afiliado detectado
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   fichaInicial?: Record<string, any>;     // última ficha guardada del caso (para prellenar al re-entrar)
+  onConciliableChange?: (v: boolean | null) => void; // reporta el flag "¿asunto conciliable?" al padre (rama)
 }
 
 // Mapea una pretensión BUPC (MAYÚSCULAS) al enum del formulario/ficha; null si no hay equivalencia.
@@ -201,7 +202,7 @@ function limpiarNum(v: string | null | undefined): string {
   return s;
 }
 
-export function FormularioParametrico({ casoId, casoData, valoresPrellenados, sintesisHechosSugerida, pretensionesSugerida, cuantiaSugerida, normasSugerida, jurisprudenciaSugerida, politicasSugerida, problemaSugerido, consideracionesSugerida, pretensionSugerida, claseSugerida, causanteNombreSugerido, causanteCedulaSugerida, fichaInicial }: FormularioParametricoProps) {
+export function FormularioParametrico({ casoId, casoData, valoresPrellenados, sintesisHechosSugerida, pretensionesSugerida, cuantiaSugerida, normasSugerida, jurisprudenciaSugerida, politicasSugerida, problemaSugerido, consideracionesSugerida, pretensionSugerida, claseSugerida, causanteNombreSugerido, causanteCedulaSugerida, fichaInicial, onConciliableChange }: FormularioParametricoProps) {
   const [error, setError] = useState<string | null>(null);
   const [generandoPoder, setGenerandoPoder] = useState(false);
   const [poderGenerado, setPoderGenerado] = useState(false);
@@ -322,6 +323,8 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
   });
 
   const conciliable      = watch("conciliable");
+  // Reporta el flag al padre (para que el panel "Analizar con IA" enrute a la rama correcta).
+  useEffect(() => { onConciliableChange?.(typeof conciliable === "boolean" ? conciliable : null); }, [conciliable, onConciliableChange]);
   // Causante/afiliado: el campo se llena SIEMPRE con el afiliado (coincida o no con el
   // demandante). Se resalta en naranja SOLO cuando difiere del demandante del CSV.
   const causanteAfiliado = watch("causante_afiliado");
