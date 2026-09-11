@@ -47,6 +47,8 @@ export function GeneradorParamsView({ casoId, casoData, documentos, fichaInicial
   const [claseDet, setClaseDet] = useState<string | null>(null);
   const [causanteNombre, setCausanteNombre] = useState<string | null>(null);
   const [causanteCedula, setCausanteCedula] = useState<string | null>(null);
+  const [demandanteNombre, setDemandanteNombre] = useState<string | null>(null);
+  const [demandanteCedula, setDemandanteCedula] = useState<string | null>(null);
   // Flag "¿asunto conciliable?" del formulario, para que el panel "Analizar con IA" enrute la rama.
   const [conciliable, setConciliable] = useState<boolean | null>(
     typeof fichaInicial?.conciliable === "boolean" ? fichaInicial.conciliable : true
@@ -70,6 +72,8 @@ export function GeneradorParamsView({ casoId, casoData, documentos, fichaInicial
     setClaseDet(s?.clase_pretension ?? null);
     setCausanteNombre(s?.causante_nombre ?? null);
     setCausanteCedula(s?.causante_cedula ?? null);
+    setDemandanteNombre(s?.demandante_nombre ?? null);
+    setDemandanteCedula(s?.demandante_cedula ?? null);
   }
 
   return (
@@ -92,6 +96,8 @@ export function GeneradorParamsView({ casoId, casoData, documentos, fichaInicial
           claseSugerida={claseDet}
           causanteNombreSugerido={causanteNombre}
           causanteCedulaSugerida={causanteCedula}
+          demandanteNombreSugerido={demandanteNombre}
+          demandanteCedulaSugerida={demandanteCedula}
           fichaInicial={fichaInicial}
           onConciliableChange={setConciliable}
         />

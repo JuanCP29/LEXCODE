@@ -21,10 +21,12 @@ type Sugerencias = {
   clase_pretension?: string | null;
   causante_nombre?: string | null;
   causante_cedula?: string | null;
+  demandante_nombre?: string | null;
+  demandante_cedula?: string | null;
 };
 
 // Claves que NO son prosa: no se muestran como tarjetas de "Sugerencias redactadas".
-const SUGERENCIAS_NO_PROSA = new Set(["pretension", "clase_pretension", "causante_nombre", "causante_cedula"]);
+const SUGERENCIAS_NO_PROSA = new Set(["pretension", "clase_pretension", "causante_nombre", "causante_cedula", "demandante_nombre", "demandante_cedula"]);
 
 const LABEL_SUGERENCIA: Record<string, string> = {
   sintesis_hechos:   "Síntesis de hechos (sec. 1)",

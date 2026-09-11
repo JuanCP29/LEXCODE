@@ -140,6 +140,8 @@ interface FormularioParametricoProps {
   claseSugerida?: string | null;        // clase BUPC detectada
   causanteNombreSugerido?: string | null; // nombre del causante/afiliado detectado (si difiere del demandante)
   causanteCedulaSugerida?: string | null; // cédula del causante/afiliado detectado
+  demandanteNombreSugerido?: string | null; // nombre del demandante/reclamante REAL detectado en el expediente
+  demandanteCedulaSugerida?: string | null; // cédula del demandante/reclamante detectado
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   fichaInicial?: Record<string, any>;     // última ficha guardada del caso (para prellenar al re-entrar)
   onConciliableChange?: (v: boolean | null) => void; // reporta el flag "¿asunto conciliable?" al padre (rama)
@@ -159,6 +161,8 @@ const DEMANDADO_FIJO = "Administradora Colombiana de Pensiones — COLPENSIONES.
 
 // Estilo sutil para un campo OBLIGATORIO aún vacío (guía visual, desaparece al llenarlo).
 const CLASE_PENDIENTE = "border-amber-300 hover:border-amber-400 focus-visible:ring-amber-400/25 dark:border-amber-700/70";
+// Resalte de SOSPECHA (demandante del CSV que no coincide con el reclamante detectado por la IA).
+const CLASE_SOSPECHA = "border-orange-400 bg-orange-50 text-orange-900 placeholder:text-orange-400 focus-visible:ring-orange-400 dark:border-orange-600 dark:bg-orange-950/30 dark:text-orange-200";
 const vacio = (v: unknown) => !String(v ?? "").trim();
 
 // Cuantía por defecto (Sección 3) cuando no se logra extraer del traslado: depende del despacho.
@@ -202,7 +206,7 @@ function limpiarNum(v: string | null | undefined): string {
   return s;
 }
 
-export function FormularioParametrico({ casoId, casoData, valoresPrellenados, sintesisHechosSugerida, pretensionesSugerida, cuantiaSugerida, normasSugerida, jurisprudenciaSugerida, politicasSugerida, problemaSugerido, consideracionesSugerida, pretensionSugerida, claseSugerida, causanteNombreSugerido, causanteCedulaSugerida, fichaInicial, onConciliableChange }: FormularioParametricoProps) {
+export function FormularioParametrico({ casoId, casoData, valoresPrellenados, sintesisHechosSugerida, pretensionesSugerida, cuantiaSugerida, normasSugerida, jurisprudenciaSugerida, politicasSugerida, problemaSugerido, consideracionesSugerida, pretensionSugerida, claseSugerida, causanteNombreSugerido, causanteCedulaSugerida, demandanteNombreSugerido, demandanteCedulaSugerida, fichaInicial, onConciliableChange }: FormularioParametricoProps) {
   const [error, setError] = useState<string | null>(null);
   const [generandoPoder, setGenerandoPoder] = useState(false);
   const [poderGenerado, setPoderGenerado] = useState(false);
@@ -341,6 +345,25 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
     if (valNombre && demNombre) return valNombre !== demNombre;   // respaldo por nombre
     return false;
   })();
+
+  // Señal de SUSTITUCIÓN: la IA identificó al demandante/reclamante REAL en el expediente y NO coincide
+  // con el que trae el CSV. Detecta el caso en que el CSV cargó por error el nombre del CAUSANTE como
+  // demandante (típico en sobrevivientes). No opina si la IA no detectó reclamante.
+  const detDemNombre = (demandanteNombreSugerido ?? "").trim();
+  const detDemCedula = (demandanteCedulaSugerida ?? "").replace(/\D/g, "");
+  const demandanteSospechoso = (() => {
+    if (!detDemNombre && !detDemCedula) return false;
+    const csvCedula = (encabezado.cedula_demandante ?? "").replace(/\D/g, "");
+    const csvNombre = (encabezado.nombre_demandante ?? "").trim().toLowerCase();
+    if (detDemCedula && csvCedula) return detDemCedula !== csvCedula;      // discrepancia por cédula
+    if (detDemNombre && csvNombre) return detDemNombre.toLowerCase() !== csvNombre; // respaldo por nombre
+    return false;
+  })();
+  const reclamanteDetectado = `${detDemNombre}${detDemCedula ? ` (C.C. ${detDemCedula})` : ""}`.trim();
+  const aplicarDemandanteDetectado = () => {
+    if (detDemNombre) setEnc("nombre_demandante", detDemNombre);
+    if (detDemCedula) setEnc("cedula_demandante", detDemCedula);
+  };
 
   async function handleGenerarPoder() {
     setGenerandoPoder(true);
@@ -867,11 +890,23 @@ export function FormularioParametrico({ casoId, casoData, valoresPrellenados, si
               </div>
             </Campo>
             <Campo label="Nombre del demandante" required>
-              <InputIcono icon={User} value={encabezado.nombre_demandante} onChange={(e) => setEnc("nombre_demandante", e.target.value)} placeholder="Ej: Wilson Lugo" className={cn(vacio(encabezado.nombre_demandante) && CLASE_PENDIENTE)} />
+              <InputIcono icon={User} value={encabezado.nombre_demandante} onChange={(e) => setEnc("nombre_demandante", e.target.value)} placeholder="Ej: Wilson Lugo" className={cn(vacio(encabezado.nombre_demandante) && CLASE_PENDIENTE, demandanteSospechoso && CLASE_SOSPECHA)} />
             </Campo>
             <Campo label="Cédula del demandante" required>
-              <InputIcono icon={Fingerprint} value={encabezado.cedula_demandante} onChange={(e) => setEnc("cedula_demandante", e.target.value)} placeholder="Ej: 16628522" className={cn(vacio(encabezado.cedula_demandante) && CLASE_PENDIENTE)} />
+              <InputIcono icon={Fingerprint} value={encabezado.cedula_demandante} onChange={(e) => setEnc("cedula_demandante", e.target.value)} placeholder="Ej: 16628522" className={cn(vacio(encabezado.cedula_demandante) && CLASE_PENDIENTE, demandanteSospechoso && CLASE_SOSPECHA)} />
             </Campo>
+            {demandanteSospechoso && (
+              <div className="sm:col-span-2 rounded-md border border-orange-300 bg-orange-50 dark:border-orange-700 dark:bg-orange-950/30 p-2.5 text-[12px] text-orange-800 dark:text-orange-200">
+                <p className="flex items-start gap-1.5">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                  <span>El reclamante identificado en el expediente es <strong>{reclamanteDetectado}</strong>, distinto del demandante cargado (<strong>{encabezado.nombre_demandante || "—"}</strong>). Es posible que el archivo de origen traiga el nombre del <strong>causante</strong> en el campo del demandante. Verifica y corrige.</span>
+                </p>
+                <button type="button" onClick={aplicarDemandanteDetectado}
+                  className="mt-1.5 ml-5 inline-flex items-center rounded border border-orange-400 bg-white dark:bg-orange-900/40 px-2 py-0.5 text-[11px] font-medium text-orange-700 dark:text-orange-200 hover:bg-orange-100 dark:hover:bg-orange-900/60">
+                  Usar el reclamante detectado
+                </button>
+              </div>
+            )}
             <Campo label="Nombre e identificación causante y/o afiliado">
               <Controller name="causante_afiliado" control={control}
                 render={({ field }) => (

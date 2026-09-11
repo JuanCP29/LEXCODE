@@ -33,6 +33,14 @@ const REGLA_CAUSANTE = `Identifica al CAUSANTE o AFILIADO: la persona cuya vida 
 - En pensiones de SOBREVIVIENTES (o sustitucion pensional) el causante es la persona FALLECIDA, DISTINTA del demandante (que es el beneficiario/conyuge/hijo que reclama): devuelve los datos del fallecido.
 - Solo pon "causante_nombre" y "causante_cedula" en null si no logras identificar al afiliado en los documentos.`;
 
+// Instrucción para identificar al DEMANDANTE/RECLAMANTE real (quien presenta la demanda o solicitud
+// y en cuyo favor se reclama), que en sobrevivientes es el BENEFICIARIO, distinto del causante fallecido.
+// Permite detectar cuando el CSV trae por error el nombre del causante en el campo del demandante.
+const REGLA_DEMANDANTE = `Identifica al DEMANDANTE/RECLAMANTE: la persona en cuyo favor se reclama la prestacion y que presenta la demanda o solicitud (directamente o por apoderado).
+- En VEJEZ o INVALIDEZ suele coincidir con el afiliado/causante.
+- En SOBREVIVIENTES o sustitucion es el BENEFICIARIO que reclama (conyuge, companero/a permanente, padre/madre o hijo/a), DISTINTO del causante fallecido.
+- Devuelve su NOMBRE COMPLETO en "demandante_nombre" y su cedula (SOLO DIGITOS, sin puntos) en "demandante_cedula", o null si no lo identificas.`;
+
 // combinarPDFsBase64 vive en lib/ia/combinar-pdfs.ts (compartido con /api/analizar-consideraciones).
 
 // Reglas de redaccion comunes a HECHOS y PRETENSIONES (secciones 1 y 2 de la ficha).
@@ -74,6 +82,8 @@ type SeccionesTraslado = {
   clase_pretension: string | null;
   causante_nombre: string | null;
   causante_cedula: string | null;
+  demandante_nombre: string | null;
+  demandante_cedula: string | null;
 };
 
 async function analizarTrasladoVision(
@@ -81,7 +91,7 @@ async function analizarTrasladoVision(
   pdfs: { nombre: string; buffer: Buffer }[],
   despacho?: string | null
 ): Promise<SeccionesTraslado> {
-  const vacio: SeccionesTraslado = { sintesis_hechos: null, pretensiones: null, cuantia: null, normas: null, problema_juridico: null, consideraciones: null, pretension: null, clase_pretension: null, causante_nombre: null, causante_cedula: null };
+  const vacio: SeccionesTraslado = { sintesis_hechos: null, pretensiones: null, cuantia: null, normas: null, problema_juridico: null, consideraciones: null, pretension: null, clase_pretension: null, causante_nombre: null, causante_cedula: null, demandante_nombre: null, demandante_cedula: null };
   if (pdfs.length === 0) return vacio;
   // Combina el traslado (demanda) con las demas actuaciones/resoluciones cargadas.
   // Presupuesto de páginas reducido para caber en el límite de 60s de Vercel Hobby.
@@ -126,6 +136,9 @@ ${REGLA_CLASIFICACION}
 H) CAUSANTE / AFILIADO -> campos "causante_nombre" y "causante_cedula".
 ${REGLA_CAUSANTE}
 
+I) DEMANDANTE / RECLAMANTE -> campos "demandante_nombre" y "demandante_cedula".
+${REGLA_DEMANDANTE}
+
 ${RESALTAR_NEGRITA}
 
 REGLA DE FORMATO JSON (CRITICA): dentro de los valores de texto NUNCA uses comillas dobles rectas ("). Para citar o
@@ -133,7 +146,7 @@ TRANSCRIBIR articulos, sentencias o textos, usa SIEMPRE comillas angulares « »
 no invalidar el JSON. Usa \\n para los saltos de linea.
 
 Devuelve UNICAMENTE un JSON con esta forma exacta:
-{ "sintesis_hechos": "1) ...\\n\\n2) ...", "pretensiones": "1) ...\\n\\n2) ...", "cuantia": "La cuantia fue estimada...", "normas": "• Ley ...\\n• Decreto ...", "problema_juridico": "Determinar si ...", "consideraciones": null, "pretension": "VEJEZ", "clase_pretension": "LEY 100 DE 1993", "causante_nombre": "NOMBRE COMPLETO DEL AFILIADO", "causante_cedula": "12345678" }`;
+{ "sintesis_hechos": "1) ...\\n\\n2) ...", "pretensiones": "1) ...\\n\\n2) ...", "cuantia": "La cuantia fue estimada...", "normas": "• Ley ...\\n• Decreto ...", "problema_juridico": "Determinar si ...", "consideraciones": null, "pretension": "VEJEZ", "clase_pretension": "LEY 100 DE 1993", "causante_nombre": "NOMBRE COMPLETO DEL AFILIADO", "causante_cedula": "12345678", "demandante_nombre": "NOMBRE COMPLETO DEL RECLAMANTE", "demandante_cedula": "87654321" }`;
 
   try {
     const message = await anthropic.messages.create({
@@ -165,6 +178,8 @@ Devuelve UNICAMENTE un JSON con esta forma exacta:
       clase_pretension: clasif.clase_pretension,
       causante_nombre: limpiar(parsed?.causante_nombre),
       causante_cedula: limpiar(parsed?.causante_cedula),
+      demandante_nombre: limpiar(parsed?.demandante_nombre),
+      demandante_cedula: limpiar(parsed?.demandante_cedula),
     };
   } catch (e) {
     console.error("analizarTrasladoVision:", e);
@@ -306,6 +321,8 @@ export async function POST(request: NextRequest) {
           clase_pretension: vision.clase_pretension,
           causante_nombre: vision.causante_nombre,
           causante_cedula: vision.causante_cedula,
+          demandante_nombre: vision.demandante_nombre,
+          demandante_cedula: vision.demandante_cedula,
         },
         fieldsFound: 0,
         suggestionsFound: encontrados.length,
@@ -360,7 +377,9 @@ Devuelve UNICAMENTE un objeto JSON valido con esta forma exacta (sin texto adici
     "pretension": "CLASIFICACION del tipo de prestacion. ${REGLA_CLASIFICACION.replace(/\n/g, " ")} Devuelve la pretension (VEJEZ, SOBREVIVIENTES, INVALIDEZ o ADMINISTRADORA) o null.",
     "clase_pretension": "la CLASE exacta del catalogo bajo la pretension elegida (segun la regla de CLASIFICACION anterior), o null",
     "causante_nombre": "nombre completo del CAUSANTE/AFILIADO. ${REGLA_CAUSANTE.replace(/\n/g, " ")} Devuelve el nombre o null.",
-    "causante_cedula": "numero de cedula del causante/afiliado (SOLO DIGITOS), o null"
+    "causante_cedula": "numero de cedula del causante/afiliado (SOLO DIGITOS), o null",
+    "demandante_nombre": "nombre completo del DEMANDANTE/RECLAMANTE. ${REGLA_DEMANDANTE.replace(/\n/g, " ")} Devuelve el nombre o null.",
+    "demandante_cedula": "numero de cedula del demandante/reclamante (SOLO DIGITOS), o null"
   }
 }`;
 
@@ -404,6 +423,8 @@ Devuelve UNICAMENTE un objeto JSON valido con esta forma exacta (sin texto adici
           clase_pretension: vision.clase_pretension,
           causante_nombre: vision.causante_nombre,
           causante_cedula: vision.causante_cedula,
+          demandante_nombre: vision.demandante_nombre,
+          demandante_cedula: vision.demandante_cedula,
         },
         fieldsFound: 0,
         suggestionsFound: encontrados.length,
