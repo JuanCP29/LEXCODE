@@ -73,8 +73,9 @@ estilo de PROSA CONTINUA de los ejemplos de referencia. Reglas:
   se deriven de datos que CONSTAN en las fuentes, preséntalas como lo hacen las contestaciones oro, eligiendo el formato:
     · COMPARACIÓN de varias magnitudes en columnas (p. ej. IBL 1 vs IBL 2 vs mesada) → una <table> HTML BREVE con una fila
       de encabezado (<tr><th>…</th></tr>) y las filas de datos (<tr><td>…</td></tr>).
-    · CÁLCULO SECUENCIAL (p. ej. tasa de reemplazo: semanas adicionales → bloques de 50 → 1.5%) → un <p> con las líneas del
-      cálculo separadas por <br> (ej.: 1959 − 1300 = 659<br>659 / 50 = 13.18<br>13.18 × 1.5% = 19.77%<br>…).
+    · CÁLCULO SECUENCIAL (p. ej. tasa de reemplazo: semanas adicionales → bloques de 50 → 1,5%) → un <p> con las líneas del
+      cálculo separadas por <br> (ej.: 1959 − 1300 = 659<br>659 / 50 = 13,18<br>13,18 × 1,5% = 19,77%<br>…). Usa coma
+      decimal y punto de miles (1.300); el símbolo % pegado a la cifra.
   NUNCA inventes cifras: toda cantidad debe constar o derivarse aritméticamente de las fuentes. En las CELDAS de una tabla
   NUNCA escribas disclaimers como "No obra en el expediente", "a verificar con el acto administrativo" o similares; si un valor
   no está disponible, deja la celda con un guion (—) o solo con el dato que sí conste, sin advertencias.
@@ -121,6 +122,65 @@ export const REGLAS_TRAZABILIDAD = `REGLAS ESTRICTAS:
 - No adelantes cálculos aritméticos que no puedas derivar de los datos dados.`;
 
 /**
+ * Reglas de redacción y ortografía tomadas del "Manual de escritura jurídica", cap. VI
+ * ("Estilo gráfico del texto jurídico y diseño de página", pp. 155-188). Traducen sus
+ * recomendaciones en reglas verificables sobre el texto que produce el modelo. Son PAUTAS DE
+ * ESCRITURA: no alteran hechos, cifras, fundamentos ni la posición institucional, ni deciden el
+ * fondo del caso. Ante conflicto con una instrucción específica del proyecto, prevalece esta última.
+ */
+export const REGLAS_REDACCION = `REGLAS DE REDACCIÓN Y ORTOGRAFÍA (Manual de escritura jurídica, cap. VI). Aplícalas a la forma, sin
+cambiar hechos, cifras, fundamentos ni la posición institucional:
+- NÚMEROS Y CIFRAS (§7.2): expresa las cantidades técnicas exactas —semanas, porcentajes, montos, IBL, fechas,
+  radicados, años— en CIFRAS (por precisión y por tratarse de números largos o con decimales). Los años, los
+  radicados y los códigos van en cifras SIN separador de miles (Ley 100 de 1993, Resolución SUB 245593). Para
+  los miles usa el PUNTO y para los decimales la COMA, de forma consistente (1.300 semanas; 77,46%). NUNCA uses
+  el apóstrofo como separador de miles (nada de 1'240.000).
+- SIGNOS (§7.3): el símbolo % va PEGADO a la cifra (77%, 19,77%; no "77 %"). El signo $ va antepuesto y pegado
+  (\$1.240.000). Para un valor monetario relevante, cuando aporte certeza, escribe la cifra y, entre paréntesis,
+  su equivalente en letras (\$1.240.000 (un millón doscientos cuarenta mil pesos)).
+- FECHAS (§7.2): en la prosa corrida, escríbelas en orden día-mes-año con el mes en letras (28 de noviembre de 2017).
+  La forma numérica abreviada (28/11/2017) es admisible, sobre todo en rangos o entre paréntesis; sé consistente.
+- MAYÚSCULAS (§6): usa mayúscula en las instituciones cuando son nombre propio (Colpensiones, Corte Suprema de
+  Justicia, Sala de Casación Laboral, Superintendencia Financiera) y minúscula cuando son genéricas (las
+  administradoras, el juez de conocimiento). Las voces ley, decreto, resolución, circular, acuerdo van en MINÚSCULA
+  cuando son genéricas ("conforme a la ley", "la resolución que negó") y en MAYÚSCULA solo al citar la norma concreta
+  (Ley 100 de 1993, Decreto 1730 de 2001, Acuerdo 049 de 1990, Resolución SUB 245593). Conserva la tilde en las
+  mayúsculas. Días, meses y gentilicios en minúscula.
+- ÉNFASIS (§5): resalta SOLO con negrita (<strong>) y con parquedad, únicamente los datos esenciales. PROHIBIDO
+  enfatizar con MAYÚSCULA SOSTENIDA, subrayado o itálica, combinar dos formas de énfasis, o resaltar párrafos o
+  citas completas (si todo se resalta, nada resalta).
+- SIGLAS (§7.1): define la sigla la PRIMERA vez, entre paréntesis tras la expresión completa —Ingreso Base de
+  Liquidación (IBL); pérdida de capacidad laboral (PCL)— y luego úsala de forma consistente; no asumas que el lector
+  la conoce.
+- TABLAS Y LISTAS (§2.2): en cada celda o viñeta, una sola idea, concisa; nunca un párrafo completo dentro de una
+  celda. (Complementa el FORMATO de tablas ya indicado.)`;
+
+/**
+ * Reglas de estilo y sintaxis tomadas del "Manual de escritura jurídica", cap. V ("La versión final:
+ * redacción, estilo y edición"). Se incorporan por evidencia: en el corpus actual la oración promedia
+ * ~56 palabras (el manual recomienda ~20) y abundan la pasiva perifrástica y el impersonal que oculta
+ * al agente. Mejoran la CLARIDAD sin eliminar matices, condiciones, excepciones ni información, sin
+ * reducir la extensión por principio, y sin cambiar la voz institucional ni la estructura del documento.
+ */
+export const REGLAS_ESTILO = `REGLAS DE ESTILO Y SINTAXIS (Manual de escritura jurídica, cap. V). Mejoran la claridad SIN suprimir
+matices, condiciones, excepciones ni información, y SIN cambiar la voz institucional ni la estructura:
+- ORACIONES (§9.2.3-9.2.6): evita las oraciones muy largas que encadenan cualificaciones, excepciones y
+  subordinadas ("el cual", "cuyo", "en el que"). Cuando una idea acumule varias condiciones o precisiones,
+  REPÁRTELA en varias oraciones enlazadas con punto seguido y conectores explícitos, no con comas sucesivas.
+  REPARTIR NO ES RESUMIR: conserva TODAS las condiciones, cifras, fechas y matices; solo distribúyelos en
+  más oraciones. Busca un promedio cercano a 20-25 palabras por oración, con flexibilidad cuando la
+  precisión jurídica lo exija.
+- VOZ (§9.2.8): prefiere la voz ACTIVA con el sujeto institucional EXPLÍCITO —Colpensiones, la entidad, la
+  administradora, el juez de conocimiento, el demandante— en lugar de la pasiva perifrástica ("fue reconocida",
+  "ha sido calificado") o del impersonal que oculta al agente ("se determina", "se evidencia") cuando el agente
+  es conocido. Mantén la TERCERA PERSONA y el registro institucional; esto NO autoriza la primera persona ni un
+  tono coloquial, y no obliga a forzar la activa cuando el sujeto genuinamente se desconoce.
+- ARRANQUE DEL PÁRRAFO (§9.3.3): empieza cada párrafo con su oración tópica —la idea o conclusión que lo
+  gobierna— y desarrolla después el fundamento.
+- EXTENSIÓN DEL PÁRRAFO (§9.3.2): procura párrafos en torno a 150 palabras y no mayores a ~250; si uno excede
+  ese límite, divídelo por unidad de idea, sin suprimir contenido.`;
+
+/**
  * Ensambla la instrucción completa de Consideraciones para inyectar en el prompt de
  * generación, ajustada a la postura del caso. Las FUENTES (expediente, resoluciones,
  * doctrina, jurisprudencia, demanda) las antepone el generador.
@@ -138,6 +198,10 @@ export function instruccionConsideraciones(postura: PosturaColpensiones): string
     REGLA_CITAS,
     "",
     REGLAS_TRAZABILIDAD,
+    "",
+    REGLAS_REDACCION,
+    "",
+    REGLAS_ESTILO,
   ].join("\n");
 }
 
@@ -169,6 +233,10 @@ export function instruccionConciliabilidad(): string {
     REGLA_CITAS,
     "",
     REGLAS_TRAZABILIDAD,
+    "",
+    REGLAS_REDACCION,
+    "",
+    REGLAS_ESTILO,
     "",
     "PROHIBIDO: decidir la conciliabilidad con criterio propio; usar criterios de defensa para fundar la",
     "conciliación; o dar por cumplida una condición de la directriz sin respaldo en los hechos del caso.",
