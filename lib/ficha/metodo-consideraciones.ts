@@ -349,7 +349,7 @@ Vas a redactar la sección CONSIDERACIONES de la Ficha de Conciliación (formato
 
 ${instruccion}
 
-${fewshot ? `═══════════ EJEMPLOS DE REFERENCIA (imita ESTILO y ESTRUCTURA de prosa; NO copies sus hechos, cifras ni sentencias; los ejemplos se muestran como texto, pero TU salida debe ir en HTML según el FORMATO indicado) ═══════════\n\n${fewshot}\n\n` : ""}═══════════ CASO A RESOLVER — FUENTES AUTORIZADAS ═══════════
+${fewshot ? `═══════════ EJEMPLOS DE REFERENCIA (imita su ESTRUCTURA, enfoque argumentativo y tono institucional; NO copies sus hechos, cifras ni sentencias. IMPORTANTE: estos ejemplos pueden contener oraciones largas y otros rasgos de forma; las REGLAS DE REDACCIÓN Y DE ESTILO PREVALECEN sobre la forma superficial de los ejemplos — escribe oraciones más cortas y en voz activa aunque el ejemplo no lo haga. Tu salida va en HTML según el FORMATO) ═══════════\n\n${fewshot}\n\n` : ""}═══════════ CASO A RESOLVER — FUENTES AUTORIZADAS ═══════════
 
 PARÁMETROS:
 - ¿Asunto conciliable?: ${f.conciliable === true ? "SÍ → RAMA DE CONCILIABILIDAD (valida las condiciones de la directriz)" : "NO → RAMA DE DEFENSA (sustenta la actuación con los criterios de defensa)"}
@@ -365,5 +365,6 @@ ${bloques.join("\n\n")}
 
 ═══════════ TU TAREA ═══════════
 ${tarea}
-Usa SOLO las fuentes autorizadas de arriba. Responde en HTML (párrafos <p>, sin JSON, sin cercos de código, sin encabezado de documento), siguiendo el FORMATO DE SALIDA: SOLO el cuerpo de las Consideraciones${parte === 1 ? " (pasos 1–5)" : parte === 2 ? " (pasos 6–9)" : ""}.`;
+Usa SOLO las fuentes autorizadas de arriba. Responde en HTML (párrafos <p>, sin JSON, sin cercos de código, sin encabezado de documento), siguiendo el FORMATO DE SALIDA: SOLO el cuerpo de las Consideraciones${parte === 1 ? " (pasos 1–5)" : parte === 2 ? " (pasos 6–9)" : ""}.
+RECORDATORIO DE FORMA (obligatorio): aplica a TODO el texto las REGLAS DE REDACCIÓN Y DE ESTILO — oraciones de ~20-25 palabras (reparte las ideas largas en varias, sin resumir), voz activa con sujeto institucional explícito, % pegado a la cifra y coma decimal, nombres propios sin mayúscula sostenida, énfasis solo con <strong>.`;
 }
