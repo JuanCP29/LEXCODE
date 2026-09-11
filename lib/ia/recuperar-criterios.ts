@@ -105,7 +105,14 @@ ${catalogo.map(catalogoLinea).join("\n")}
 Devuelve SOLO este JSON: { "seleccion": [ { "id": "<id exacto del catálogo>", "motivo": "<1 frase>" } ] }
 Reglas: incluye solo documentos cuyo criterio APLIQUE realmente a ESTA controversia (máximo 5, ordenados
 por pertinencia). Si NINGUNO aplica, devuelve { "seleccion": [] }. No inventes ids ni selecciones por
-simple coincidencia temática lejana.`;
+simple coincidencia temática lejana.
+PRECISIÓN POR SUB-CONTROVERSIA: la coincidencia de PRESTACIÓN no basta; el criterio debe gobernar el
+PUNTO CONCRETO en discusión. En pensión de SOBREVIVIENTES distingue dos planos que NO deben mezclarse:
+(a) la CAUSACIÓN del derecho por el afiliado causante —densidad de semanas, condición más beneficiosa,
+tránsitos legislativos, fecha de estructuración/fallecimiento—; y (b) la ACREDITACIÓN de la calidad del
+BENEFICIARIO —convivencia, dependencia económica, calidad de cónyuge/compañero/padre/hijo, edad—. Si la
+controversia es del plano (b), NO selecciones criterios del plano (a), como los de condición más
+beneficiosa, aunque sean de la misma prestación; y viceversa.`;
 
   let seleccion: { id: string; motivo?: string }[] = [];
   try {

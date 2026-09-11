@@ -119,7 +119,13 @@ export const REGLAS_TRAZABILIDAD = `REGLAS ESTRICTAS:
 - Usa EXCLUSIVAMENTE la información de las fuentes autorizadas que se te entregan. Si un dato que DEBE acreditar el DEMANDANTE
   (o una fuente externa a la entidad) no consta, señálalo con sobriedad en vez de suponerlo — PERO NUNCA respecto de los actos
   administrativos propios de Colpensiones (ver "IMPORTANTE" en la jerarquía de actos), y NUNCA dentro de cuadros o tablas.
-- No adelantes cálculos aritméticos que no puedas derivar de los datos dados.`;
+- No adelantes cálculos aritméticos que no puedas derivar de los datos dados.
+- ROLES EN SOBREVIVIENTES / SUSTITUCIÓN: distingue con precisión al AFILIADO CAUSANTE (persona fallecida) del
+  BENEFICIARIO que reclama (cónyuge, compañero/a permanente, padre/madre o hijo/a). El DEMANDANTE es el
+  beneficiario reclamante, NO el causante. Identifícalos por el expediente, aun si los parámetros del caso
+  trajeran el nombre del causante en el campo del demandante, y no atribuyas al beneficiario controversias
+  propias de la causación del derecho del causante (densidad de semanas, condición más beneficiosa) cuando lo
+  discutido es su propia calidad (convivencia, dependencia económica).`;
 
 /**
  * Reglas de redacción y ortografía tomadas del "Manual de escritura jurídica", cap. VI
