@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { extraerTextoPDF } from "@/lib/ia/extraer-pdf";
+import { transcribirPDFVision } from "@/lib/ia/ocr-claude";
 import { enriquecerDirectriz } from "@/lib/ia/enriquecer-directriz";
 import { esAdmin } from "@/lib/auth/roles";
 
@@ -96,21 +97,32 @@ export async function POST(request: NextRequest) {
       tipologiaIds = tipologiasRaw ? JSON.parse(tipologiasRaw) : [];
     } catch { /* array vacío si viene malformado */ }
 
-    // Extraer texto del PDF
+    // Extraer texto del PDF. Si viene escaneado (poco texto nativo), se transcribe con OCR de visión.
+    const buffer = Buffer.from(await archivo.arrayBuffer());
+    const utiles = (s: string) => s.replace(/\s+/g, "").length;
     let textoExtraido = "";
     try {
-      const buffer = Buffer.from(await archivo.arrayBuffer());
       textoExtraido = await extraerTextoPDF(buffer);
     } catch {
-      textoExtraido = "[No se pudo extraer el texto automáticamente]";
+      textoExtraido = "";
     }
+    // Fallback OCR: si el texto nativo es escaso (PDF escaneado), transcribir con visión de Claude
+    // antes de enriquecer, para no guardar el documento con la ficha de criterio vacía.
+    if (utiles(textoExtraido) < 400) {
+      try {
+        const ocr = await transcribirPDFVision(buffer);
+        if (utiles(ocr) > utiles(textoExtraido)) textoExtraido = ocr;
+      } catch (e) {
+        console.error("OCR visión (no bloqueante):", e);
+      }
+    }
+    if (!textoExtraido.trim()) textoExtraido = "[No se pudo extraer el texto automáticamente]";
 
     // Subir PDF a Storage
     const storagePath = `directrices/${pretension}/${Date.now()}_${archivo.name}`;
-    const arrayBuffer = await archivo.arrayBuffer();
     const { error: uploadError } = await supabase.storage
       .from("directrices-lexcode")
-      .upload(storagePath, arrayBuffer, {
+      .upload(storagePath, buffer, {
         contentType: "application/pdf",
         upsert: false,
       });
