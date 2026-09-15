@@ -42,6 +42,26 @@ function extraerRadicados(texto: string): string[] {
   return Array.from(ids).slice(0, 20);
 }
 
+/**
+ * Identificadores de DOCTRINA INSTITUCIONAL citados en un texto: memorandos OAL, directrices (DIC/
+ * Directriz de conciliación), circulares, conceptos Bizagi. Devuelve tokens normalizados para cotejar
+ * por INTERSECCIÓN DE CONJUNTOS contra los mismos tokens del nombre/código de cada documento (robusto a
+ * palabras intermedias). "DIC" y "Directriz de conciliación" se tratan como equivalentes.
+ */
+function extraerCodigosDoctrina(texto: string): Set<string> {
+  const out = new Set<string>();
+  const t = texto ?? "";
+  Array.from(t.matchAll(/\bOAL[\s-]?0*(\d{2,4})\b/gi)).forEach((m) => out.add(`oal${m[1]}`));
+  // DIC y Directriz de conciliación → emite ambas variantes para que se crucen entre sí.
+  Array.from(t.matchAll(/\bDIC[\s-]?0*(\d{1,4})\b/gi)).forEach((m) => { out.add(`dic${m[1]}`); out.add(`directriz${m[1]}`); });
+  Array.from(t.matchAll(/\bDirectriz(?:\s+de\s+concili\w+)?\s*(?:n[o°.]*\s*)?0*(\d{1,4})\b/gi)).forEach((m) => { out.add(`directriz${m[1]}`); out.add(`dic${m[1]}`); });
+  Array.from(t.matchAll(/\bCircular(?:\s+interna)?\s*(?:n[o°.]*\s*)?0*(\d{1,4})\b/gi)).forEach((m) => out.add(`circular${m[1]}`));
+  // Conceptos Bizagi / radicados de concepto: la parte numérica larga es el token distintivo.
+  Array.from(t.matchAll(/\bBZ[_\s]?(\d{4})[_\s]?(\d{4,})\b/gi)).forEach((m) => out.add(m[2]));
+  Array.from(t.matchAll(/\bconcepto\s+(?:n[o°.]*\s*)?(\d{4})[_\s](\d{4,})\b/gi)).forEach((m) => out.add(m[2]));
+  return out;
+}
+
 function catalogoLinea(c: Record<string, unknown>): string {
   const esc = Array.isArray(c.escenarios) ? (c.escenarios as string[]).join(", ") : "";
   const prest = Array.isArray(c.prestaciones) ? (c.prestaciones as string[]).join(", ") : "";
@@ -86,9 +106,21 @@ export async function recuperarCriterios(
     }
   }
 
+  // 2b. Refuerzo por cita de DOCTRINA: memorandos/directrices/circulares/conceptos que el acto ancla cita
+  //     por su código y que EXISTEN en el catálogo (cotejo por intersección de códigos normalizados). Estos
+  //     se FUERZAN en la selección, pues son criterio institucional invocado por la propia decisión.
+  const codigosActo = args.textoActoAncla ? extraerCodigosDoctrina(args.textoActoAncla) : new Set<string>();
+  const citadosDoctrina = new Set<string>();
+  if (codigosActo.size) {
+    for (const d of catalogo) {
+      const codsDoc = extraerCodigosDoctrina(`${d.nombre ?? ""} ${d.codigo ?? ""}`);
+      if (Array.from(codsDoc).some((c) => codigosActo.has(c))) { citadosDoctrina.add(d.id); acogenCitas.add(d.id); }
+    }
+  }
+
   // 3. Selector con IA.
   const refuerzo = acogenCitas.size
-    ? `\nREFUERZO: el acto ancla cita sentencias que estos documentos acogen (prioriza si aplican): ${Array.from(acogenCitas).join(", ")}.`
+    ? `\nREFUERZO: el acto ancla invoca fuentes (jurisprudencia o doctrina institucional) que estos documentos recogen o son (priorízalos si aplican): ${Array.from(acogenCitas).join(", ")}.`
     : "";
   const prompt = `Eres un asistente de recuperación jurídica de COLPENSIONES. Selecciona, del catálogo de criterios
 institucionales, ÚNICAMENTE los que GOBIERNAN la controversia del caso. ${rama === "conciliabilidad"
@@ -129,12 +161,18 @@ beneficiosa, aunque sean de la misma prestación; y viceversa.`;
     seleccion = Array.from(acogenCitas).map((id) => ({ id }));
   }
 
-  // 4. Materializar los criterios seleccionados (en el orden dado por el selector).
+  // 4. Materializar. Se FUERZA la inclusión de los documentos citados por su código en el acto ancla
+  //    (aunque el selector no los haya elegido), pues son criterio institucional invocado por la propia
+  //    decisión; luego se agregan los del selector, sin duplicar, hasta un máximo de 6.
   const byId = new Map(catalogo.map((d) => [d.id, d]));
-  const criterios: CriterioRecuperado[] = seleccion
-    .map((s) => { const d = byId.get(s.id); return d ? { ...d, motivo: s.motivo } as CriterioRecuperado : null; })
-    .filter((x): x is CriterioRecuperado => !!x)
-    .slice(0, 5);
+  const forzados: CriterioRecuperado[] = Array.from(citadosDoctrina)
+    .map((id) => { const d = byId.get(id); return d ? { ...d, motivo: "Citado expresamente en el acto administrativo ancla." } as CriterioRecuperado : null; })
+    .filter((x): x is CriterioRecuperado => !!x);
+  const forzadosIds = new Set(forzados.map((c) => c.id));
+  const delSelector: CriterioRecuperado[] = seleccion
+    .map((s) => { const d = byId.get(s.id); return d && !forzadosIds.has(d.id) ? { ...d, motivo: s.motivo } as CriterioRecuperado : null; })
+    .filter((x): x is CriterioRecuperado => !!x);
+  const criterios: CriterioRecuperado[] = [...forzados, ...delSelector].slice(0, 6);
 
   // 5. Bloque de inyección compacto, según la rama.
   const bloqueInyeccion = construirBloque(rama, criterios).slice(0, MAX_INYECCION);
