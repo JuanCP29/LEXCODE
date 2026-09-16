@@ -19,13 +19,12 @@ const dir = "C:/Users/USER/AppData/Local/Temp/claude/C--Users-USER-OneDrive-Escr
 const textos = fs.readdirSync(dir).filter(f=>f.endsWith(".txt")).map(f=>fs.readFileSync(path.join(dir,f),"utf8"));
 
 const TARGETS = [
-  { nombre:"Circular OAL-02 de 2021 - Efectividad de la pension de vejez (modifica num. 1.6.5 Circular 01 de 2012)", tipo:"circular", prest:["vejez"], pat:/oal[\s-]?0?2[\s-]*(?:de\s*)?2021|circular\s+(?:interna\s+)?oal[\s-]?0?2/i },
-  { nombre:"Circular Interna 24 de 2018 - Efectividad de la pension de vejez (modifica num. 1.6.5 Circular 01 de 2012)", tipo:"circular", prest:["vejez"], pat:/circular\s+(?:interna\s+)?(?:n[o°.]*\s*)?24\s+de\s+2018/i },
-  { nombre:"Circular Conjunta 069 de 2008 - Cobro de cuotas partes pensionales", tipo:"circular", prest:["transversal"], pat:/circular\s+conjunta\s+(?:n[o°.]*\s*)?0?69|conjunta\s+069/i },
-  { nombre:"SU-065 de 2018 - Intereses moratorios: mora en el pago vs. reconocimiento", tipo:"jurisprudencia", prest:["transversal"], pat:/su[\s-]?0?65[\s-\/]*(?:de\s*)?2018/i },
-  { nombre:"T-588 de 2003 - Plazos para decidir y pagar solicitudes pensionales", tipo:"jurisprudencia", prest:["transversal"], pat:/t[\s-]?588[\s-\/]*(?:de\s*)?2003/i },
-  { nombre:"C-601 de 2000 - Indemnizacion por pago tardio de mesadas pensionales", tipo:"jurisprudencia", prest:["transversal"], pat:/c[\s-]?601[\s-\/]*(?:de\s*)?2000/i },
-  { nombre:"SL4338-2019 - Improcedencia de intereses e indexacion en reliquidaciones pensionales", tipo:"jurisprudencia", prest:["transversal"], pat:/sl\s?4338[\s-]?2019/i },
+  { nombre:"C-965 de 2003 - Legitimacion en la causa por pasiva en materia pensional", tipo:"jurisprudencia", prest:["transversal"], pat:/c[\s-]?965[\s-\/]*(?:de\s*)?2003/i },
+  { nombre:"T-425 de 2004 - Convivencia efectiva para la pension de sobrevivientes", tipo:"jurisprudencia", prest:["sobrevivientes"], pat:/t[\s-]?425[\s-\/]*(?:de\s*)?2004/i },
+  { nombre:"T-170 de 2000 - Plazos y pago oportuno de prestaciones pensionales", tipo:"jurisprudencia", prest:["transversal"], pat:/t[\s-]?170[\s-\/]*(?:de\s*)?2000/i },
+  { nombre:"T-422 de 2003 - Pago oportuno de mesadas y minimo vital del pensionado", tipo:"jurisprudencia", prest:["transversal"], pat:/t[\s-]?422[\s-\/]*(?:de\s*)?2003/i },
+  { nombre:"Circular Externa 07 de 1996 - Superintendencia Financiera - deber de asesoria / traslado de regimen", tipo:"circular", prest:["administradora","transversal"], pat:/circular\s+(?:externa\s+)?(?:n[o°.]*\s*)?0*7\s+de\s+1996/i },
+  { nombre:"Circular Interna 15 de 2015 - Criterios operativos de Colpensiones", tipo:"circular", prest:["transversal"], pat:/circular\s+(?:interna\s+)?(?:n[o°.]*\s*)?0*15\s+de\s+2015/i },
 ];
 
 function excerpts(pat) {
