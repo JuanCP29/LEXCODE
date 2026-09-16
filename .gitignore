@@ -39,3 +39,10 @@ next-env.d.ts
 scripts/aoe_paths.txt
 scripts/muestra_estratificada.csv
 _tmp_*.mjs
+_tmp_*.ts
+
+# salidas generadas con datos personales de casos (no versionar)
+consideraciones_*.html
+expediente_*.txt
+muestra_contestaciones.csv
+muestra_contestaciones.xlsx
