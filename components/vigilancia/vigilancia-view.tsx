@@ -99,12 +99,13 @@ export function VigilanciaView({ iniciales }: { iniciales: ProcesoVigilado[] }) 
       const d = await r.json();
       if (!r.ok) setAviso({ tipo: "error", texto: d?.error ?? "No se pudo sincronizar." });
       else {
-        setAviso({
-          tipo: "ok",
-          texto: d.novedades > 0
-            ? `${d.novedades} novedad(es) nueva(s) en ${d.sincronizados} proceso(s).`
-            : `Sin cambios · ${d.sincronizados} proceso(s) revisado(s).`,
-        });
+        const base = d.novedades > 0
+          ? `${d.novedades} novedad(es) nueva(s) en ${d.sincronizados} proceso(s).`
+          : `Sin cambios · ${d.sincronizados} proceso(s) revisado(s).`;
+        const cola = d.restantes > 0
+          ? ` Quedan ${d.restantes} por revisar — vuelve a sincronizar para continuar.`
+          : "";
+        setAviso({ tipo: "ok", texto: base + cola });
         await refrescar();
       }
     } catch {

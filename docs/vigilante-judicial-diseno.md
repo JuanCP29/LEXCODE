@@ -107,9 +107,25 @@ vigilante no solo avisa: **entrega el borrador**.
 - **RLS** por `org_id`; solo roles autorizados gestionan vigilancia.
 - **Límites:** Vercel Hobby (60s, cron limitado) → mover ingesta a Supabase/worker; F3 exige worker.
 - **Fases:**
-  - **MVP:** F1 (CPNU) + persistencia + diff + novedades + alerta email + tablero. Alta manual/Excel.
-  - **v1:** WhatsApp/SMS, calendario de audiencias, clasificador IA → enlace a contestación.
-  - **v2:** F2/F3, notificación certificada (proveedor ONAC), paquetes/monetización.
+  - **MVP:** F1 (CPNU) + persistencia + diff + novedades + tablero. Alta manual.
+  - **v1:** **documento de la última actuación** (columna G: sembrar el PDF del estado/providencia,
+    ver memoria del PoC), alerta email, WhatsApp/SMS, calendario de audiencias, clasificador IA →
+    enlace a contestación.
+  - **v2:** más fuentes (F2 Publicaciones, F3 SIUGJ con reCAPTCHA en worker, F4 SAMAI, **TYBA**),
+    notificación certificada (proveedor ONAC), paquetes/monetización.
+
+### Estado de implementación (MVP, 2026-09-17)
+Implementado en `app/(protected)/vigilancia`, `app/api/vigilancia/*`, `lib/vigilancia/*` y
+`supabase/vigilancia.sql`. Decisiones heredadas del PoC (memoria `vigilante-judicial`):
+- **Rate-limit CPNU** (bloqueo por IP tras ~29 consultas): `Sincronizar todo` avanza por **lote**
+  (12) con pausa de cortesía y reporta `restantes`; el cliente reintenta 429/5xx con backoff.
+- **Fecha del movimiento:** se toma de la **última actuación** (el resumen de CPNU llega
+  desactualizado), no de `fechaUltimaActuacion`.
+- **Fuentes:** el modelo (`procesos_vigilados.pagina_origen`) ya admite
+  `rama_unificada | samai | siglo_xxi | tyba`; **TYBA** queda registrada como fuente a integrar
+  (v2), además de las F2/F3/F4 del PoC.
+- **Documento del estado (columna G):** diferido a **v1** (núcleo del proyecto original; el MVP ya
+  guarda todas las actuaciones, base para extraer el PDF de la última cuando sea estado/providencia).
 
 ## 11. Riesgos
 - Estabilidad/cambios de la API de la Rama Judicial (F1/F2) y del portal con captcha (F3).

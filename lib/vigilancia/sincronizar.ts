@@ -107,7 +107,9 @@ export async function sincronizarProceso(
     ciudad: datos.ciudad,
     departamento: datos.departamento,
     estado: "activo",
-    ultimo_movimiento: fechaISO(datos.fechaUltimaActuacion) ?? fechaISO(ultima?.fecha ?? null),
+    // La fecha del "resumen" de CPNU llega desactualizada (aviso del PoC):
+    // tomamos la de la última actuación real y solo caemos al resumen si no hay.
+    ultimo_movimiento: fechaISO(ultima?.fecha ?? null) ?? fechaISO(datos.fechaUltimaActuacion),
     ultima_actuacion_hash: ultima?.hash ?? proceso.radicado,
     backfill_completo: true,
     updated_at: new Date().toISOString(),

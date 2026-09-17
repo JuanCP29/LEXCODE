@@ -35,13 +35,30 @@ export function hashActuacion(fecha: unknown, actuacion: unknown, anotacion: unk
     .digest("hex");
 }
 
-async function fetchConTimeout(url: string, ms = 15000): Promise<Response> {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), ms);
-  try {
-    return await fetch(url, { headers: HEADERS, cache: "no-store", signal: ctrl.signal });
-  } finally {
-    clearTimeout(t);
+const pausa = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+// CPNU limita por IP (el PoC observó bloqueo tras ~29 consultas seguidas). Ante 429/5xx o
+// timeout, reintenta con backoff exponencial en vez de fallar de una.
+async function fetchConTimeout(url: string, ms = 15000, reintentos = 2): Promise<Response> {
+  for (let intento = 0; ; intento++) {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), ms);
+    try {
+      const r = await fetch(url, { headers: HEADERS, cache: "no-store", signal: ctrl.signal });
+      if ((r.status === 429 || r.status >= 500) && intento < reintentos) {
+        await pausa(1000 * Math.pow(3, intento)); // 1s, 3s
+        continue;
+      }
+      return r;
+    } catch (e) {
+      if (intento < reintentos) {
+        await pausa(1000 * Math.pow(3, intento));
+        continue;
+      }
+      throw e;
+    } finally {
+      clearTimeout(t);
+    }
   }
 }
 
