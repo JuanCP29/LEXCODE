@@ -17,6 +17,7 @@ import {
   Building2,
   Users,
   Undo2,
+  ScanEye,
   X,
 } from "lucide-react";
 import { ROL, esAdmin, esCoordinador } from "@/lib/auth/roles";
@@ -76,7 +77,10 @@ function SidebarContent({ onClose, rol }: SidebarContentProps) {
       { href: "/cola-de-casos", label: "Asignaciones", icon: ListChecks },
       { href: "/devoluciones", label: "Devoluciones", icon: Undo2, badge: "devoluciones" as BadgeKey },
     ] : []),
-    ...(!prop ? [{ href: "/pendientes", label: "Pendientes", icon: Clock }] : []),
+    ...(!prop ? [
+      { href: "/pendientes", label: "Pendientes", icon: Clock },
+      { href: "/vigilancia", label: "Vigilancia", icon: ScanEye },
+    ] : []),
   ];
   const herramientasItems: NavItem[] = [
     { href: "/configuracion", label: "Configuración", icon: Settings },
