@@ -286,7 +286,9 @@ function ProcesoCard({
             <>
               <div className="mb-3 flex items-center justify-between gap-2">
                 <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Actuaciones {detalle?.actuaciones.length ? `(${detalle.actuaciones.length})` : ""}
+                  {detalle && detalle.actuaciones.length > 5
+                    ? `Últimas 5 actuaciones (de ${detalle.actuaciones.length})`
+                    : `Actuaciones${detalle?.actuaciones.length ? ` (${detalle.actuaciones.length})` : ""}`}
                 </span>
                 <div className="flex gap-2">
                   {proceso.novedades > 0 && (
@@ -304,7 +306,7 @@ function ProcesoCard({
                 <p className="py-2 text-sm text-muted-foreground">Sin actuaciones registradas.</p>
               ) : (
                 <ol className="space-y-2">
-                  {detalle.actuaciones.slice(0, 40).map((a) => {
+                  {detalle.actuaciones.slice(0, 5).map((a) => {
                     const esAccion = detalle.novedades.some(
                       (n) => !n.atendida && n.nivel === "accion" && (n.resumen ?? "").includes((a.actuacion ?? "").trim())
                     );
