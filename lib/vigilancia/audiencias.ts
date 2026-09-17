@@ -21,33 +21,41 @@ export type AudienciaExtraida = {
 };
 
 // Parsea una fecha (y hora si aparece) en texto libre en español. Devuelve Date local o null.
+// Recolecta TODAS las fechas y se queda con la ÚLTIMA: en una actuación la primera fecha suele
+// ser la de registro y la de la AUDIENCIA aparece después ("… PARA EL DÍA 14/10/2026"); en una
+// reprogramación, la última es la fecha nueva. La hora se busca a partir de esa fecha.
 export function parseFechaHora(textoRaw: string): Date | null {
   const texto = textoRaw || "";
-  let y = 0, m = 0, d = 0;
+  const cands: { i: number; y: number; m: number; d: number }[] = [];
 
-  // 1) "20 de marzo de 2026" (con ")" opcional tras el día; case-insensitive: el texto
-  //    judicial suele venir en MAYÚSCULAS ("7 DE JULIO DE 2026").
-  const tt = texto.match(/(\d{1,2})\s*\)?\s*de\s+([A-Za-zÁÉÍÓÚáéíóú]+)\s+de\s+(\d{4})/i);
-  if (tt && MESES[sinAcentos(tt[2])]) {
-    d = +tt[1]; m = MESES[sinAcentos(tt[2])]; y = +tt[3];
-  } else {
-    const iso = texto.match(/\b(\d{4})-(\d{2})-(\d{2})\b/);
-    const num = texto.match(/\b(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})\b/);
-    if (iso) { y = +iso[1]; m = +iso[2]; d = +iso[3]; }
-    else if (num) { d = +num[1]; m = +num[2]; y = +num[3]; }
+  // Textual: "20 de marzo de 2026" (con ")" opcional; case-insensitive por el texto en MAYÚSCULAS)
+  for (const m of Array.from(texto.matchAll(/(\d{1,2})\s*\)?\s*de\s+([A-Za-zÁÉÍÓÚáéíóú]+)\s+de\s+(\d{4})/gi))) {
+    const mes = MESES[sinAcentos(m[2])];
+    if (mes) cands.push({ i: m.index ?? 0, y: +m[3], m: mes, d: +m[1] });
   }
-  if (!y || !m || !d || m > 12 || d > 31) return null;
+  // Numérica dd/mm/yyyy
+  for (const m of Array.from(texto.matchAll(/\b(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})\b/g))) {
+    cands.push({ i: m.index ?? 0, y: +m[3], m: +m[2], d: +m[1] });
+  }
+  // ISO yyyy-mm-dd
+  for (const m of Array.from(texto.matchAll(/\b(\d{4})-(\d{2})-(\d{2})\b/g))) {
+    cands.push({ i: m.index ?? 0, y: +m[1], m: +m[2], d: +m[3] });
+  }
+  if (!cands.length) return null;
+  cands.sort((a, b) => a.i - b.i);
+  const c = cands[cands.length - 1]; // la última fecha del texto
+  if (c.m > 12 || c.d > 31) return null;
 
-  // Hora: "9:00 a. m.", "14:30", "10:00 horas"
+  // Hora, buscada desde la posición de la fecha elegida ("… 14/10/2026 HORA 9:00 AM")
   let hh = 0, mm = 0;
-  const ht = texto.match(/\b(\d{1,2})[:.](\d{2})\s*(a\.?\s*m\.?|p\.?\s*m\.?|am|pm)?/i);
+  const ht = texto.slice(c.i).match(/\b(\d{1,2})[:.](\d{2})\s*(a\.?\s*m\.?|p\.?\s*m\.?|am|pm)?/i);
   if (ht) {
     hh = +ht[1]; mm = +ht[2];
     const ap = sinAcentos(ht[3] || "").replace(/[\s.]/g, "");
     if (ap.startsWith("p") && hh < 12) hh += 12;
     if (ap.startsWith("a") && hh === 12) hh = 0;
   }
-  const dt = new Date(y, m - 1, d, hh, mm, 0);
+  const dt = new Date(c.y, c.m - 1, c.d, hh, mm, 0);
   return Number.isNaN(dt.getTime()) ? null : dt;
 }
 

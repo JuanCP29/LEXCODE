@@ -50,20 +50,27 @@ export function CalendarioAudiencias({ iniciales }: { iniciales: Audiencia[] }) 
   const [cursor, setCursor] = useState({ y: hoy.getFullYear(), m: hoy.getMonth() });
   const [sel, setSel] = useState<string | null>(keyLocal(hoy));
 
+  // Solo relacionamos audiencias de HOY y PRÓXIMAS (las pasadas no se muestran).
+  const inicioHoyTs = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()).getTime();
+  const visibles = useMemo(
+    () => iniciales.filter((a) => !a.fecha || new Date(a.fecha).getTime() >= inicioHoyTs),
+    [iniciales, inicioHoyTs]
+  );
+
   const porDia = useMemo(() => {
     const map = new Map<string, Audiencia[]>();
-    for (const a of iniciales) {
+    for (const a of visibles) {
       if (!a.fecha) continue;
       const k = keyLocal(new Date(a.fecha));
       if (!map.has(k)) map.set(k, []);
       map.get(k)!.push(a);
     }
     return map;
-  }, [iniciales]);
+  }, [visibles]);
 
-  const porConfirmar = iniciales.filter((a) => !a.fecha && a.estado !== "cancelada");
-  const proximas = iniciales
-    .filter((a) => a.fecha && new Date(a.fecha) >= new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()) && a.estado !== "cancelada")
+  const porConfirmar = visibles.filter((a) => !a.fecha && a.estado !== "cancelada");
+  const proximas = visibles
+    .filter((a) => a.fecha && a.estado !== "cancelada")
     .sort((a, b) => new Date(a.fecha!).getTime() - new Date(b.fecha!).getTime())
     .slice(0, 6);
 
