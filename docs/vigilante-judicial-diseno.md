@@ -127,6 +127,16 @@ Implementado en `app/(protected)/vigilancia`, `app/api/vigilancia/*`, `lib/vigil
 - **Documento del estado (columna G):** diferido a **v1** (núcleo del proyecto original; el MVP ya
   guarda todas las actuaciones, base para extraer el PDF de la última cuando sea estado/providencia).
 
+**Limitación conocida — expedientes migrados a SIUGJ (F3).** El MVP vigila **solo F1/CPNU**. Muchos
+laborales (p. ej. despachos de Bucaramanga) migran su trámite a **SIUGJ**, dejando en CPNU una
+actuación tipo *"Constancia Secretarial: en adelante se tramitará únicamente a través de SIUGJ"* y
+**sin más movimientos posteriores en CPNU**. Para esos procesos, CPNU queda como **espejo congelado**
+en la fecha de migración y el vigilante **no verá lo nuevo** hasta integrar **F3/SIUGJ** (reCAPTCHA →
+worker aparte). Caso reproducido con `68001310500620260009000` (verificado con
+`scripts/verificar-vigilancia.mjs`: FoQs = CPNU 2/2 actuaciones, última 28-may-2026, la de migración
+a SIUGJ). **Mitigación provisional:** detectar esa "Constancia Secretarial"/"Fijacion estado SIUGJ" y
+marcar el proceso como *seguimiento incompleto (fuente SIUGJ pendiente)* en el tablero.
+
 ## 11. Riesgos
 - Estabilidad/cambios de la API de la Rama Judicial (F1/F2) y del portal con captcha (F3).
 - Cumplimiento: la parte "certificada" depende del proveedor ONAC (no reinventar).
