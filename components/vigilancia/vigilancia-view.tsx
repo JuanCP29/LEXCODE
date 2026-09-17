@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -53,10 +54,12 @@ export function VigilanciaView({ iniciales }: { iniciales: ProcesoVigilado[] }) 
   const [sincronizando, setSincronizando] = useState(false);
   const [aviso, setAviso] = useState<{ tipo: "ok" | "error"; texto: string } | null>(null);
   const [expandido, setExpandido] = useState<string | null>(null);
+  const router = useRouter();
 
   async function refrescar() {
     const r = await fetch("/api/vigilancia/procesos", { cache: "no-store" });
     if (r.ok) setProcesos((await r.json()).procesos ?? []);
+    router.refresh(); // actualiza el conteo del encabezado (render del servidor)
   }
 
   async function incluir() {
@@ -118,7 +121,10 @@ export function VigilanciaView({ iniciales }: { iniciales: ProcesoVigilado[] }) 
   async function excluir(id: string) {
     if (!confirm("¿Excluir este proceso de la vigilancia? Se conserva el historial.")) return;
     const r = await fetch(`/api/vigilancia/procesos/${id}`, { method: "DELETE" });
-    if (r.ok) setProcesos((prev) => prev.filter((p) => p.id !== id));
+    if (r.ok) {
+      setProcesos((prev) => prev.filter((p) => p.id !== id));
+      router.refresh();
+    }
   }
 
   return (
