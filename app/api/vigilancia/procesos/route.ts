@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
 
   // Backfill inicial: trae el historial sin generar novedades.
   const resultado = await sincronizarProceso(ctx.sb, {
-    id: procesoId, radicado, backfill_completo: !!existente?.activo,
+    id: procesoId, radicado, backfill_completo: !!existente?.activo, org_id: ctx.orgId,
   });
 
   if (!resultado.encontrado) {

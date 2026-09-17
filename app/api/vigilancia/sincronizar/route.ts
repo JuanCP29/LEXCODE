@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       .select("id, radicado, backfill_completo")
       .eq("org_id", ctx.orgId).eq("activo", true).eq("id", procesoId).maybeSingle();
     if (!uno) return NextResponse.json({ error: "Proceso no encontrado" }, { status: 404 });
-    const r = await sincronizarProceso(ctx.sb, uno);
+    const r = await sincronizarProceso(ctx.sb, { ...uno, org_id: ctx.orgId });
     return NextResponse.json({ ok: true, sincronizados: 1, novedades: r.novedades, restantes: 0, resultados: [r] });
   }
 
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
   const resultados: ResultadoSync[] = [];
   let novedades = 0;
   for (let i = 0; i < procesos.length; i++) {
-    const r = await sincronizarProceso(ctx.sb, procesos[i]);
+    const r = await sincronizarProceso(ctx.sb, { ...procesos[i], org_id: ctx.orgId });
     resultados.push(r);
     novedades += r.novedades;
     if (i < procesos.length - 1) await pausa(PAUSA_MS); // cortesía con la Rama

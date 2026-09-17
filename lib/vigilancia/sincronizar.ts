@@ -1,4 +1,5 @@
 import { consultarProceso, type ActuacionRama } from "./rama";
+import { extraerAudiencia } from "./audiencias";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Sb = any; // SupabaseClient (admin o server) — tipado laxo para no acoplar versión
 
@@ -7,6 +8,7 @@ export type ResultadoSync = {
   encontrado: boolean;
   nuevas: number;       // actuaciones nuevas insertadas
   novedades: number;    // novedades generadas (0 en el backfill inicial)
+  audiencias: number;   // audiencias detectadas/registradas (auto)
   error?: string;
 };
 
@@ -41,10 +43,10 @@ function fechaISO(v: string | null): string | null {
  */
 export async function sincronizarProceso(
   sb: Sb,
-  proceso: { id: string; radicado: string; backfill_completo: boolean }
+  proceso: { id: string; radicado: string; backfill_completo: boolean; org_id: string }
 ): Promise<ResultadoSync> {
   const res: ResultadoSync = {
-    radicado: proceso.radicado, encontrado: false, nuevas: 0, novedades: 0,
+    radicado: proceso.radicado, encontrado: false, nuevas: 0, novedades: 0, audiencias: 0,
   };
 
   let datos;
@@ -115,5 +117,55 @@ export async function sincronizarProceso(
     updated_at: new Date().toISOString(),
   }).eq("id", proceso.id);
 
+  // Barrido de audiencias: recorre TODAS las actuaciones almacenadas (no solo las nuevas, para
+  // cubrir el historial del backfill) y registra las que fijan audiencia. Idempotente por
+  // unique(actuacion_id) con ignoreDuplicates → no pisa correcciones manuales.
+  res.audiencias = await sincronizarAudiencias(sb, proceso.id, proceso.org_id, datos.despacho);
+
   return res;
+}
+
+async function sincronizarAudiencias(
+  sb: Sb, procesoId: string, orgId: string, despacho: string | null
+): Promise<number> {
+  const { data: acts } = await sb
+    .from("actuaciones_vigilancia")
+    .select("id, actuacion, anotacion")
+    .eq("proceso_id", procesoId);
+
+  // Audiencias ya registradas: por actuación (idempotencia) y por fecha (dedup de misma audiencia).
+  const { data: ya } = await sb
+    .from("audiencias_vigilancia").select("actuacion_id, fecha").eq("proceso_id", procesoId);
+  const actYa = new Set<string>((ya ?? []).map((x: { actuacion_id: string }) => x.actuacion_id).filter(Boolean));
+  const fechaYa = new Set<number>(
+    (ya ?? []).filter((x: { fecha: string | null }) => x.fecha).map((x: { fecha: string }) => new Date(x.fecha).getTime())
+  );
+
+  const filas: Record<string, unknown>[] = [];
+  for (const a of (acts ?? []) as { id: string; actuacion: string | null; anotacion: string | null }[]) {
+    if (actYa.has(a.id)) continue;
+    const e = extraerAudiencia(a.actuacion, a.anotacion);
+    if (!e.esAudiencia) continue;
+    // Si ya hay una audiencia con esa misma fecha (otro auto la fijó), no dupliques.
+    if (e.fechaISO) {
+      const ts = new Date(e.fechaISO).getTime();
+      if (fechaYa.has(ts)) continue;
+      fechaYa.add(ts);
+    }
+    filas.push({
+      org_id: orgId,
+      proceso_id: procesoId,
+      actuacion_id: a.id,
+      fecha: e.fechaISO,
+      tipo: e.tipo,
+      despacho,
+      origen: "auto",
+      estado: e.fechaISO ? "programada" : "por_confirmar",
+    });
+  }
+
+  if (!filas.length) return 0;
+  await sb.from("audiencias_vigilancia")
+    .upsert(filas, { onConflict: "actuacion_id", ignoreDuplicates: true });
+  return filas.length;
 }

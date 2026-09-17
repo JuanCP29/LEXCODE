@@ -18,6 +18,7 @@ import {
   Users,
   Undo2,
   ScanEye,
+  CalendarDays,
   X,
 } from "lucide-react";
 import { ROL, esAdmin, esCoordinador } from "@/lib/auth/roles";
@@ -80,6 +81,7 @@ function SidebarContent({ onClose, rol }: SidebarContentProps) {
     ...(!prop ? [
       { href: "/pendientes", label: "Pendientes", icon: Clock },
       { href: "/vigilancia", label: "Vigilancia", icon: ScanEye },
+      { href: "/audiencias", label: "Audiencias", icon: CalendarDays },
     ] : []),
   ];
   const herramientasItems: NavItem[] = [
