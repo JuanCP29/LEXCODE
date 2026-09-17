@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -50,6 +50,11 @@ export function CalendarioAudiencias({ iniciales }: { iniciales: Audiencia[] }) 
   const [cursor, setCursor] = useState({ y: hoy.getFullYear(), m: hoy.getMonth() });
   const [sel, setSel] = useState<string | null>(keyLocal(hoy));
 
+  // El calendario depende de la fecha/zona local; para evitar desajustes de hidratación
+  // (servidor en UTC vs. cliente en Bogotá) renderizamos su contenido solo tras montar.
+  const [montado, setMontado] = useState(false);
+  useEffect(() => setMontado(true), []);
+
   // Solo relacionamos audiencias de HOY y PRÓXIMAS (las pasadas no se muestran).
   const inicioHoyTs = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()).getTime();
   const visibles = useMemo(
@@ -92,6 +97,16 @@ export function CalendarioAudiencias({ iniciales }: { iniciales: Audiencia[] }) 
   };
 
   const delDia = sel ? porDia.get(sel) ?? [] : [];
+
+  if (!montado) {
+    return (
+      <Card>
+        <CardContent className="flex items-center gap-2 p-6 text-sm text-muted-foreground">
+          <CalendarDays className="h-4 w-4" /> Cargando calendario…
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="grid gap-5 lg:grid-cols-[1fr_320px]">

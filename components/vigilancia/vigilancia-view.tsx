@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   ScanEye, RefreshCw, Plus, ChevronDown, ChevronRight, Trash2,
-  BellDot, CircleAlert, Loader2, CheckCheck, Scale,
+  BellDot, CircleAlert, Loader2, CheckCheck, Scale, Upload,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -52,13 +52,18 @@ export function VigilanciaView({ iniciales }: { iniciales: ProcesoVigilado[] }) 
   const [radicado, setRadicado] = useState("");
   const [incluyendo, setIncluyendo] = useState(false);
   const [sincronizando, setSincronizando] = useState(false);
+  const [importando, setImportando] = useState(false);
   const [aviso, setAviso] = useState<{ tipo: "ok" | "error"; texto: string } | null>(null);
   const [expandido, setExpandido] = useState<string | null>(null);
   const router = useRouter();
+  const fileRef = useRef<HTMLInputElement>(null);
 
-  async function refrescar() {
+  async function refetchLista() {
     const r = await fetch("/api/vigilancia/procesos", { cache: "no-store" });
     if (r.ok) setProcesos((await r.json()).procesos ?? []);
+  }
+  async function refrescar() {
+    await refetchLista();
     router.refresh(); // actualiza el conteo del encabezado (render del servidor)
   }
 
@@ -94,27 +99,93 @@ export function VigilanciaView({ iniciales }: { iniciales: ProcesoVigilado[] }) 
     }
   }
 
+  // Sincroniza en lotes y AUTO-CONTINÚA hasta agotar la cola (el servidor pausa entre procesos
+  // y respeta el rate-limit de la Rama). Muestra el avance para no hacer clic repetidas veces.
   async function sincronizarTodo() {
     setSincronizando(true);
     setAviso(null);
+    let totalNov = 0;
+    let procesados = 0;
     try {
-      const r = await fetch("/api/vigilancia/sincronizar", { method: "POST" });
-      const d = await r.json();
-      if (!r.ok) setAviso({ tipo: "error", texto: d?.error ?? "No se pudo sincronizar." });
-      else {
-        const base = d.novedades > 0
-          ? `${d.novedades} novedad(es) nueva(s) en ${d.sincronizados} proceso(s).`
-          : `Sin cambios · ${d.sincronizados} proceso(s) revisado(s).`;
-        const cola = d.restantes > 0
-          ? ` Quedan ${d.restantes} por revisar — vuelve a sincronizar para continuar.`
-          : "";
-        setAviso({ tipo: "ok", texto: base + cola });
-        await refrescar();
+      for (;;) {
+        const r = await fetch("/api/vigilancia/sincronizar", { method: "POST" });
+        const d = await r.json();
+        if (!r.ok) { setAviso({ tipo: "error", texto: d?.error ?? "No se pudo sincronizar." }); break; }
+        totalNov += d.novedades ?? 0;
+        procesados += d.sincronizados ?? 0;
+        await refetchLista();
+        if (d.restantes > 0) {
+          setAviso({ tipo: "ok", texto: `Sincronizando… ${procesados} revisados, quedan ${d.restantes}${totalNov > 0 ? ` · ${totalNov} novedad(es)` : ""}.` });
+          continue;
+        }
+        setAviso({ tipo: "ok", texto: totalNov > 0 ? `Listo · ${totalNov} novedad(es) nueva(s) en ${procesados} proceso(s).` : `Listo · sin cambios (${procesados} revisados).` });
+        break;
       }
+      router.refresh();
     } catch {
       setAviso({ tipo: "error", texto: "Error de red al sincronizar." });
     } finally {
       setSincronizando(false);
+    }
+  }
+
+  // Carga masiva: lee un Excel/CSV, extrae los radicados (23 díg.) de cualquier columna y los
+  // registra. El historial se trae después con "Sincronizar todo".
+  async function onArchivo(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!/\.(xlsx|xls|csv)$/i.test(file.name)) {
+      setAviso({ tipo: "error", texto: "Formato admitido: .xlsx, .xls o .csv" });
+      return;
+    }
+    setImportando(true);
+    setAviso(null);
+    try {
+      const XLSX = await import("xlsx");
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: "array" });
+      const radicados = new Set<string>();
+      const agrega = (v: unknown) => {
+        const dig = String(v ?? "").replace(/\D/g, "");
+        if (dig.length >= 20 && dig.length <= 23) radicados.add(dig);
+      };
+      // Preferimos una columna "Radicado"; solo si ninguna hoja la tiene, escaneamos todas las celdas.
+      let hallada = false;
+      for (const name of wb.SheetNames) {
+        const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(wb.Sheets[name], { defval: "" });
+        if (!rows.length) continue;
+        const key = Object.keys(rows[0]).find((k) => /radicad/i.test(k));
+        if (!key) continue;
+        hallada = true;
+        for (const row of rows) agrega(row[key]);
+      }
+      if (!hallada) {
+        for (const name of wb.SheetNames) {
+          const filas = XLSX.utils.sheet_to_json<unknown[]>(wb.Sheets[name], { header: 1, defval: "" });
+          for (const fila of filas) for (const celda of fila as unknown[]) agrega(celda);
+        }
+      }
+      if (!radicados.size) {
+        setAviso({ tipo: "error", texto: "No se encontraron radicados (23 dígitos) en el archivo." });
+        return;
+      }
+      const res = await fetch("/api/vigilancia/procesos/importar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ radicados: Array.from(radicados) }),
+      });
+      const d = await res.json();
+      if (!res.ok) { setAviso({ tipo: "error", texto: d?.error ?? "No se pudo importar." }); return; }
+      setAviso({
+        tipo: "ok",
+        texto: `Cargados ${d.insertados} proceso(s)${d.duplicados ? ` · ${d.duplicados} ya estaban` : ""}${d.invalidos ? ` · ${d.invalidos} inválidos` : ""}. Usa “Sincronizar todo” para traer el historial.`,
+      });
+      await refrescar();
+    } catch {
+      setAviso({ tipo: "error", texto: "No se pudo leer el archivo." });
+    } finally {
+      setImportando(false);
     }
   }
 
@@ -150,6 +221,11 @@ export function VigilanciaView({ iniciales }: { iniciales: ProcesoVigilado[] }) 
               {incluyendo ? "Consultando…" : "Vigilar"}
             </Button>
           </div>
+          <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={onArchivo} />
+          <Button variant="outline" onClick={() => fileRef.current?.click()} disabled={importando}>
+            {importando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+            {importando ? "Cargando…" : "Carga masiva"}
+          </Button>
           <Button variant="outline" onClick={sincronizarTodo} disabled={sincronizando || procesos.length === 0}>
             <RefreshCw className={cn("h-4 w-4", sincronizando && "animate-spin")} />
             {sincronizando ? "Sincronizando…" : "Sincronizar todo"}
