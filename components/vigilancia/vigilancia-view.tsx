@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   ScanEye, RefreshCw, Plus, ChevronDown, ChevronRight, Trash2,
-  BellDot, CircleAlert, Loader2, CheckCheck, Scale, Upload, FileText, FileSearch,
+  BellDot, CircleAlert, Loader2, CheckCheck, Scale, Upload, FileText, FileSearch, Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -56,6 +56,7 @@ export function VigilanciaView({ iniciales }: { iniciales: ProcesoVigilado[] }) 
   const [incluyendo, setIncluyendo] = useState(false);
   const [sincronizando, setSincronizando] = useState(false);
   const [importando, setImportando] = useState(false);
+  const [exportando, setExportando] = useState(false);
   const [aviso, setAviso] = useState<{ tipo: "ok" | "error"; texto: string } | null>(null);
   const [expandido, setExpandido] = useState<string | null>(null);
   const router = useRouter();
@@ -129,6 +130,40 @@ export function VigilanciaView({ iniciales }: { iniciales: ProcesoVigilado[] }) 
       setAviso({ tipo: "error", texto: "Error de red al sincronizar." });
     } finally {
       setSincronizando(false);
+    }
+  }
+
+  // Descarga un Excel con la actualización de todos los procesos (última actuación + documento +
+  // próxima audiencia). El archivo se arma en el navegador con la librería xlsx.
+  async function exportar() {
+    setExportando(true);
+    setAviso(null);
+    try {
+      const r = await fetch("/api/vigilancia/exportar", { cache: "no-store" });
+      const d = await r.json();
+      if (!r.ok || !Array.isArray(d.filas) || !d.filas.length) {
+        setAviso({ tipo: "error", texto: d?.error ?? "No hay procesos para exportar." });
+        return;
+      }
+      const XLSX = await import("xlsx");
+      const ws = XLSX.utils.json_to_sheet(d.filas);
+      ws["!cols"] = [{ wch: 4 }, { wch: 26 }, { wch: 40 }, { wch: 34 }, { wch: 16 }, { wch: 10 }, { wch: 14 }, { wch: 26 }, { wch: 50 }, { wch: 34 }, { wch: 60 }, { wch: 20 }, { wch: 24 }];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Vigilancia");
+      const out = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+      const blob = new Blob([out], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const url = URL.createObjectURL(blob);
+      const hoy = new Date().toISOString().slice(0, 10);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `FoQs - Vigilancia ${hoy}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setAviso({ tipo: "ok", texto: `Descargado · ${d.filas.length} proceso(s).` });
+    } catch {
+      setAviso({ tipo: "error", texto: "No se pudo generar el Excel." });
+    } finally {
+      setExportando(false);
     }
   }
 
@@ -232,6 +267,10 @@ export function VigilanciaView({ iniciales }: { iniciales: ProcesoVigilado[] }) 
           <Button variant="outline" onClick={sincronizarTodo} disabled={sincronizando || procesos.length === 0}>
             <RefreshCw className={cn("h-4 w-4", sincronizando && "animate-spin")} />
             {sincronizando ? "Sincronizando…" : "Sincronizar todo"}
+          </Button>
+          <Button variant="outline" onClick={exportar} disabled={exportando || procesos.length === 0}>
+            {exportando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            {exportando ? "Generando…" : "Descargar actualización"}
           </Button>
         </CardContent>
       </Card>
