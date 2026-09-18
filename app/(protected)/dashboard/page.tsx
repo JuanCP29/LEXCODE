@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import {
   FileText, FolderOpen, Clock, Loader2, CheckCircle2,
-  FilePlus, ArrowRight, ChevronRight, Activity, Users, CalendarDays,
+  ArrowRight, ChevronRight, Activity, Users, CalendarDays,
 } from "lucide-react";
 import { ROL } from "@/lib/auth/roles";
 import { DashboardPropietario } from "@/components/dashboard/dashboard-propietario";
@@ -42,10 +42,9 @@ type Evento = { tipo: "documento" | "caso"; titulo: string; desc: string; fecha:
 async function getData() {
   const supabase = createClient();
   const ahoraISO = new Date().toISOString();
-  const [{ data: casos }, { count: totalFichas }, { data: recFichas }, { data: recCasos }, audienciasRes] =
+  const [{ data: casos }, { data: recFichas }, { data: recCasos }, audienciasRes] =
     await Promise.all([
       supabase.from("casos").select("fichas_conciliacion(id, estado)"),
-      supabase.from("fichas_conciliacion").select("id", { count: "exact", head: true }),
       // Actividad: fichas generadas
       supabase
         .from("fichas_conciliacion")
@@ -101,7 +100,7 @@ async function getData() {
   }));
 
   return {
-    counts, totalFichas: totalFichas ?? 0, eventos,
+    counts, eventos,
     audiencias, totalAudiencias: audienciasRes.count ?? audiencias.length,
   };
 }
@@ -151,7 +150,7 @@ export default async function DashboardPage() {
   if (perfil?.rol === ROL.COORDINADOR) return <DashboardCoordinador nombre={nombre} userId={user!.id} />;
 
   // Sustanciador (y roles restantes): dashboard actual
-  const { counts, totalFichas, eventos, audiencias, totalAudiencias } = await getData();
+  const { counts, eventos, audiencias, totalAudiencias } = await getData();
   const hoy = new Date().toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" });
   const pct = (n: number) => (counts.total ? Math.round((n / counts.total) * 100) : 0);
 
@@ -231,16 +230,6 @@ export default async function DashboardPage() {
               </Link>
             </div>
           )}
-
-          {/* Accesos rápidos */}
-          <div className="mt-4 pt-4 border-t border-border">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-3">Acciones rápidas</p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-              <AccesoMini href="/casos/nuevo" icon={FilePlus} label="Nuevo caso" />
-              <AccesoMini href="/casos" icon={FolderOpen} label="Reparto" />
-              <AccesoMini href="/documentos" icon={FileText} label="Historial" />
-            </div>
-          </div>
         </section>
 
         {/* ── Actividad reciente ── */}
@@ -285,8 +274,6 @@ export default async function DashboardPage() {
           </Link>
         </section>
       </div>
-
-      <p className="text-[11px] text-muted-foreground/70">{totalFichas} documentos generados en total.</p>
     </div>
   );
 }
@@ -319,18 +306,6 @@ function StatCard({ label, value, icon: Icon, tint, sub, href }: {
         <p className="text-2xl sm:text-3xl font-bold text-foreground tabular-nums leading-tight mt-0.5">{value}</p>
         {sub && <p className="text-[11px] text-muted-foreground mt-0.5 tabular-nums">{sub}</p>}
       </div>
-    </Link>
-  );
-}
-
-function AccesoMini({ href, icon: Icon, label }: { href: string; icon: React.ElementType; label: string }) {
-  return (
-    <Link href={href} className="flex items-center gap-2 rounded-lg border border-border px-3 py-2.5 transition-all hover:border-brand/30 hover:-translate-y-0.5 group">
-      <span className="w-7 h-7 rounded-lg bg-brand-subtle text-brand-ink flex items-center justify-center shrink-0">
-        <Icon className="w-4 h-4" />
-      </span>
-      <span className="text-sm font-medium text-foreground whitespace-nowrap">{label}</span>
-      <ChevronRight className="w-4 h-4 ml-auto text-muted-foreground group-hover:text-brand-ink group-hover:translate-x-0.5 transition-all shrink-0" />
     </Link>
   );
 }
