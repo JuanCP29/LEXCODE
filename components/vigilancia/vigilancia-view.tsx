@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   ScanEye, RefreshCw, Plus, ChevronDown, ChevronRight, Trash2,
-  BellDot, CircleAlert, Loader2, CheckCheck, Scale, Upload,
+  BellDot, CircleAlert, Loader2, CheckCheck, Scale, Upload, FileText, FileSearch,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +25,9 @@ export type ProcesoVigilado = {
   created_at: string;
   caso_id: string | null;
   novedades: number;
+  documento_url: string | null;
+  documento_nombre: string | null;
+  documento_tipo: string | null;
 };
 
 type Actuacion = {
@@ -295,6 +298,31 @@ function ProcesoCard({
 }) {
   const [detalle, setDetalle] = useState<{ actuaciones: Actuacion[]; novedades: Novedad[] } | null>(null);
   const [cargando, setCargando] = useState(false);
+  const [doc, setDoc] = useState<{ url: string | null; nombre: string | null; tipo: string | null }>({
+    url: proceso.documento_url, nombre: proceso.documento_nombre, tipo: proceso.documento_tipo,
+  });
+  const [buscandoDoc, setBuscandoDoc] = useState(false);
+
+  // Busca el documento de la última actuación en Publicaciones (F2) vía sync individual.
+  async function buscarDocumento() {
+    setBuscandoDoc(true);
+    try {
+      const r = await fetch("/api/vigilancia/sincronizar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ proceso_id: proceso.id }),
+      });
+      if (r.ok) {
+        const lr = await fetch("/api/vigilancia/procesos", { cache: "no-store" });
+        if (lr.ok) {
+          const p = ((await lr.json()).procesos ?? []).find((x: ProcesoVigilado) => x.id === proceso.id);
+          if (p) setDoc({ url: p.documento_url, nombre: p.documento_nombre, tipo: p.documento_tipo });
+        }
+      }
+    } finally {
+      setBuscandoDoc(false);
+    }
+  }
 
   async function abrir() {
     onToggle();
@@ -360,6 +388,32 @@ function ProcesoCard({
             </div>
           ) : (
             <>
+              {/* Documento de la última actuación (F2 Publicaciones) */}
+              <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border bg-card p-2.5">
+                {doc.url ? (
+                  <a
+                    href={doc.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex min-w-0 items-center gap-2 text-sm font-medium text-primary hover:underline"
+                  >
+                    <FileText className="h-4 w-4 shrink-0" />
+                    <span className="truncate">{doc.nombre ?? "Ver documento"}</span>
+                    {doc.tipo === "estado" && (
+                      <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">estado</span>
+                    )}
+                  </a>
+                ) : (
+                  <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <FileText className="h-4 w-4 shrink-0 opacity-50" /> Sin documento de la última actuación
+                  </span>
+                )}
+                <Button variant="outline" size="sm" onClick={buscarDocumento} disabled={buscandoDoc}>
+                  {buscandoDoc ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileSearch className="h-3.5 w-3.5" />}
+                  {buscandoDoc ? "Buscando…" : doc.url ? "Actualizar" : "Buscar documento"}
+                </Button>
+              </div>
+
               <div className="mb-3 flex items-center justify-between gap-2">
                 <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   {detalle && detalle.actuaciones.length > 5

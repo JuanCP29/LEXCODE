@@ -15,7 +15,7 @@ export default async function VigilanciaPage() {
 
   const { data: procesos } = await supabase
     .from("procesos_vigilados")
-    .select("id, radicado, despacho, sujetos, ciudad, estado, ultimo_movimiento, backfill_completo, created_at, caso_id")
+    .select("id, radicado, despacho, sujetos, ciudad, estado, ultimo_movimiento, backfill_completo, created_at, caso_id, documento_url, documento_nombre, documento_tipo")
     .eq("activo", true)
     .order("ultimo_movimiento", { ascending: false, nullsFirst: false });
 

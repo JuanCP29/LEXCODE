@@ -13,7 +13,7 @@ export async function GET() {
 
   const { data: procesos, error } = await ctx.sb
     .from("procesos_vigilados")
-    .select("id, radicado, despacho, sujetos, ciudad, estado, ultimo_movimiento, backfill_completo, activo, created_at, caso_id")
+    .select("id, radicado, despacho, sujetos, ciudad, estado, ultimo_movimiento, backfill_completo, activo, created_at, caso_id, documento_url, documento_nombre, documento_tipo")
     .eq("org_id", ctx.orgId)
     .eq("activo", true)
     .order("ultimo_movimiento", { ascending: false, nullsFirst: false });
@@ -78,10 +78,11 @@ export async function POST(request: NextRequest) {
     procesoId = creado.id;
   }
 
-  // Backfill inicial: trae el historial sin generar novedades.
+  // Backfill inicial: trae el historial sin generar novedades. Busca el documento (F2) de la
+  // última actuación si es estado/providencia.
   const resultado = await sincronizarProceso(ctx.sb, {
     id: procesoId, radicado, backfill_completo: !!existente?.activo, org_id: ctx.orgId,
-  });
+  }, { buscarDoc: true });
 
   if (!resultado.encontrado) {
     return NextResponse.json({

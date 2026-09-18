@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       .select("id, radicado, backfill_completo")
       .eq("org_id", ctx.orgId).eq("activo", true).eq("id", procesoId).maybeSingle();
     if (!uno) return NextResponse.json({ error: "Proceso no encontrado" }, { status: 404 });
-    const r = await sincronizarProceso(ctx.sb, { ...uno, org_id: ctx.orgId });
+    const r = await sincronizarProceso(ctx.sb, { ...uno, org_id: ctx.orgId }, { buscarDoc: true });
     return NextResponse.json({ ok: true, sincronizados: 1, novedades: r.novedades, restantes: 0, resultados: [r] });
   }
 

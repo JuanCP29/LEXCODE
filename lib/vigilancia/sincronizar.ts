@@ -1,5 +1,6 @@
 import { consultarProceso, type ActuacionRama } from "./rama";
 import { extraerAudiencia } from "./audiencias";
+import { ameritaDocumento, buscarDocumento } from "./publicaciones";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Sb = any; // SupabaseClient (admin o server) — tipado laxo para no acoplar versión
 
@@ -43,7 +44,8 @@ function fechaISO(v: string | null): string | null {
  */
 export async function sincronizarProceso(
   sb: Sb,
-  proceso: { id: string; radicado: string; backfill_completo: boolean; org_id: string }
+  proceso: { id: string; radicado: string; backfill_completo: boolean; org_id: string },
+  opciones: { buscarDoc?: boolean } = {}
 ): Promise<ResultadoSync> {
   const res: ResultadoSync = {
     radicado: proceso.radicado, encontrado: false, nuevas: 0, novedades: 0, audiencias: 0,
@@ -121,6 +123,21 @@ export async function sincronizarProceso(
   // cubrir el historial del backfill) y registra las que fijan audiencia. Idempotente por
   // unique(actuacion_id) con ignoreDuplicates → no pisa correcciones manuales.
   res.audiencias = await sincronizarAudiencias(sb, proceso.id, proceso.org_id, datos.despacho);
+
+  // Documento de la última actuación (F2 Publicaciones): solo bajo demanda (inclusión / sync
+  // individual), cuando la última actuación es estado o providencia. Best-effort: nunca rompe el sync.
+  if (opciones.buscarDoc && ultima?.actuacion && ameritaDocumento(ultima.actuacion)) {
+    try {
+      const doc = await buscarDocumento(proceso.radicado, ultima.fecha ?? new Date().toISOString());
+      await sb.from("procesos_vigilados").update({
+        documento_url: doc?.url ?? null,
+        documento_nombre: doc?.nombre ?? null,
+        documento_tipo: doc?.tipo ?? null,
+        documento_fecha: fechaISO(ultima?.fecha ?? null),
+        documento_buscado_at: new Date().toISOString(),
+      }).eq("id", proceso.id);
+    } catch { /* F2 no disponible: se deja sin documento */ }
+  }
 
   return res;
 }
