@@ -19,13 +19,6 @@ function claveEstado(caso: any): ClaveEstado {
   return "pendiente";
 }
 
-const ESTADO_LABEL: Record<string, string> = {
-  borrador: "Borrador",
-  en_revision: "En revisión",
-  listo: "Listo",
-  en_proceso: "En proceso",
-};
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function unoDe(rel: any) {
   return Array.isArray(rel) ? rel[0] : rel;
@@ -48,18 +41,11 @@ type Evento = { tipo: "documento" | "caso"; titulo: string; desc: string; fecha:
 
 async function getData() {
   const supabase = createClient();
-  const [{ data: casos }, { count: totalFichas }, { data: draft }, { data: recFichas }, { data: recCasos }] =
+  const ahoraISO = new Date().toISOString();
+  const [{ data: casos }, { count: totalFichas }, { data: recFichas }, { data: recCasos }, audienciasRes] =
     await Promise.all([
       supabase.from("casos").select("fichas_conciliacion(id, estado)"),
       supabase.from("fichas_conciliacion").select("id", { count: "exact", head: true }),
-      // Último borrador/en revisión para "Continuar trabajando"
-      supabase
-        .from("fichas_conciliacion")
-        .select("id, estado, created_at, caso_id, casos(nombre_demandante, radicado)")
-        .neq("estado", "listo")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
       // Actividad: fichas generadas
       supabase
         .from("fichas_conciliacion")
@@ -72,6 +58,14 @@ async function getData() {
         .select("id, nombre_demandante, created_at")
         .order("created_at", { ascending: false })
         .limit(5),
+      // Audiencias programadas (hoy en adelante) para el visor del dashboard
+      supabase
+        .from("audiencias_vigilancia")
+        .select("id, fecha, tipo, despacho, procesos_vigilados(radicado)", { count: "exact" })
+        .gte("fecha", ahoraISO)
+        .neq("estado", "cancelada")
+        .order("fecha", { ascending: true })
+        .limit(4),
     ]);
 
   const lista = casos ?? [];
@@ -97,7 +91,40 @@ async function getData() {
     .sort((a, b) => +new Date(b.fecha) - +new Date(a.fecha))
     .slice(0, 4);
 
-  return { counts, totalFichas: totalFichas ?? 0, draft, eventos };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const audiencias: Audiencia[] = ((audienciasRes.data ?? []) as any[]).map((a) => ({
+    id: a.id,
+    fecha: a.fecha,
+    tipo: a.tipo,
+    despacho: a.despacho,
+    radicado: unoDe(a.procesos_vigilados)?.radicado ?? "",
+  }));
+
+  return {
+    counts, totalFichas: totalFichas ?? 0, eventos,
+    audiencias, totalAudiencias: audienciasRes.count ?? audiencias.length,
+  };
+}
+
+type Audiencia = { id: string; fecha: string; tipo: string | null; despacho: string | null; radicado: string };
+
+// Formatea en zona horaria de Colombia (el server puede correr en UTC).
+const BOGOTA = "America/Bogota";
+function fechaChip(iso: string): { dia: string; mes: string } {
+  const d = new Date(iso);
+  return {
+    dia: d.toLocaleDateString("es-CO", { timeZone: BOGOTA, day: "2-digit" }),
+    mes: d.toLocaleDateString("es-CO", { timeZone: BOGOTA, month: "short" }).replace(".", ""),
+  };
+}
+function horaBogota(iso: string): string {
+  const d = new Date(iso);
+  const h = d.toLocaleTimeString("es-CO", { timeZone: BOGOTA, hour: "numeric", minute: "2-digit", hour12: true });
+  const cero = d.toLocaleTimeString("es-CO", { timeZone: BOGOTA, hour: "2-digit", minute: "2-digit", hour12: false });
+  return cero === "00:00" ? "" : h;
+}
+function fmtRadicado(r: string): string {
+  return r.length === 23 ? `${r.slice(0, 5)}-${r.slice(5, 7)}-${r.slice(7, 9)}-${r.slice(9, 12)}-${r.slice(12)}` : r;
 }
 
 // "NOMBRE APELLIDO" / "nombre apellido" → "Nombre Apellido".
@@ -124,14 +151,9 @@ export default async function DashboardPage() {
   if (perfil?.rol === ROL.COORDINADOR) return <DashboardCoordinador nombre={nombre} userId={user!.id} />;
 
   // Sustanciador (y roles restantes): dashboard actual
-  const { counts, totalFichas, draft, eventos } = await getData();
+  const { counts, totalFichas, eventos, audiencias, totalAudiencias } = await getData();
   const hoy = new Date().toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" });
   const pct = (n: number) => (counts.total ? Math.round((n / counts.total) * 100) : 0);
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const draftAny = draft as any;
-  const draftNombre = draftAny ? (unoDe(draftAny.casos)?.nombre_demandante ?? "Ficha sin demandante") : null;
-  const draftRadicado = draftAny ? (unoDe(draftAny.casos)?.radicado ?? null) : null;
 
   return (
     <div className="relative space-y-6 max-w-5xl overflow-x-clip">
@@ -163,40 +185,49 @@ export default async function DashboardPage() {
       {/* Continuar trabajando + Actividad reciente */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
 
-        {/* ── Continuar trabajando ── */}
+        {/* ── Audiencias programadas (visor del calendario) ── */}
         <section className="bg-card rounded-xl border border-border card-shadow-md p-5 sm:p-6">
-          <SeccionHeader icon={FileText} titulo="Continuar trabajando" />
-
-          {draftAny ? (
-            <div className="rounded-lg border border-border bg-muted/40 p-3 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <span className="w-10 h-10 rounded-lg bg-brand-subtle text-brand-ink flex items-center justify-center shrink-0">
-                  <FileText className="w-5 h-5" />
-                </span>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-foreground truncate">{draftNombre}</p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    Ficha de conciliación{draftRadicado ? ` · ${draftRadicado}` : ""}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-brand-subtle text-brand-ink border border-brand/20">
-                  {ESTADO_LABEL[draftAny.estado] ?? draftAny.estado}
-                </span>
-                <Link
-                  href={`/generador/${draftAny.caso_id}/params`}
-                  className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-[0.98] transition-all"
-                >
-                  Continuar <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2.5">
+              <CalendarDays className="w-5 h-5 text-brand-ink" />
+              <h2 className="text-base font-semibold text-foreground">Audiencias programadas</h2>
             </div>
+            <Link href="/audiencias" className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-brand-ink transition-colors">
+              Ver calendario <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <div className="flex items-baseline gap-2 mb-4">
+            <span className="text-4xl font-bold text-foreground tabular-nums leading-none">{totalAudiencias}</span>
+            <span className="text-sm text-muted-foreground">próxima{totalAudiencias !== 1 ? "s" : ""} en el calendario</span>
+          </div>
+
+          {audiencias.length ? (
+            <ol className="space-y-2">
+              {audiencias.map((a) => {
+                const chip = fechaChip(a.fecha);
+                const hora = horaBogota(a.fecha);
+                return (
+                  <li key={a.id} className="flex items-center gap-3 rounded-lg border border-border bg-muted/40 p-2.5">
+                    <span className="flex w-11 h-11 flex-col items-center justify-center rounded-lg bg-brand-subtle text-brand-ink shrink-0 leading-none">
+                      <span className="text-base font-bold tabular-nums">{chip.dia}</span>
+                      <span className="text-[10px] font-semibold uppercase">{chip.mes}</span>
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-foreground truncate">{a.tipo ?? "Audiencia"}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {hora ? `${hora} · ` : ""}{a.despacho ? a.despacho.trim() : fmtRadicado(a.radicado)}
+                      </p>
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
           ) : (
             <div className="rounded-lg border border-dashed border-border p-5 text-center">
-              <p className="text-sm text-muted-foreground">No tienes borradores en curso.</p>
-              <Link href="/casos/nuevo" className="inline-flex items-center gap-1.5 mt-2 text-sm font-semibold text-brand-ink hover:underline">
-                Registrar un caso <ArrowRight className="w-3.5 h-3.5" />
+              <p className="text-sm text-muted-foreground">No hay audiencias programadas.</p>
+              <Link href="/vigilancia" className="inline-flex items-center gap-1.5 mt-2 text-sm font-semibold text-brand-ink hover:underline">
+                Ir a Vigilancia <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
           )}
