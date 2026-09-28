@@ -36,7 +36,8 @@ export async function updateSession(request: NextRequest) {
     pathname === "/recuperar-contrasena" ||
     pathname === "/actualizar-contrasena" ||
     pathname === "/auth/callback" ||
-    pathname === "/auth/confirm";
+    pathname === "/auth/confirm" ||
+    pathname === "/api/keepalive"; // cron de Supabase keepalive (sin sesión; se protege con CRON_SECRET)
 
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();
