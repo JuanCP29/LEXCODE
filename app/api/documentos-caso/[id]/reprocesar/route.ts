@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { extraerTextoPDF } from "@/lib/ia/extraer-pdf";
+import { extraerTextoPDFDetallado } from "@/lib/ia/extraer-pdf";
+import { transcribirPDFVision } from "@/lib/ia/ocr-claude";
 
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 function sb() {
   const c = cookies();
@@ -41,10 +42,29 @@ export async function POST(_request: NextRequest, { params }: { params: { id: st
     if (dlErr || !archivo) throw new Error(dlErr?.message ?? "No se pudo descargar de Storage");
 
     const buffer = Buffer.from(await archivo.arrayBuffer());
-    const texto = await extraerTextoPDF(buffer);
+    const nativo = await extraerTextoPDFDetallado(buffer);
+    let texto = nativo.texto;
+    let metodo = "texto";
+
+    // OCR si viene escaneado o es MIXTO (páginas digitales + páginas imagen).
+    const fraccionVacias = nativo.paginas > 0 ? nativo.paginasVacias / nativo.paginas : 0;
+    const pareceEscaneado =
+      !texto || texto.length < 50 ||
+      (nativo.paginas >= 2 && (nativo.paginasVacias >= 2 || fraccionVacias >= 0.3));
+    if (pareceEscaneado) {
+      try {
+        const textoOCR = await transcribirPDFVision(buffer, "application/pdf");
+        if (textoOCR && textoOCR.length >= 50 && textoOCR.length > texto.length) {
+          texto = textoOCR;
+          metodo = "ocr";
+        }
+      } catch (e) {
+        console.error("OCR visión (reprocesar):", e);
+      }
+    }
 
     if (!texto || texto.length < 50) {
-      const msg = "El PDF no contiene texto extraíble (posible documento escaneado).";
+      const msg = "El PDF no contiene texto extraíble y el OCR no pudo procesarlo (posible archivo muy grande o ilegible).";
       await supabase.from("documentos_caso")
         .update({ estado_procesamiento: "error", error_procesamiento: msg })
         .eq("id", params.id);
@@ -55,7 +75,7 @@ export async function POST(_request: NextRequest, { params }: { params: { id: st
       .update({ estado_procesamiento: "ok", texto_extraido: texto })
       .eq("id", params.id);
 
-    return NextResponse.json({ estado: "ok" });
+    return NextResponse.json({ estado: "ok", metodo });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Error al reprocesar";
     await supabase.from("documentos_caso")

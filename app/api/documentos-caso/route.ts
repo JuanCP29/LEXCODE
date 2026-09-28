@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { extraerTextoPDF } from "@/lib/ia/extraer-pdf";
+import { extraerTextoPDFDetallado } from "@/lib/ia/extraer-pdf";
 import { transcribirPDFVision } from "@/lib/ia/ocr-claude";
 
 // El OCR con visión de documentos escaneados de varias páginas puede tardar; margen (plan Pro).
@@ -175,15 +175,29 @@ async function registrarDocumento(request: NextRequest) {
         .eq("id", doc.id);
     } else {
       try {
-        // 1) Capa de texto nativa (PDF digital).
-        let texto = await extraerTextoPDF(buffer);
+        // 1) Capa de texto nativa (PDF digital), con diagnóstico por página.
+        const nativo = await extraerTextoPDFDetallado(buffer);
+        let texto = nativo.texto;
         let metodo = "texto";
 
-        // 2) Si viene escaneado (sin texto), OCR con visión de Claude.
-        if (!texto || texto.length < 50) {
+        // 2) Disparar OCR si el PDF viene escaneado O es MIXTO (páginas digitales + páginas
+        //    imagen). El caso mixto —demanda escaneada + resolución digital, p. ej.— supera el
+        //    umbral de "tiene texto" pero pierde los hechos/pretensiones de las páginas imagen.
+        const fraccionVacias = nativo.paginas > 0 ? nativo.paginasVacias / nativo.paginas : 0;
+        const pareceEscaneado =
+          !texto ||
+          texto.length < 50 ||
+          (nativo.paginas >= 2 && (nativo.paginasVacias >= 2 || fraccionVacias >= 0.3));
+
+        if (pareceEscaneado) {
           try {
             const textoOCR = await transcribirPDFVision(buffer, "application/pdf");
-            if (textoOCR && textoOCR.length >= 50) { texto = textoOCR; metodo = "ocr"; }
+            // En mixtos el OCR transcribe TODAS las páginas → nos quedamos con él solo si aporta
+            // más texto que el nativo (recupera lo escaneado sin perder lo digital).
+            if (textoOCR && textoOCR.length >= 50 && textoOCR.length > texto.length) {
+              texto = textoOCR;
+              metodo = "ocr";
+            }
           } catch (e) {
             console.error("OCR visión:", e);
           }
