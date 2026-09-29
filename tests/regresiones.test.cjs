@@ -125,6 +125,36 @@ test('new accounts are created in the caller organization', async () => {
   assert.equal(db.calls.find(c => c.operation === 'upsert').values.org_id, 'A');
 });
 
+for (const scn of [
+  { name: 'resend invite resets the temp password for a pending user of my org', targetOrg: 'A', lastSignIn: null, status: 200, resets: 1 },
+  { name: 'resend invite refuses a user of another organization', targetOrg: 'B', lastSignIn: null, status: 403, resets: 0 },
+  { name: 'resend invite refuses an already active account', targetOrg: 'A', lastSignIn: '2026-01-01T00:00:00Z', status: 409, resets: 0 },
+]) test(scn.name, async () => {
+  const db = database(c => {
+    if (c.table === 'perfiles') {
+      const id = (c.filters.find(f => f[1] === 'id') || [])[2];
+      if (id === 'caller') return { data: { rol: 'coordinador', org_id: 'A' } };
+      if (id === 'target') return { data: { org_id: scn.targetOrg, nombre_completo: 'Pendiente' } };
+    }
+    return { data: null };
+  }, { id: 'caller' });
+  let resets = 0, deletes = 0;
+  db.auth.admin = {
+    listUsers: async () => ({ data: { users: [{ id: 'target', email: 'pending@example.test', last_sign_in_at: scn.lastSignIn }] } }),
+    updateUserById: async (id, attrs) => { resets++; assert.equal(id, 'target'); assert.ok(attrs.password); return { error: null }; },
+    deleteUser: () => { deletes++; throw new Error('Account deletion is forbidden'); },
+  };
+  const route = load('app/api/equipo/route.ts', {
+    '@supabase/ssr': { createServerClient: () => db },
+    '@/lib/auth/password': { generarPassword: () => 'fresh-temp' },
+  });
+  const res = await route.PATCH(request({ email: 'pending@example.test' }));
+  assert.equal(res.status, scn.status);
+  assert.equal(resets, scn.resets);
+  assert.equal(deletes, 0);
+  if (scn.status === 200) assert.equal(res.body.usuario.password, 'fresh-temp');
+});
+
 for (const draft of [true, false]) test(draft ? 'saving draft preserves queue state and skips AI' : 'generation still completes queued cases', async () => {
   let aiCalls = 0;
   const db = database(c => ({ data: c.table === 'casos' ? { id: 'case' } : { id: 'ficha' }, error: null }));

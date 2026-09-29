@@ -125,3 +125,46 @@ export async function POST(request: NextRequest) {
     usuario: { email: emailLimpio, nombre: nombreLimpio, rol: rolFinal, password: tempPassword },
   });
 }
+
+// PATCH — reenviar invitación: regenera la contraseña temporal de un usuario PENDIENTE
+// (nunca inició sesión) de la organización del coordinador. Reemplaza el antiguo
+// delete+recreate: NUNCA elimina cuentas ni toca usuarios de otra organización.
+export async function PATCH(request: NextRequest) {
+  const g = await guardCoordinador();
+  if ("error" in g) return NextResponse.json({ error: g.error }, { status: g.status });
+  const { admin, orgId } = g;
+
+  const { email } = (await request.json().catch(() => ({}))) as { email?: string };
+  const emailLimpio = (email ?? "").trim().toLowerCase();
+  if (!emailLimpio || !emailLimpio.includes("@")) {
+    return NextResponse.json({ error: "Correo inválido" }, { status: 400 });
+  }
+
+  const { data: lista } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+  const existente = lista?.users?.find((u) => (u.email ?? "").toLowerCase() === emailLimpio);
+  if (!existente) {
+    return NextResponse.json({ error: "No existe una cuenta con ese correo." }, { status: 404 });
+  }
+
+  // Debe pertenecer a MI organización (nunca tocar usuarios de otra org).
+  const { data: perfil } = await admin
+    .from("perfiles").select("org_id, nombre_completo").eq("id", existente.id).single();
+  if (!perfil || perfil.org_id !== orgId) {
+    return NextResponse.json({ error: "Ese usuario no pertenece a tu organización." }, { status: 403 });
+  }
+  // Solo cuentas pendientes: si ya inició sesión, debe usar "Olvidé mi contraseña".
+  if (existente.last_sign_in_at) {
+    return NextResponse.json({ error: "La cuenta ya está activa; el usuario debe usar la recuperación de contraseña." }, { status: 409 });
+  }
+
+  const tempPassword = generarPassword();
+  const { error } = await admin.auth.admin.updateUserById(existente.id, { password: tempPassword });
+  if (error) {
+    return NextResponse.json({ error: `No se pudo reenviar la invitación: ${error.message}` }, { status: 500 });
+  }
+
+  return NextResponse.json({
+    ok: true,
+    usuario: { email: emailLimpio, nombre: perfil.nombre_completo, password: tempPassword },
+  });
+}
