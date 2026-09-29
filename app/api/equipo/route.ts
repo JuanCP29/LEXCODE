@@ -56,7 +56,11 @@ export async function GET() {
 
   const { data: lista } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
   const emailPorId = new Map<string, string>();
-  for (const u of lista?.users ?? []) if (u.email) emailPorId.set(u.id, u.email);
+  const pendientePorId = new Map<string, boolean>();
+  for (const u of lista?.users ?? []) {
+    if (u.email) emailPorId.set(u.id, u.email);
+    pendientePorId.set(u.id, !u.last_sign_in_at); // nunca inició sesión → invitación pendiente
+  }
 
   const usuarios = (perfiles ?? []).map((p) => ({
     id: p.id,
@@ -65,6 +69,7 @@ export async function GET() {
     rol: p.rol,
     rolLabel: ROLES_UI[p.rol] ?? p.rol,
     activo: p.activo,
+    pendiente: pendientePorId.get(p.id) ?? false,
   }));
 
   return NextResponse.json({ usuarios });

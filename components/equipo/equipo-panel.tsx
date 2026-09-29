@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { UserPlus, Mail, CheckCircle2, AlertCircle, Users, Copy, Check, KeyRound, Scale, Shield } from "lucide-react";
+import { UserPlus, Mail, CheckCircle2, AlertCircle, Users, Copy, Check, KeyRound, Scale, Shield, Send } from "lucide-react";
 import { FoqsLoader } from "@/components/ui/foqs-loader";
 import { cn } from "@/lib/utils";
 
-type Usuario = { id: string; nombre: string | null; email: string | null; rol: string; rolLabel: string; activo: boolean };
+type Usuario = { id: string; nombre: string | null; email: string | null; rol: string; rolLabel: string; activo: boolean; pendiente?: boolean };
 
 export function EquipoPanel() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
@@ -14,9 +14,10 @@ export function EquipoPanel() {
   const [email, setEmail] = useState("");
   const [rol, setRol] = useState<"sustanciador" | "coordinador">("sustanciador");
   const [enviando, setEnviando] = useState(false);
-  const [cred, setCred] = useState<{ email: string; password: string; rolLabel: string } | null>(null);
+  const [cred, setCred] = useState<{ email: string; password: string; titulo: string } | null>(null);
   const [copiado, setCopiado] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [reenviandoId, setReenviandoId] = useState<string | null>(null);
 
   const cargar = useCallback(async () => {
     setCargando(true);
@@ -44,13 +45,34 @@ export function EquipoPanel() {
       });
       const body = await res.json();
       if (!res.ok) throw new Error(body.error ?? "Error al crear");
-      setCred({ email, password: body.usuario.password, rolLabel: rol === "coordinador" ? "Coordinador" : "Abogado sustanciador" });
+      setCred({ email, password: body.usuario.password, titulo: `${rol === "coordinador" ? "Coordinador" : "Abogado sustanciador"} creado` });
       setNombre(""); setEmail(""); setRol("sustanciador");
       cargar();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al crear");
     } finally {
       setEnviando(false);
+    }
+  }
+
+  // Reenviar invitación: regenera la contraseña temporal de un usuario pendiente.
+  async function reenviar(u: Usuario) {
+    if (!u.email) return;
+    setReenviandoId(u.id); setCred(null); setError(null);
+    try {
+      const res = await fetch("/api/equipo", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: u.email }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error ?? "No se pudo reenviar la invitación");
+      setCred({ email: u.email, password: body.usuario.password, titulo: "Invitación reenviada" });
+      cargar();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo reenviar la invitación");
+    } finally {
+      setReenviandoId(null);
     }
   }
 
@@ -120,7 +142,7 @@ export function EquipoPanel() {
           {cred && (
             <div className="rounded-lg border border-green-500/40 bg-green-500/10 p-3 space-y-2">
               <p className="text-xs font-semibold text-green-700 dark:text-green-400 flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4" /> {cred.rolLabel} creado
+                <CheckCircle2 className="w-4 h-4" /> {cred.titulo}
               </p>
               <p className="text-[11px] text-muted-foreground">
                 Comparte estas credenciales. Entrará en <strong>Iniciar sesión</strong> y cambiará la contraseña en Configuración.
@@ -167,6 +189,23 @@ export function EquipoPanel() {
                     <p className="text-sm font-semibold text-foreground truncate">{u.nombre || u.email || "—"}</p>
                     <p className="text-[11px] text-muted-foreground truncate">{u.email}</p>
                   </div>
+                  {u.pendiente && (
+                    <>
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full border shrink-0 bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30">
+                        Pendiente
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => reenviar(u)}
+                        disabled={reenviandoId === u.id}
+                        title="Regenerar la contraseña temporal"
+                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-ink hover:underline disabled:opacity-60 shrink-0"
+                      >
+                        {reenviandoId === u.id ? <FoqsLoader size="sm" /> : <Send className="w-3.5 h-3.5" />}
+                        Reenviar
+                      </button>
+                    </>
+                  )}
                   <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full border shrink-0",
                     esCoord ? "bg-brand-subtle text-brand-ink border-brand/20" : "bg-muted text-muted-foreground border-border")}>
                     {u.rolLabel}
