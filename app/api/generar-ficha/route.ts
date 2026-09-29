@@ -242,15 +242,19 @@ export async function POST(request: NextRequest) {
       console.error("ficha_seccion_fuentes (no bloqueante):", e);
     }
 
-    // 7a. Si el caso está en la cola de trabajo, marcarlo completado (best-effort)
-    try {
-      await supabase
-        .from("casos")
-        .update({ cola_estado: "completado" })
-        .eq("id", caso_id)
-        .not("cola_estado", "is", null);
-    } catch (e) {
-      console.error("marcar cola completado (no bloqueante):", e);
+    // 7a. Solo la generación completa termina el trabajo de la cola.
+    // Guardar un borrador conserva el estado actual del caso.
+    if (!solo_guardar) {
+      try {
+        const { error: colaError } = await supabase
+          .from("casos")
+          .update({ cola_estado: "completado" })
+          .eq("id", caso_id)
+          .not("cola_estado", "is", null);
+        if (colaError) console.error("marcar cola completado (no bloqueante):", colaError.message);
+      } catch (e) {
+        console.error("marcar cola completado (no bloqueante):", e);
+      }
     }
 
     // 7b. Snapshot de versión inicial (best-effort)

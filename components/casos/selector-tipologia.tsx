@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Tags, Loader2, BookMarked, AlertTriangle, CheckCircle2 } from "lucide-react";
 
@@ -29,9 +29,12 @@ export function SelectorTipologia({
   const [seleccion, setSeleccion] = useState<string>(tipologiaActual ?? "");
   const [guardando, setGuardando] = useState(false);
   const [guardado, setGuardado] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [directrices, setDirectrices] = useState<DirectrizAplicable[]>([]);
   const [metodo, setMetodo] = useState<string>("");
   const [cargandoDir, setCargandoDir] = useState(false);
+  // Guardia de orden: si se disparan varias cargas seguidas, solo aplica la última respuesta.
+  const dirReqId = useRef(0);
 
   useEffect(() => {
     fetch("/api/tipologias")
@@ -46,38 +49,49 @@ export function SelectorTipologia({
   }, []);
 
   async function cargarDirectrices() {
+    const reqId = ++dirReqId.current;
     setCargandoDir(true);
     try {
       const res = await fetch(`/api/casos/${casoId}/directrices-aplicables`);
       if (res.ok) {
         const body = await res.json();
+        // Descarta respuestas obsoletas: solo la última carga disparada actualiza el estado.
+        if (reqId !== dirReqId.current) return;
         setDirectrices(body.directrices ?? []);
         setMetodo(body.metodo ?? "");
       }
     } finally {
-      setCargandoDir(false);
+      if (reqId === dirReqId.current) setCargandoDir(false);
     }
   }
 
   async function handleCambio(nueva: string) {
+    const anterior = seleccion;
     setSeleccion(nueva);
     setGuardando(true);
     setGuardado(false);
+    setError(null);
     try {
       const res = await fetch(`/api/casos/${casoId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tipologia_id: nueva || null }),
       });
-      if (res.ok) {
-        setGuardado(true);
-        await cargarDirectrices();
-        router.refresh();
-        setTimeout(() => setGuardado(false), 2500);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "No se pudo guardar la tipología");
       }
+    } catch (e) {
+      setSeleccion(anterior);
+      setError(e instanceof Error ? e.message : "No se pudo guardar la tipología");
+      return;
     } finally {
       setGuardando(false);
     }
+    setGuardado(true);
+    void cargarDirectrices().catch(() => setError("Tipología guardada; no se pudieron actualizar las directrices."));
+    router.refresh();
+    setTimeout(() => setGuardado(false), 2500);
   }
 
   return (
@@ -96,8 +110,10 @@ export function SelectorTipologia({
       </div>
 
       <div className="px-5 py-4 space-y-4">
+        {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
         <select
           value={seleccion}
+          disabled={guardando}
           onChange={(e) => handleCambio(e.target.value)}
           className="w-full rounded-md border border-[#2d3148] bg-[#0f1117] text-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#6b7dff]"
         >

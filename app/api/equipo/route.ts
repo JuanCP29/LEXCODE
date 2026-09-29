@@ -84,16 +84,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Correo inválido" }, { status: 400 });
   }
 
-  // Si ya existe un usuario con ese correo, resolverlo
-  const { data: lista } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-  const existente = lista?.users?.find((u) => (u.email ?? "").toLowerCase() === emailLimpio);
-  if (existente) {
-    if (existente.last_sign_in_at) {
-      return NextResponse.json({ error: "Ya existe una cuenta activa con ese correo." }, { status: 400 });
-    }
-    await admin.auth.admin.deleteUser(existente.id);
-  }
-
+  // Auth comprueba la unicidad del correo de forma atómica. Nunca eliminar una
+  // cuenta existente: puede pertenecer a otra organización o tener datos asociados.
   // Crear con contraseña temporal
   const tempPassword = generarPassword();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -109,6 +101,9 @@ export async function POST(request: NextRequest) {
   } catch (e) { createErr = e; }
   if (createErr || !creado?.user) {
     const e = createErr ?? {};
+    if (e.code === "email_exists" || e.code === "user_already_exists") {
+      return NextResponse.json({ error: "Ya existe una cuenta con ese correo." }, { status: 409 });
+    }
     let detalle = e.message || e.code || e.name || "";
     if (!detalle) { try { detalle = JSON.stringify(e, Object.getOwnPropertyNames(e)); } catch { detalle = String(e); } }
     return NextResponse.json({ error: `No se pudo crear el usuario: ${detalle || "desconocido"}` }, { status: 400 });
